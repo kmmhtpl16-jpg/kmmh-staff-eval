@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ประเมินขยัน หน้าร้าน KMMH</title>
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#e2e8f0; --mut:#94a3b8;
+    --blue:#2563eb; --red:#dc2626; --green:#16a34a; --amber:#d97706; --gold:#facc15;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,"Segoe UI","Sarabun",sans-serif;background:var(--bg);color:var(--txt);padding-bottom:90px}
+  header{background:linear-gradient(135deg,#1e3a8a,#1e40af);padding:14px 16px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+  header h1{margin:0;font-size:18px;font-weight:700}
+  header .sub{font-size:12px;color:#bfdbfe;margin-top:2px}
+  .wrap{padding:14px;max-width:560px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+  .row{display:flex;align-items:center;gap:10px}
+  label.fld{font-size:13px;color:var(--mut);display:block;margin-bottom:6px}
+  select,input{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0b1220;color:var(--txt);font-size:15px}
+  .emp-block{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;background:#0b1220}
+  .emp-name{font-size:16px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+  .tally{font-size:12px;color:var(--mut);font-weight:400}
+  .tally b.r{color:#f87171} .tally b.g{color:#4ade80}
+  .btns{display:flex;gap:8px}
+  .btn{flex:1;border:none;border-radius:10px;padding:13px 8px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;transition:transform .05s}
+  .btn:active{transform:scale(.96)}
+  .btn.sup{background:var(--red)} .btn.pro{background:var(--green)}
+  .btn.ontime{background:var(--green)} .btn.late{background:var(--amber)} .btn.leave{background:#64748b}
+  .att-row .btn{font-size:14px;padding:11px 4px}
+  .att-row .btn.off{background:#0b1220;color:var(--mut);border:1px solid var(--line)}
+  nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:20}
+  nav button{flex:1;background:none;border:none;color:var(--mut);padding:12px 4px;font-size:13px;font-weight:600;cursor:pointer}
+  nav button.on{color:#60a5fa}
+  nav button .ic{display:block;font-size:20px;margin-bottom:2px}
+  .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#0b1220;border:1px solid var(--green);color:#bbf7d0;padding:10px 18px;border-radius:30px;font-size:14px;opacity:0;transition:opacity .2s;z-index:50;pointer-events:none;max-width:90%}
+  .toast.show{opacity:1}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-size:12px;font-weight:600}
+  td.name{text-align:left;font-weight:700}
+  .rank1{color:var(--gold)}
+  .score{font-weight:700}
+  .pos{color:#4ade80} .neg{color:#f87171}
+  .seg{display:flex;gap:6px;margin-bottom:12px}
+  .seg button{flex:1;padding:9px;border-radius:8px;border:1px solid var(--line);background:#0b1220;color:var(--mut);font-size:13px;font-weight:600}
+  .seg button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .muted{color:var(--mut);font-size:12px;text-align:center;margin-top:8px}
+  .undo{background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:8px 12px;font-size:13px;width:100%;margin-top:4px}
+  .hint{font-size:12px;color:var(--mut);line-height:1.5;margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>📋 ประเมินขยัน หน้าร้าน</h1>
+  <div class="sub" id="todayLbl">—</div>
+</header>
+
+<div class="wrap">
+  <!-- ===== TAB: ขีดเหตุการณ์ ===== -->
+  <section id="tab-log">
+    <div class="card">
+      <label class="fld">ผู้ขีด (คนที่เรียกใช้/พบเหตุ)</label>
+      <select id="logger">
+        <option value="">— เลือกชื่อ —</option>
+        <option>หมิว</option><option>เบียร์</option><option>เนเน่</option>
+        <option>โอ๋</option><option>คุณหลิง</option><option>อื่นๆ</option>
+      </select>
+      <div class="hint">🔴 ต้องคุม = ยังต้องมีคนไปยืนกำกับ/ช่วย &nbsp; 🟢 เชิงรุก = หยิบงานเอง/เติมของ/ทำเสร็จไว โดยไม่ต้องสั่ง</div>
+    </div>
+    <div id="empList"></div>
+    <button class="undo" id="undoBtn">↩︎ ยกเลิกรายการล่าสุดที่ฉันเพิ่งขีด</button>
+  </section>
+
+  <!-- ===== TAB: เช็คชื่อ ===== -->
+  <section id="tab-att" style="display:none">
+    <div class="card"><div class="hint">เช็คเข้างานวันละครั้งต่อคน — กดทับได้ถ้าแก้</div></div>
+    <div id="attList"></div>
+  </section>
+
+  <!-- ===== TAB: สรุป ===== -->
+  <section id="tab-sum" style="display:none">
+    <div class="card">
+      <div class="seg" id="rangeSeg">
+        <button data-r="today" class="on">วันนี้</button>
+        <button data-r="month">เดือนนี้</button>
+      </div>
+      <div class="row" id="monthPick" style="display:none">
+        <input type="month" id="monthInput">
+      </div>
+      <div id="sumTbl" style="margin-top:8px"></div>
+      <div class="muted">คะแนน = เชิงรุก − ต้องคุม − วันสาย (สูง = ดี) • รายชื่อเรียงตามอันดับ</div>
+    </div>
+  </section>
+</div>
+
+<nav>
+  <button data-tab="log" class="on"><span class="ic">✍️</span>ขีดเหตุการณ์</button>
+  <button data-tab="att"><span class="ic">🕗</span>เช็คชื่อ</button>
+  <button data-tab="sum"><span class="ic">📊</span>สรุป</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB_URL="https://hfystbdqjhftrlelmkjm.supabase.co";
+const SB_KEY="sb_publishable_Cz_p8O1rAs2ohPDtnKS_BA_LYUGiw8r";
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const TH_M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+// วันที่ปัจจุบันโซนกรุงเทพ -> 'YYYY-MM-DD'
+function bkkToday(){
+  const s=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Bangkok'}); // YYYY-MM-DD
+  return s;
+}
+function thDate(ymd){
+  const [y,m,d]=ymd.split('-').map(Number);
+  return `${d} ${TH_M[m-1]} ${y+543}`;
+}
+const TODAY=bkkToday();
+document.getElementById('todayLbl').textContent='วันที่ '+thDate(TODAY);
+
+let ROSTER=[];
+function toast(msg,ok=true){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.borderColor=ok?'var(--green)':'var(--red)';
+  t.style.color=ok?'#bbf7d0':'#fecaca';
+  t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1600);
+}
+// จำผู้ขีดล่าสุด
+const loggerSel=document.getElementById('logger');
+loggerSel.value=localStorage.getItem('eval_logger')||'';
+loggerSel.onchange=()=>localStorage.setItem('eval_logger',loggerSel.value);
+let lastEventId=null;
+
+async function loadRoster(){
+  const {data,error}=await sb.from('staff_eval_roster').select('*').eq('active',true).order('sort');
+  if(error){toast('โหลดรายชื่อไม่ได้',false);return;}
+  ROSTER=data||[];
+  renderLog(); renderAtt();
+}
+
+// ===== ขีดเหตุการณ์ =====
+async function renderLog(){
+  // นับเหตุการณ์วันนี้
+  const {data}=await sb.from('staff_eval_events').select('emp,event_type').eq('event_date',TODAY);
+  const cnt={};
+  (data||[]).forEach(e=>{cnt[e.emp]=cnt[e.emp]||{supervise:0,proactive:0};cnt[e.emp][e.event_type]++;});
+  const box=document.getElementById('empList'); box.innerHTML='';
+  ROSTER.forEach(r=>{
+    const c=cnt[r.name]||{supervise:0,proactive:0};
+    const el=document.createElement('div'); el.className='emp-block';
+    el.innerHTML=`<div class="emp-name">${r.name}
+      <span class="tally">วันนี้ ต้องคุม <b class="r">${c.supervise}</b> · เชิงรุก <b class="g">${c.proactive}</b></span></div>
+      <div class="btns">
+        <button class="btn sup">🔴 ต้องคุม</button>
+        <button class="btn pro">🟢 เชิงรุก</button>
+      </div>`;
+    el.querySelector('.sup').onclick=()=>logEvent(r.name,'supervise');
+    el.querySelector('.pro').onclick=()=>logEvent(r.name,'proactive');
+    box.appendChild(el);
+  });
+}
+async function logEvent(emp,type){
+  const lg=loggerSel.value;
+  if(!lg){toast('เลือกชื่อผู้ขีดก่อน',false);return;}
+  const {data,error}=await sb.from('staff_eval_events')
+    .insert({emp,event_type:type,logged_by:lg,event_date:TODAY}).select('id').single();
+  if(error){toast('บันทึกไม่สำเร็จ',false);return;}
+  lastEventId=data.id;
+  toast((type==='supervise'?'🔴 ต้องคุม: ':'🟢 เชิงรุก: ')+emp);
+  renderLog();
+}
+document.getElementById('undoBtn').onclick=async()=>{
+  if(!lastEventId){toast('ไม่มีรายการให้ยกเลิก',false);return;}
+  const {error}=await sb.from('staff_eval_events').delete().eq('id',lastEventId);
+  if(error){toast('ยกเลิกไม่ได้',false);return;}
+  lastEventId=null; toast('ยกเลิกแล้ว'); renderLog();
+};
+
+// ===== เช็คชื่อ =====
+async function renderAtt(){
+  const {data}=await sb.from('staff_eval_attendance').select('emp,status').eq('event_date',TODAY);
+  const st={}; (data||[]).forEach(a=>st[a.emp]=a.status);
+  const box=document.getElementById('attList'); box.innerHTML='';
+  ROSTER.forEach(r=>{
+    const cur=st[r.name]||'';
+    const el=document.createElement('div'); el.className='emp-block';
+    el.innerHTML=`<div class="emp-name">${r.name}</div>
+      <div class="btns att-row">
+        <button class="btn ${cur==='ontime'?'ontime':'off'}" data-s="ontime">ตรงเวลา</button>
+        <button class="btn ${cur==='late'?'late':'off'}" data-s="late">สาย</button>
+        <button class="btn ${cur==='leave'?'leave':'off'}" data-s="leave">ลา/หยุด</button>
+      </div>`;
+    el.querySelectorAll('button').forEach(b=>b.onclick=()=>setAtt(r.name,b.dataset.s));
+    box.appendChild(el);
+  });
+}
+async function setAtt(emp,status){
+  const lg=loggerSel.value||null;
+  const {error}=await sb.from('staff_eval_attendance')
+    .upsert({emp,status,event_date:TODAY,recorded_by:lg},{onConflict:'event_date,emp'});
+  if(error){toast('บันทึกไม่สำเร็จ',false);return;}
+  toast(emp+': '+({ontime:'ตรงเวลา',late:'สาย',leave:'ลา/หยุด'})[status]);
+  renderAtt();
+}
+
+// ===== สรุป =====
+let RANGE='today';
+document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); RANGE=b.dataset.r;
+  document.getElementById('monthPick').style.display='none';
+  renderSum();
+});
+const monthInput=document.getElementById('monthInput');
+monthInput.value=TODAY.slice(0,7);
+monthInput.onchange=renderSum;
+async function renderSum(){
+  let from,to;
+  if(RANGE==='today'){from=to=TODAY;}
+  else{
+    const ym=monthInput.value||TODAY.slice(0,7);
+    const [y,m]=ym.split('-').map(Number);
+    from=`${ym}-01`; const last=new Date(y,m,0).getDate();
+    to=`${ym}-${String(last).padStart(2,'0')}`;
+    document.getElementById('monthPick').style.display='block';
+  }
+  const ev=await sb.from('staff_eval_events').select('emp,event_type').gte('event_date',from).lte('event_date',to);
+  const at=await sb.from('staff_eval_attendance').select('emp,status').gte('event_date',from).lte('event_date',to);
+  const agg={}; ROSTER.forEach(r=>agg[r.name]={sup:0,pro:0,ontime:0,late:0,leave:0});
+  (ev.data||[]).forEach(e=>{if(agg[e.emp])agg[e.emp][e.event_type==='supervise'?'sup':'pro']++;});
+  (at.data||[]).forEach(a=>{if(agg[a.emp])agg[a.emp][a.status]++;});
+  const rows=ROSTER.map(r=>{const a=agg[r.name];a.name=r.name;a.score=a.pro-a.sup-a.late;return a;});
+  rows.sort((x,y)=>y.score-x.score);
+  let h=`<table><tr><th>อันดับ</th><th>ชื่อ</th><th>🔴คุม</th><th>🟢รุก</th><th>สาย</th><th>ลา</th><th>คะแนน</th></tr>`;
+  rows.forEach((r,i)=>{
+    const sc=r.score>0?'pos':(r.score<0?'neg':'');
+    h+=`<tr><td class="${i===0?'rank1':''}">${i+1}</td><td class="name">${r.name}</td>
+      <td>${r.sup}</td><td>${r.pro}</td><td>${r.late}</td><td>${r.leave}</td>
+      <td class="score ${sc}">${r.score>0?'+':''}${r.score}</td></tr>`;
+  });
+  h+='</table>';
+  document.getElementById('sumTbl').innerHTML=h;
+}
+
+// ===== Tabs =====
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  ['log','att','sum'].forEach(t=>document.getElementById('tab-'+t).style.display=(t===b.dataset.tab?'block':'none'));
+  if(b.dataset.tab==='sum')renderSum();
+  if(b.dataset.tab==='att')renderAtt();
+});
+
+loadRoster();
+</script>
+</body>
+</html>
