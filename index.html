@@ -24,7 +24,8 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
   .row{display:flex;align-items:center;gap:10px}
   label.fld{font-size:13px;color:var(--mut);display:block;margin-bottom:6px}
-  select,input{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0b1220;color:var(--txt);font-size:15px}
+  select,input{width:100%;max-width:100%;min-width:0;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0b1220;color:var(--txt);font-size:15px;-webkit-appearance:none;appearance:none}
+  input[type=date],input[type=month]{display:block}
   .half{flex:1}
   .emp-block{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;background:#0b1220}
   .emp-name{font-size:16px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
