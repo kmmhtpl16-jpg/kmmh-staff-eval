@@ -69,8 +69,8 @@
           <label class="fld">ผู้ขีด</label>
           <select id="logger">
             <option value="">— เลือกชื่อ —</option>
-            <option>หมิว</option><option>เบียร์</option><option>เนเน่</option>
-            <option>โอ๋</option><option>คุณหลิง</option><option>อื่นๆ</option>
+            <option>หมิว</option><option>เบียร์</option><option>เนเน่</option><option>บ๋อ</option><option>เอ</option>
+            <option>เมย์</option><option>ฟาง</option><option>โอ๋</option><option>คุณหลิง</option><option>อื่นๆ</option>
           </select>
         </div>
         <div class="half">
@@ -123,6 +123,34 @@
 const SB_URL="https://hfystbdqjhftrlelmkjm.supabase.co";
 const SB_KEY="sb_publishable_Cz_p8O1rAs2ohPDtnKS_BA_LYUGiw8r";
 const sb=supabase.createClient(SB_URL,SB_KEY);
+// บัตรผ่านจริง: แลก PIN เป็น session ของ Supabase (ปิดรู anon)
+const LOGIN_FN_URL=SB_URL+"/functions/v1/login";
+async function ensureEvalSession(pin){
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(session) return true;
+    if(!pin) return false;
+    const resp=await fetch(LOGIN_FN_URL,{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({pin})});
+    const j=await resp.json();
+    if(resp.ok && j.access_token){ await sb.auth.setSession({access_token:j.access_token,refresh_token:j.refresh_token}); return true; }
+  }catch(e){ console.error("ensureEvalSession",e); }
+  return false;
+}
+function showPinGate(){
+  const g=document.createElement('div'); g.id='pinGate';
+  g.style.cssText='position:fixed;inset:0;background:#0f172a;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px';
+  g.innerHTML='<div style="font-size:40px">🔒</div><div style="font-size:16px;color:#e2e8f0;font-weight:700">ประเมินขยัน หน้าร้าน</div><div style="font-size:13px;color:#94a3b8">ใส่ PIN เพื่อเข้าใช้งาน</div><input id="pinInp" type="password" inputmode="numeric" maxlength="8" autocomplete="off" style="font-size:24px;letter-spacing:8px;text-align:center;padding:12px;width:190px;border-radius:10px;border:1px solid #334155;background:#0b1220;color:#e2e8f0"><div id="pinMsg" style="color:#f87171;font-size:13px;min-height:18px"></div><button id="pinBtn" style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:12px 30px;font-size:15px;font-weight:700">เข้าใช้งาน</button>';
+  document.body.appendChild(g);
+  const inp=g.querySelector('#pinInp'),msg=g.querySelector('#pinMsg'),btn=g.querySelector('#pinBtn');
+  async function submit(){
+    const v=(inp.value||'').trim(); if(!v) return;
+    msg.style.color='#94a3b8'; msg.textContent='กำลังเข้าสู่ระบบ…';
+    if(await ensureEvalSession(v)){ g.remove(); loadRoster(); }
+    else{ msg.style.color='#f87171'; msg.textContent='PIN ไม่ถูกต้อง'; inp.value=''; inp.focus(); }
+  }
+  btn.onclick=submit; inp.onkeydown=e=>{ if(e.key==='Enter') submit(); }; inp.focus();
+}
+async function startApp(){ if(await ensureEvalSession()){ loadRoster(); } else { showPinGate(); } }
 const TH_M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 function bkkToday(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Bangkok'});}
 function thDate(ymd){const [y,m,d]=ymd.split('-').map(Number);return `${d} ${TH_M[m-1]} ${y+543}`;}
@@ -263,6 +291,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
   if(b.dataset.tab==='hist')renderHist();
 });
 
+// เปิดระบบ PIN เมื่อพร้อม: เปลี่ยน loadRoster() บรรทัดล่างเป็น startApp()
 loadRoster();
 </script>
 </body>
