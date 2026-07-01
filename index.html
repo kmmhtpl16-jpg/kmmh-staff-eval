@@ -96,6 +96,10 @@ td.name{text-align:left;font-weight:700}
 <input id="billNo" inputmode="text" placeholder="เช่น 12345" autocomplete="off">
 </div>
 </div>
+<div id="otherWrap" style="display:none;margin-top:10px">
+<label class="fld">พิมพ์ชื่อผู้ขีด (กรณีเลือก "อื่นๆ")</label>
+<input id="otherName" inputmode="text" placeholder="เช่น ชื่อพนักงานที่ไม่มีในรายการ" autocomplete="off">
+</div>
 <div class="hint">🔴 ต้องคุม = ยังต้องมีคนยืนกำกับ/ช่วย &nbsp; 🟢 เชิงรุก = หยิบงานเอง/เติมของ/ทำเสร็จไวโดยไม่ต้องสั่ง<br>ใส่เลขบิลไว้ บิลเดียว+คนเดียว+เหตุเดียว จะลงได้ครั้งเดียว (กันสองคนนับซ้ำ) • เชิงรุกที่ไม่มีบิล (เช่นเติมของ) เว้นว่างได้</div>
 </div>
 <div id="empList"></div>
@@ -167,8 +171,17 @@ t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.rem
 }
 const loggerSel=document.getElementById('logger');
 const billInput=document.getElementById('billNo');
+const otherWrap=document.getElementById('otherWrap');
+const otherName=document.getElementById('otherName');
+function syncOther(){
+const on=(loggerSel.value==='อื่นๆ');
+otherWrap.style.display=on?'block':'none';
+if(on){otherName.value=localStorage.getItem('eval_logger_other')||'';}
+}
 loggerSel.value=localStorage.getItem('eval_logger')||'';
-loggerSel.onchange=()=>localStorage.setItem('eval_logger',loggerSel.value);
+syncOther();
+loggerSel.onchange=()=>{localStorage.setItem('eval_logger',loggerSel.value);syncOther();};
+otherName.oninput=()=>localStorage.setItem('eval_logger_other',otherName.value);
 
 async function loadRoster(){
 const {data,error}=await sb.from('staff_eval_roster').select('*').eq('active',true).order('sort');
@@ -197,8 +210,12 @@ box.appendChild(el);
 });
 }
 async function logEvent(emp,type){
-const lg=loggerSel.value;
+let lg=loggerSel.value;
 if(!lg){toast('เลือกชื่อผู้ขีดก่อน',false);return;}
+if(lg==='อื่นๆ'){
+lg=(otherName.value||'').trim();
+if(!lg){toast('พิมพ์ชื่อผู้ขีดก่อน',false);return;}
+}
 const bill=(billInput.value||'').trim();
 const rec={emp,event_type:type,logged_by:lg,event_date:TODAY};
 if(bill) rec.bill_no=bill;
