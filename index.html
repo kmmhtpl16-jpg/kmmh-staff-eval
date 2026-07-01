@@ -4,123 +4,145 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ประเมินขยัน หน้าร้าน KMMH</title>
-<link rel="icon" href="favicon-32.png" sizes="32x32">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#1e40af">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="ประเมินขยัน">
 <style>
-  :root{
-    --bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#e2e8f0; --mut:#94a3b8;
-    --blue:#2563eb; --red:#dc2626; --green:#16a34a; --gold:#facc15;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{margin:0;font-family:-apple-system,"Segoe UI","Sarabun",sans-serif;background:var(--bg);color:var(--txt);padding-bottom:90px}
-  header{background:linear-gradient(135deg,#1e3a8a,#1e40af);padding:14px 16px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.4)}
-  header h1{margin:0;font-size:18px;font-weight:700}
-  header .sub{font-size:12px;color:#bfdbfe;margin-top:2px}
-  .wrap{padding:14px;max-width:560px;margin:0 auto}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
-  .row{display:flex;align-items:center;gap:10px}
-  label.fld{font-size:13px;color:var(--mut);display:block;margin-bottom:6px}
-  select,input{width:100%;max-width:100%;min-width:0;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0b1220;color:var(--txt);font-size:15px;-webkit-appearance:none;appearance:none}
-  input[type=date],input[type=month]{display:block}
-  .half{flex:1}
-  .emp-block{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;background:#0b1220}
-  .emp-name{font-size:16px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
-  .tally{font-size:12px;color:var(--mut);font-weight:400}
-  .tally b.r{color:#f87171} .tally b.g{color:#4ade80}
-  .btns{display:flex;gap:8px}
-  .btn{flex:1;border:none;border-radius:10px;padding:13px 8px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;transition:transform .05s}
-  .btn:active{transform:scale(.96)}
-  .btn.sup{background:var(--red)} .btn.pro{background:var(--green)}
-  nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:20}
-  nav button{flex:1;background:none;border:none;color:var(--mut);padding:12px 4px;font-size:13px;font-weight:600;cursor:pointer}
-  nav button.on{color:#60a5fa}
-  nav button .ic{display:block;font-size:20px;margin-bottom:2px}
-  .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#0b1220;border:1px solid var(--green);color:#bbf7d0;padding:10px 18px;border-radius:30px;font-size:14px;opacity:0;transition:opacity .2s;z-index:50;pointer-events:none;max-width:90%;text-align:center}
-  .toast.show{opacity:1}
-  table{width:100%;border-collapse:collapse;font-size:14px}
-  th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
-  th{color:var(--mut);font-size:12px;font-weight:600}
-  td.name{text-align:left;font-weight:700}
-  .rank1{color:var(--gold)}
-  .score{font-weight:700}
-  .pos{color:#4ade80} .neg{color:#f87171}
-  .seg{display:flex;gap:6px;margin-bottom:12px}
-  .seg button{flex:1;padding:9px;border-radius:8px;border:1px solid var(--line);background:#0b1220;color:var(--mut);font-size:13px;font-weight:600}
-  .seg button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
-  .muted{color:var(--mut);font-size:12px;text-align:center;margin-top:8px;line-height:1.5}
-  .hint{font-size:12px;color:var(--mut);line-height:1.5;margin-top:6px}
-  .hrow{display:flex;align-items:center;gap:8px;padding:9px 6px;border-bottom:1px solid var(--line);font-size:14px}
-  .hrow .meta{flex:1}
-  .hrow .tag{font-weight:700} .hrow .tag.r{color:#f87171} .hrow .tag.g{color:#4ade80}
-  .hrow .sm{font-size:12px;color:var(--mut)}
-  .del{background:#3f1d1d;border:1px solid #7f1d1d;color:#fca5a5;border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer}
-  .recon{background:#0b1220;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px;text-align:center}
+:root{
+--bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#e2e8f0; --mut:#94a3b8;
+--blue:#2563eb; --red:#dc2626; --green:#16a34a; --gold:#facc15;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,"Segoe UI","Sarabun",sans-serif;background:var(--bg);color:var(--txt);padding-bottom:90px}
+header{background:linear-gradient(135deg,#1e3a8a,#1e40af);padding:14px 16px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+header h1{margin:0;font-size:18px;font-weight:700}
+header .sub{font-size:12px;color:#bfdbfe;margin-top:2px}
+.wrap{padding:14px;max-width:560px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.row{display:flex;align-items:center;gap:10px}
+label.fld{font-size:13px;color:var(--mut);display:block;margin-bottom:6px}
+select,input{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0b1220;color:var(--txt);font-size:15px}
+.half{flex:1}
+.emp-block{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;background:#0b1220}
+.emp-name{font-size:16px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.tally{font-size:12px;color:var(--mut);font-weight:400}
+.tally b.r{color:#f87171} .tally b.g{color:#4ade80}
+.btns{display:flex;gap:8px}
+.btn{flex:1;border:none;border-radius:10px;padding:13px 8px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;transition:transform .05s}
+.btn:active{transform:scale(.96)}
+.btn.sup{background:var(--red)} .btn.pro{background:var(--green)}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:20}
+nav button{flex:1;background:none;border:none;color:var(--mut);padding:12px 4px;font-size:13px;font-weight:600;cursor:pointer}
+nav button.on{color:#60a5fa}
+nav button .ic{display:block;font-size:20px;margin-bottom:2px}
+.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#0b1220;border:1px solid var(--green);color:#bbf7d0;padding:10px 18px;border-radius:30px;font-size:14px;opacity:0;transition:opacity .2s;z-index:50;pointer-events:none;max-width:90%;text-align:center}
+.toast.show{opacity:1}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
+th{color:var(--mut);font-size:12px;font-weight:600}
+td.name{text-align:left;font-weight:700}
+.rank1{color:var(--gold)}
+.score{font-weight:700}
+.pos{color:#4ade80} .neg{color:#f87171}
+.seg{display:flex;gap:6px;margin-bottom:12px}
+.seg button{flex:1;padding:9px;border-radius:8px;border:1px solid var(--line);background:#0b1220;color:var(--mut);font-size:13px;font-weight:600}
+.seg button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.muted{color:var(--mut);font-size:12px;text-align:center;margin-top:8px;line-height:1.5}
+.hint{font-size:12px;color:var(--mut);line-height:1.5;margin-top:6px}
+.hrow{display:flex;align-items:center;gap:8px;padding:9px 6px;border-bottom:1px solid var(--line);font-size:14px}
+.hrow .meta{flex:1}
+.hrow .tag{font-weight:700} .hrow .tag.r{color:#f87171} .hrow .tag.g{color:#4ade80}
+.hrow .sm{font-size:12px;color:var(--mut)}
+.del{background:#3f1d1d;border:1px solid #7f1d1d;color:#fca5a5;border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer}
+.recon{background:#0b1220;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px;text-align:center}
+/* ===== สรุปฝั่งคนขีด ===== */
+.sec-title{font-size:14px;font-weight:700;color:#bfdbfe;margin:4px 0 10px}
+.srow{border:1px solid var(--line);border-radius:12px;background:#0b1220;margin-bottom:10px;overflow:hidden}
+.shead{display:flex;align-items:center;gap:10px;padding:12px 12px;cursor:pointer}
+.shead .sname{font-size:15px;font-weight:700;flex:1}
+.shead .scnt{font-size:12px;color:var(--mut)}
+.shead .scnt b.r{color:#f87171} .shead .scnt b.g{color:#4ade80}
+.shead .chev{color:var(--mut);font-size:13px;transition:transform .15s}
+.srow.open .chev{transform:rotate(180deg)}
+.sbody{display:none;border-top:1px solid var(--line);padding:6px 12px 10px}
+.srow.open .sbody{display:block}
+.semp{padding:8px 0;border-bottom:1px solid #1e293b}
+.semp:last-child{border-bottom:none}
+.semp .ehead{font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.semp .ehead .ec{font-size:12px;color:var(--mut);font-weight:400}
+.semp .ehead .ec b.r{color:#f87171} .semp .ehead .ec b.g{color:#4ade80}
+.sitem{font-size:12px;color:var(--mut);padding:3px 0 3px 10px}
+.sitem .r{color:#f87171} .sitem .g{color:#4ade80}
 </style>
 </head>
 <body>
 <header>
-  <h1>📋 ประเมินขยัน หน้าร้าน</h1>
-  <div class="sub" id="todayLbl">—</div>
+<h1>📋 ประเมินขยัน หน้าร้าน</h1>
+<div class="sub" id="todayLbl">—</div>
 </header>
 
 <div class="wrap">
-  <!-- ===== TAB: ขีดเหตุการณ์ ===== -->
-  <section id="tab-log">
-    <div class="card">
-      <div class="row">
-        <div class="half">
-          <label class="fld">ผู้ขีด</label>
-          <select id="logger">
-            <option value="">— เลือกชื่อ —</option>
-            <option>หมิว</option><option>เบียร์</option><option>เนเน่</option><option>บ๋อ</option><option>เอ</option>
-            <option>เมย์</option><option>ฟาง</option><option>โอ๋</option><option>คุณหลิง</option><option>อื่นๆ</option>
-          </select>
-        </div>
-        <div class="half">
-          <label class="fld">เลขบิล (กันนับซ้ำ)</label>
-          <input id="billNo" inputmode="text" placeholder="เช่น 12345" autocomplete="off">
-        </div>
-      </div>
-      <div class="hint">🔴 ต้องคุม = ยังต้องมีคนยืนกำกับ/ช่วย &nbsp; 🟢 เชิงรุก = หยิบงานเอง/เติมของ/ทำเสร็จไวโดยไม่ต้องสั่ง<br>ใส่เลขบิลไว้ บิลเดียว+คนเดียว+เหตุเดียว จะลงได้ครั้งเดียว (กันสองคนนับซ้ำ) • เชิงรุกที่ไม่มีบิล (เช่นเติมของ) เว้นว่างได้</div>
-    </div>
-    <div id="empList"></div>
-  </section>
+<!-- ===== TAB: ขีดเหตุการณ์ ===== -->
+<section id="tab-log">
+<div class="card">
+<div class="row">
+<div class="half">
+<label class="fld">ผู้ขีด</label>
+<select id="logger">
+<option value="">— เลือกชื่อ —</option>
+<option>หมิว</option><option>เบียร์</option><option>เนเน่</option><option>บ๋อ</option><option>เอ</option>
+<option>เมย์</option><option>ฟาง</option><option>โอ๋</option><option>คุณหลิง</option><option>อื่นๆ</option>
+</select>
+</div>
+<div class="half">
+<label class="fld">เลขบิล (กันนับซ้ำ)</label>
+<input id="billNo" inputmode="text" placeholder="เช่น 12345" autocomplete="off">
+</div>
+</div>
+<div class="hint">🔴 ต้องคุม = ยังต้องมีคนยืนกำกับ/ช่วย &nbsp; 🟢 เชิงรุก = หยิบงานเอง/เติมของ/ทำเสร็จไวโดยไม่ต้องสั่ง<br>ใส่เลขบิลไว้ บิลเดียว+คนเดียว+เหตุเดียว จะลงได้ครั้งเดียว (กันสองคนนับซ้ำ) • เชิงรุกที่ไม่มีบิล (เช่นเติมของ) เว้นว่างได้</div>
+</div>
+<div id="empList"></div>
+</section>
 
-  <!-- ===== TAB: ประวัติ/แก้ไข ===== -->
-  <section id="tab-hist" style="display:none">
-    <div class="card">
-      <label class="fld">เลือกวัน</label>
-      <input type="date" id="histDate">
-      <div class="recon" id="histRecon" style="margin-top:10px">—</div>
-      <div id="histList"></div>
-    </div>
-  </section>
+<!-- ===== TAB: ประวัติ/แก้ไข ===== -->
+<section id="tab-hist" style="display:none">
+<div class="card">
+<label class="fld">เลือกวัน</label>
+<input type="date" id="histDate">
+<div class="recon" id="histRecon" style="margin-top:10px">—</div>
+<div id="histList"></div>
+</div>
+</section>
 
-  <!-- ===== TAB: สรุป ===== -->
-  <section id="tab-sum" style="display:none">
-    <div class="card">
-      <div class="seg" id="rangeSeg">
-        <button data-r="today" class="on">วันนี้</button>
-        <button data-r="month">เดือนนี้</button>
-      </div>
-      <div class="row" id="monthPick" style="display:none;margin-bottom:8px">
-        <input type="month" id="monthInput">
-      </div>
-      <div class="recon" id="sumRecon">—</div>
-      <div id="sumTbl"></div>
-      <div class="muted">คะแนน = เชิงรุก − ต้องคุม (สูง = ดี) • เรียงตามอันดับ</div>
-    </div>
-  </section>
+<!-- ===== TAB: สรุป ===== -->
+<section id="tab-sum" style="display:none">
+<div class="card">
+<div class="seg" id="rangeSeg">
+<button data-r="today" class="on">วันนี้</button>
+<button data-r="day">เลือกวัน</button>
+<button data-r="month">เดือนนี้</button>
+</div>
+<div class="row" id="dayPick" style="display:none;margin-bottom:8px">
+<input type="date" id="dayInput">
+</div>
+<div class="row" id="monthPick" style="display:none;margin-bottom:8px">
+<input type="month" id="monthInput">
+</div>
+<div class="recon" id="sumRecon">—</div>
+<div id="sumTbl"></div>
+<div class="muted">คะแนน = เชิงรุก − ต้องคุม (สูง = ดี) • เรียงตามอันดับ</div>
+</div>
+
+<!-- สรุปฝั่งคนขีด -->
+<div class="card">
+<div class="sec-title">👤 สรุปฝั่งคนขีด (กดชื่อเพื่อดูรายละเอียด)</div>
+<div id="scorerList"></div>
+<div class="muted">เรียงตามจำนวนครั้งที่ขีดมากสุด • รายละเอียดแยกตามพนักงาน พร้อมเวลา/บิล</div>
+</div>
+</section>
 </div>
 
 <nav>
-  <button data-tab="log" class="on"><span class="ic">✍️</span>ขีดเหตุการณ์</button>
-  <button data-tab="hist"><span class="ic">🧾</span>ประวัติ/ลบ</button>
-  <button data-tab="sum"><span class="ic">📊</span>สรุป</button>
+<button data-tab="log" class="on"><span class="ic">✍️</span>ขีดเหตุการณ์</button>
+<button data-tab="hist"><span class="ic">🧾</span>ประวัติ/ลบ</button>
+<button data-tab="sum"><span class="ic">📊</span>สรุป</button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -130,34 +152,6 @@
 const SB_URL="https://hfystbdqjhftrlelmkjm.supabase.co";
 const SB_KEY="sb_publishable_Cz_p8O1rAs2ohPDtnKS_BA_LYUGiw8r";
 const sb=supabase.createClient(SB_URL,SB_KEY);
-// บัตรผ่านจริง: แลก PIN เป็น session ของ Supabase (ปิดรู anon)
-const LOGIN_FN_URL=SB_URL+"/functions/v1/login";
-async function ensureEvalSession(pin){
-  try{
-    const {data:{session}}=await sb.auth.getSession();
-    if(session) return true;
-    if(!pin) return false;
-    const resp=await fetch(LOGIN_FN_URL,{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({pin})});
-    const j=await resp.json();
-    if(resp.ok && j.access_token){ await sb.auth.setSession({access_token:j.access_token,refresh_token:j.refresh_token}); return true; }
-  }catch(e){ console.error("ensureEvalSession",e); }
-  return false;
-}
-function showPinGate(){
-  const g=document.createElement('div'); g.id='pinGate';
-  g.style.cssText='position:fixed;inset:0;background:#0f172a;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px';
-  g.innerHTML='<div style="font-size:40px">🔒</div><div style="font-size:16px;color:#e2e8f0;font-weight:700">ประเมินขยัน หน้าร้าน</div><div style="font-size:13px;color:#94a3b8">ใส่ PIN เพื่อเข้าใช้งาน</div><input id="pinInp" type="password" inputmode="numeric" maxlength="8" autocomplete="off" style="font-size:24px;letter-spacing:8px;text-align:center;padding:12px;width:190px;border-radius:10px;border:1px solid #334155;background:#0b1220;color:#e2e8f0"><div id="pinMsg" style="color:#f87171;font-size:13px;min-height:18px"></div><button id="pinBtn" style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:12px 30px;font-size:15px;font-weight:700">เข้าใช้งาน</button>';
-  document.body.appendChild(g);
-  const inp=g.querySelector('#pinInp'),msg=g.querySelector('#pinMsg'),btn=g.querySelector('#pinBtn');
-  async function submit(){
-    const v=(inp.value||'').trim(); if(!v) return;
-    msg.style.color='#94a3b8'; msg.textContent='กำลังเข้าสู่ระบบ…';
-    if(await ensureEvalSession(v)){ g.remove(); loadRoster(); }
-    else{ msg.style.color='#f87171'; msg.textContent='PIN ไม่ถูกต้อง'; inp.value=''; inp.focus(); }
-  }
-  btn.onclick=submit; inp.onkeydown=e=>{ if(e.key==='Enter') submit(); }; inp.focus();
-}
-async function startApp(){ if(await ensureEvalSession()){ loadRoster(); } else { showPinGate(); } }
 const TH_M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 function bkkToday(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Bangkok'});}
 function thDate(ymd){const [y,m,d]=ymd.split('-').map(Number);return `${d} ${TH_M[m-1]} ${y+543}`;}
@@ -166,10 +160,10 @@ document.getElementById('todayLbl').textContent='วันที่ '+thDate(TOD
 
 let ROSTER=[];
 function toast(msg,ok=true){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.style.borderColor=ok?'var(--green)':'var(--red)';
-  t.style.color=ok?'#bbf7d0':'#fecaca';
-  t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1800);
+const t=document.getElementById('toast');
+t.textContent=msg; t.style.borderColor=ok?'var(--green)':'var(--red)';
+t.style.color=ok?'#bbf7d0':'#fecaca';
+t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1800);
 }
 const loggerSel=document.getElementById('logger');
 const billInput=document.getElementById('billNo');
@@ -177,45 +171,45 @@ loggerSel.value=localStorage.getItem('eval_logger')||'';
 loggerSel.onchange=()=>localStorage.setItem('eval_logger',loggerSel.value);
 
 async function loadRoster(){
-  const {data,error}=await sb.from('staff_eval_roster').select('*').eq('active',true).order('sort');
-  if(error){toast('โหลดรายชื่อไม่ได้',false);return;}
-  ROSTER=data||[]; renderLog();
+const {data,error}=await sb.from('staff_eval_roster').select('*').eq('active',true).order('sort');
+if(error){toast('โหลดรายชื่อไม่ได้',false);return;}
+ROSTER=data||[]; renderLog();
 }
 
 // ===== ขีดเหตุการณ์ =====
 async function renderLog(){
-  const {data}=await sb.from('staff_eval_events').select('emp,event_type').eq('event_date',TODAY);
-  const cnt={};
-  (data||[]).forEach(e=>{cnt[e.emp]=cnt[e.emp]||{supervise:0,proactive:0};cnt[e.emp][e.event_type]++;});
-  const box=document.getElementById('empList'); box.innerHTML='';
-  ROSTER.forEach(r=>{
-    const c=cnt[r.name]||{supervise:0,proactive:0};
-    const el=document.createElement('div'); el.className='emp-block';
-    el.innerHTML=`<div class="emp-name">${r.name}
-      <span class="tally">วันนี้ ต้องคุม <b class="r">${c.supervise}</b> · เชิงรุก <b class="g">${c.proactive}</b></span></div>
-      <div class="btns">
-        <button class="btn sup">🔴 ต้องคุม</button>
-        <button class="btn pro">🟢 เชิงรุก</button>
-      </div>`;
-    el.querySelector('.sup').onclick=()=>logEvent(r.name,'supervise');
-    el.querySelector('.pro').onclick=()=>logEvent(r.name,'proactive');
-    box.appendChild(el);
-  });
+const {data}=await sb.from('staff_eval_events').select('emp,event_type').eq('event_date',TODAY);
+const cnt={};
+(data||[]).forEach(e=>{cnt[e.emp]=cnt[e.emp]||{supervise:0,proactive:0};cnt[e.emp][e.event_type]++;});
+const box=document.getElementById('empList'); box.innerHTML='';
+ROSTER.forEach(r=>{
+const c=cnt[r.name]||{supervise:0,proactive:0};
+const el=document.createElement('div'); el.className='emp-block';
+el.innerHTML=`<div class="emp-name">${r.name}
+<span class="tally">วันนี้ ต้องคุม <b class="r">${c.supervise}</b> · เชิงรุก <b class="g">${c.proactive}</b></span></div>
+<div class="btns">
+<button class="btn sup">🔴 ต้องคุม</button>
+<button class="btn pro">🟢 เชิงรุก</button>
+</div>`;
+el.querySelector('.sup').onclick=()=>logEvent(r.name,'supervise');
+el.querySelector('.pro').onclick=()=>logEvent(r.name,'proactive');
+box.appendChild(el);
+});
 }
 async function logEvent(emp,type){
-  const lg=loggerSel.value;
-  if(!lg){toast('เลือกชื่อผู้ขีดก่อน',false);return;}
-  const bill=(billInput.value||'').trim();
-  const rec={emp,event_type:type,logged_by:lg,event_date:TODAY};
-  if(bill) rec.bill_no=bill;
-  const {error}=await sb.from('staff_eval_events').insert(rec);
-  if(error){
-    if(error.code==='23505'){toast('⚠ บิล '+bill+' ของ '+emp+' ('+(type==='supervise'?'ต้องคุม':'เชิงรุก')+') ลงไปแล้ว',false);}
-    else{toast('บันทึกไม่สำเร็จ',false);}
-    return;
-  }
-  toast((type==='supervise'?'🔴 ต้องคุม: ':'🟢 เชิงรุก: ')+emp+(bill?(' • บิล '+bill):''));
-  billInput.value=''; renderLog();
+const lg=loggerSel.value;
+if(!lg){toast('เลือกชื่อผู้ขีดก่อน',false);return;}
+const bill=(billInput.value||'').trim();
+const rec={emp,event_type:type,logged_by:lg,event_date:TODAY};
+if(bill) rec.bill_no=bill;
+const {error}=await sb.from('staff_eval_events').insert(rec);
+if(error){
+if(error.code==='23505'){toast('⚠ บิล '+bill+' ของ '+emp+' ('+(type==='supervise'?'ต้องคุม':'เชิงรุก')+') ลงไปแล้ว',false);}
+else{toast('บันทึกไม่สำเร็จ',false);}
+return;
+}
+toast((type==='supervise'?'🔴 ต้องคุม: ':'🟢 เชิงรุก: ')+emp+(bill?(' • บิล '+bill):''));
+billInput.value=''; renderLog();
 }
 
 // ===== ประวัติ/ลบ =====
@@ -223,82 +217,140 @@ const histDate=document.getElementById('histDate');
 histDate.value=TODAY;
 histDate.onchange=renderHist;
 async function renderHist(){
-  const d=histDate.value||TODAY;
-  const {data,error}=await sb.from('staff_eval_events').select('*').eq('event_date',d).order('id',{ascending:false});
-  const box=document.getElementById('histList'); const rec=document.getElementById('histRecon');
-  if(error){box.innerHTML='';rec.textContent='โหลดไม่ได้';return;}
-  const rows=data||[];
-  const bills=new Set(rows.filter(r=>r.bill_no).map(r=>r.bill_no));
-  const sup=rows.filter(r=>r.event_type==='supervise').length, pro=rows.length-sup;
-  rec.innerHTML=`${thDate(d)} — ขีดทั้งหมด <b>${rows.length}</b> ครั้ง (🔴${sup} / 🟢${pro}) • บิลไม่ซ้ำ <b>${bills.size}</b>`;
-  box.innerHTML='';
-  if(!rows.length){box.innerHTML='<div class="muted">ยังไม่มีรายการ</div>';return;}
-  rows.forEach(r=>{
-    const t=new Date(r.created_at).toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit'});
-    const el=document.createElement('div'); el.className='hrow';
-    el.innerHTML=`<div class="meta">
-      <span class="tag ${r.event_type==='supervise'?'r':'g'}">${r.event_type==='supervise'?'🔴 ต้องคุม':'🟢 เชิงรุก'}</span> · <b>${r.emp}</b>
-      <div class="sm">${t} • ${r.bill_no?('บิล '+r.bill_no+' • '):''}โดย ${r.logged_by||'-'}</div>
-    </div>
-    <button class="del">ลบ</button>`;
-    el.querySelector('.del').onclick=()=>delEvent(r);
-    box.appendChild(el);
-  });
+const d=histDate.value||TODAY;
+const {data,error}=await sb.from('staff_eval_events').select('*').eq('event_date',d).order('id',{ascending:false});
+const box=document.getElementById('histList'); const rec=document.getElementById('histRecon');
+if(error){box.innerHTML='';rec.textContent='โหลดไม่ได้';return;}
+const rows=data||[];
+const bills=new Set(rows.filter(r=>r.bill_no).map(r=>r.bill_no));
+const sup=rows.filter(r=>r.event_type==='supervise').length, pro=rows.length-sup;
+rec.innerHTML=`${thDate(d)} — ขีดทั้งหมด <b>${rows.length}</b> ครั้ง (🔴${sup} / 🟢${pro}) • บิลไม่ซ้ำ <b>${bills.size}</b>`;
+box.innerHTML='';
+if(!rows.length){box.innerHTML='<div class="muted">ยังไม่มีรายการ</div>';return;}
+rows.forEach(r=>{
+const t=new Date(r.created_at).toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit'});
+const el=document.createElement('div'); el.className='hrow';
+el.innerHTML=`<div class="meta">
+<span class="tag ${r.event_type==='supervise'?'r':'g'}">${r.event_type==='supervise'?'🔴 ต้องคุม':'🟢 เชิงรุก'}</span> · <b>${r.emp}</b>
+<div class="sm">${t} • ${r.bill_no?('บิล '+r.bill_no+' • '):''}โดย ${r.logged_by||'-'}</div>
+</div>
+<button class="del">ลบ</button>`;
+el.querySelector('.del').onclick=()=>delEvent(r);
+box.appendChild(el);
+});
 }
 async function delEvent(r){
-  if(!confirm(`ลบรายการนี้?\n${r.emp} • ${r.event_type==='supervise'?'ต้องคุม':'เชิงรุก'}${r.bill_no?(' • บิล '+r.bill_no):''}`))return;
-  const {error}=await sb.from('staff_eval_events').delete().eq('id',r.id);
-  if(error){toast('ลบไม่สำเร็จ',false);return;}
-  toast('ลบแล้ว'); renderHist();
+if(!confirm(`ลบรายการนี้?\n${r.emp} • ${r.event_type==='supervise'?'ต้องคุม':'เชิงรุก'}${r.bill_no?(' • บิล '+r.bill_no):''}`))return;
+const {error}=await sb.from('staff_eval_events').delete().eq('id',r.id);
+if(error){toast('ลบไม่สำเร็จ',false);return;}
+toast('ลบแล้ว'); renderHist();
 }
 
 // ===== สรุป =====
 let RANGE='today';
 document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); RANGE=b.dataset.r;
-  document.getElementById('monthPick').style.display=(RANGE==='month'?'block':'none');
-  renderSum();
+document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.remove('on'));
+b.classList.add('on'); RANGE=b.dataset.r;
+document.getElementById('dayPick').style.display=(RANGE==='day'?'block':'none');
+document.getElementById('monthPick').style.display=(RANGE==='month'?'block':'none');
+renderSum();
 });
+const dayInput=document.getElementById('dayInput');
+dayInput.value=TODAY; dayInput.onchange=renderSum;
 const monthInput=document.getElementById('monthInput');
 monthInput.value=TODAY.slice(0,7); monthInput.onchange=renderSum;
+
 async function renderSum(){
-  let from,to,lbl;
-  if(RANGE==='today'){from=to=TODAY;lbl=thDate(TODAY);}
-  else{
-    const ym=monthInput.value||TODAY.slice(0,7); const [y,m]=ym.split('-').map(Number);
-    from=`${ym}-01`; const last=new Date(y,m,0).getDate(); to=`${ym}-${String(last).padStart(2,'0')}`;
-    lbl=`${TH_M[m-1]} ${y+543}`;
-  }
-  const {data}=await sb.from('staff_eval_events').select('emp,event_type,bill_no').gte('event_date',from).lte('event_date',to);
-  const ev=data||[];
-  const agg={}; ROSTER.forEach(r=>agg[r.name]={sup:0,pro:0});
-  ev.forEach(e=>{if(agg[e.emp])agg[e.emp][e.event_type==='supervise'?'sup':'pro']++;});
-  const bills=new Set(ev.filter(e=>e.bill_no).map(e=>e.bill_no));
-  document.getElementById('sumRecon').innerHTML=`${lbl} — ขีด <b>${ev.length}</b> ครั้ง • บิลไม่ซ้ำ <b>${bills.size}</b>`;
-  const rows=ROSTER.map(r=>{const a=agg[r.name];a.name=r.name;a.score=a.pro-a.sup;return a;});
-  rows.sort((x,y)=>y.score-x.score);
-  let h=`<table><tr><th>อันดับ</th><th>ชื่อ</th><th>🔴 ต้องคุม</th><th>🟢 เชิงรุก</th><th>คะแนน</th></tr>`;
-  rows.forEach((r,i)=>{
-    const sc=r.score>0?'pos':(r.score<0?'neg':'');
-    h+=`<tr><td class="${i===0?'rank1':''}">${i+1}</td><td class="name">${r.name}</td>
-      <td>${r.sup}</td><td>${r.pro}</td>
-      <td class="score ${sc}">${r.score>0?'+':''}${r.score}</td></tr>`;
-  });
-  h+='</table>';
-  document.getElementById('sumTbl').innerHTML=h;
+let from,to,lbl;
+if(RANGE==='today'){from=to=TODAY;lbl=thDate(TODAY);}
+else if(RANGE==='day'){const d=dayInput.value||TODAY;from=to=d;lbl=thDate(d);}
+else{
+const ym=monthInput.value||TODAY.slice(0,7); const [y,m]=ym.split('-').map(Number);
+from=`${ym}-01`; const last=new Date(y,m,0).getDate(); to=`${ym}-${String(last).padStart(2,'0')}`;
+lbl=`${TH_M[m-1]} ${y+543}`;
+}
+const {data}=await sb.from('staff_eval_events')
+.select('emp,event_type,bill_no,logged_by,created_at')
+.gte('event_date',from).lte('event_date',to);
+const ev=data||[];
+// --- ตารางอันดับพนักงาน ---
+const agg={}; ROSTER.forEach(r=>agg[r.name]={sup:0,pro:0});
+ev.forEach(e=>{if(agg[e.emp])agg[e.emp][e.event_type==='supervise'?'sup':'pro']++;});
+const bills=new Set(ev.filter(e=>e.bill_no).map(e=>e.bill_no));
+document.getElementById('sumRecon').innerHTML=`${lbl} — ขีด <b>${ev.length}</b> ครั้ง • บิลไม่ซ้ำ <b>${bills.size}</b>`;
+const rows=ROSTER.map(r=>{const a=agg[r.name];a.name=r.name;a.score=a.pro-a.sup;return a;});
+rows.sort((x,y)=>y.score-x.score);
+let h=`<table><tr><th>อันดับ</th><th>ชื่อ</th><th>🔴 ต้องคุม</th><th>🟢 เชิงรุก</th><th>คะแนน</th></tr>`;
+rows.forEach((r,i)=>{
+const sc=r.score>0?'pos':(r.score<0?'neg':'');
+h+=`<tr><td class="${i===0?'rank1':''}">${i+1}</td><td class="name">${r.name}</td>
+<td>${r.sup}</td><td>${r.pro}</td>
+<td class="score ${sc}">${r.score>0?'+':''}${r.score}</td></tr>`;
+});
+h+='</table>';
+document.getElementById('sumTbl').innerHTML=h;
+// --- สรุปฝั่งคนขีด ---
+renderScorers(ev);
+}
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function renderScorers(ev){
+const box=document.getElementById('scorerList');
+const by={};
+ev.forEach(e=>{
+const k=e.logged_by||'(ไม่ระบุ)';
+by[k]=by[k]||{sup:0,pro:0,emps:{}};
+by[k][e.event_type==='supervise'?'sup':'pro']++;
+const em=by[k].emps[e.emp]=by[k].emps[e.emp]||{sup:0,pro:0,items:[]};
+em[e.event_type==='supervise'?'sup':'pro']++;
+em.items.push(e);
+});
+const keys=Object.keys(by).sort((a,b)=>(by[b].sup+by[b].pro)-(by[a].sup+by[a].pro));
+if(!keys.length){box.innerHTML='<div class="muted">ยังไม่มีการขีดในช่วงนี้</div>';return;}
+box.innerHTML='';
+keys.forEach(k=>{
+const s=by[k]; const total=s.sup+s.pro;
+const el=document.createElement('div'); el.className='srow';
+// เรียงพนักงานในรายละเอียดตามจำนวนครั้งมากสุด
+const empKeys=Object.keys(s.emps).sort((a,b)=>(s.emps[b].sup+s.emps[b].pro)-(s.emps[a].sup+s.emps[a].pro));
+let body='';
+empKeys.forEach(en=>{
+const em=s.emps[en];
+// เรียงรายการตามเวลา
+em.items.sort((x,y)=>new Date(x.created_at)-new Date(y.created_at));
+let items='';
+em.items.forEach(it=>{
+const t=it.created_at?new Date(it.created_at).toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit'}):'--:--';
+const isSup=it.event_type==='supervise';
+items+=`<div class="sitem">${t} <span class="${isSup?'r':'g'}">${isSup?'🔴 ต้องคุม':'🟢 เชิงรุก'}</span>${it.bill_no?(' • บิล '+esc(it.bill_no)):''}</div>`;
+});
+body+=`<div class="semp">
+<div class="ehead">${esc(en)}<span class="ec">🔴<b class="r">${em.sup}</b> · 🟢<b class="g">${em.pro}</b></span></div>
+${items}
+</div>`;
+});
+el.innerHTML=`<div class="shead">
+<span class="sname">${esc(k)}</span>
+<span class="scnt">ขีด ${total} ครั้ง · 🔴<b class="r">${s.sup}</b> 🟢<b class="g">${s.pro}</b></span>
+<span class="chev">▼</span>
+</div>
+<div class="sbody">${body}</div>`;
+el.querySelector('.shead').onclick=()=>el.classList.toggle('open');
+box.appendChild(el);
+});
 }
 
 // ===== Tabs =====
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');
-  ['log','hist','sum'].forEach(t=>document.getElementById('tab-'+t).style.display=(t===b.dataset.tab?'block':'none'));
-  if(b.dataset.tab==='sum')renderSum();
-  if(b.dataset.tab==='hist')renderHist();
+document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+b.classList.add('on');
+['log','hist','sum'].forEach(t=>document.getElementById('tab-'+t).style.display=(t===b.dataset.tab?'block':'none'));
+if(b.dataset.tab==='sum')renderSum();
+if(b.dataset.tab==='hist')renderHist();
 });
 
-startApp();
+loadRoster();
 </script>
 </body>
 </html>
