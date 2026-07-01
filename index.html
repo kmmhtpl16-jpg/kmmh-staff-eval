@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ประเมินขยัน หน้าร้าน KMMH</title>
+<link rel="icon" href="favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1e40af">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ประเมินขยัน">
 <style>
   :root{
     --bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#e2e8f0; --mut:#94a3b8;
@@ -18,7 +24,8 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
   .row{display:flex;align-items:center;gap:10px}
   label.fld{font-size:13px;color:var(--mut);display:block;margin-bottom:6px}
-  select,input{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0b1220;color:var(--txt);font-size:15px}
+  select,input{width:100%;max-width:100%;min-width:0;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0b1220;color:var(--txt);font-size:15px;-webkit-appearance:none;appearance:none}
+  input[type=date],input[type=month]{display:block}
   .half{flex:1}
   .emp-block{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;background:#0b1220}
   .emp-name{font-size:16px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
@@ -52,24 +59,6 @@
   .hrow .sm{font-size:12px;color:var(--mut)}
   .del{background:#3f1d1d;border:1px solid #7f1d1d;color:#fca5a5;border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer}
   .recon{background:#0b1220;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px;text-align:center}
-  /* ===== สรุปฝั่งคนขีด ===== */
-  .sec-title{font-size:14px;font-weight:700;color:#bfdbfe;margin:4px 0 10px}
-  .srow{border:1px solid var(--line);border-radius:12px;background:#0b1220;margin-bottom:10px;overflow:hidden}
-  .shead{display:flex;align-items:center;gap:10px;padding:12px 12px;cursor:pointer}
-  .shead .sname{font-size:15px;font-weight:700;flex:1}
-  .shead .scnt{font-size:12px;color:var(--mut)}
-  .shead .scnt b.r{color:#f87171} .shead .scnt b.g{color:#4ade80}
-  .shead .chev{color:var(--mut);font-size:13px;transition:transform .15s}
-  .srow.open .chev{transform:rotate(180deg)}
-  .sbody{display:none;border-top:1px solid var(--line);padding:6px 12px 10px}
-  .srow.open .sbody{display:block}
-  .semp{padding:8px 0;border-bottom:1px solid #1e293b}
-  .semp:last-child{border-bottom:none}
-  .semp .ehead{font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
-  .semp .ehead .ec{font-size:12px;color:var(--mut);font-weight:400}
-  .semp .ehead .ec b.r{color:#f87171} .semp .ehead .ec b.g{color:#4ade80}
-  .sitem{font-size:12px;color:var(--mut);padding:3px 0 3px 10px}
-  .sitem .r{color:#f87171} .sitem .g{color:#4ade80}
 </style>
 </head>
 <body>
@@ -87,8 +76,8 @@
           <label class="fld">ผู้ขีด</label>
           <select id="logger">
             <option value="">— เลือกชื่อ —</option>
-            <option>หมิว</option><option>เบียร์</option><option>เนเน่</option>
-            <option>โอ๋</option><option>คุณหลิง</option><option>อื่นๆ</option>
+            <option>หมิว</option><option>เบียร์</option><option>เนเน่</option><option>บ๋อ</option><option>เอ</option>
+            <option>เมย์</option><option>ฟาง</option><option>โอ๋</option><option>คุณหลิง</option><option>อื่นๆ</option>
           </select>
         </div>
         <div class="half">
@@ -116,11 +105,7 @@
     <div class="card">
       <div class="seg" id="rangeSeg">
         <button data-r="today" class="on">วันนี้</button>
-        <button data-r="day">เลือกวัน</button>
         <button data-r="month">เดือนนี้</button>
-      </div>
-      <div class="row" id="dayPick" style="display:none;margin-bottom:8px">
-        <input type="date" id="dayInput">
       </div>
       <div class="row" id="monthPick" style="display:none;margin-bottom:8px">
         <input type="month" id="monthInput">
@@ -128,13 +113,6 @@
       <div class="recon" id="sumRecon">—</div>
       <div id="sumTbl"></div>
       <div class="muted">คะแนน = เชิงรุก − ต้องคุม (สูง = ดี) • เรียงตามอันดับ</div>
-    </div>
-
-    <!-- สรุปฝั่งคนขีด -->
-    <div class="card">
-      <div class="sec-title">👤 สรุปฝั่งคนขีด (กดชื่อเพื่อดูรายละเอียด)</div>
-      <div id="scorerList"></div>
-      <div class="muted">เรียงตามจำนวนครั้งที่ขีดมากสุด • รายละเอียดแยกตามพนักงาน พร้อมเวลา/บิล</div>
     </div>
   </section>
 </div>
@@ -152,6 +130,34 @@
 const SB_URL="https://hfystbdqjhftrlelmkjm.supabase.co";
 const SB_KEY="sb_publishable_Cz_p8O1rAs2ohPDtnKS_BA_LYUGiw8r";
 const sb=supabase.createClient(SB_URL,SB_KEY);
+// บัตรผ่านจริง: แลก PIN เป็น session ของ Supabase (ปิดรู anon)
+const LOGIN_FN_URL=SB_URL+"/functions/v1/login";
+async function ensureEvalSession(pin){
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(session) return true;
+    if(!pin) return false;
+    const resp=await fetch(LOGIN_FN_URL,{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({pin})});
+    const j=await resp.json();
+    if(resp.ok && j.access_token){ await sb.auth.setSession({access_token:j.access_token,refresh_token:j.refresh_token}); return true; }
+  }catch(e){ console.error("ensureEvalSession",e); }
+  return false;
+}
+function showPinGate(){
+  const g=document.createElement('div'); g.id='pinGate';
+  g.style.cssText='position:fixed;inset:0;background:#0f172a;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px';
+  g.innerHTML='<div style="font-size:40px">🔒</div><div style="font-size:16px;color:#e2e8f0;font-weight:700">ประเมินขยัน หน้าร้าน</div><div style="font-size:13px;color:#94a3b8">ใส่ PIN เพื่อเข้าใช้งาน</div><input id="pinInp" type="password" inputmode="numeric" maxlength="8" autocomplete="off" style="font-size:24px;letter-spacing:8px;text-align:center;padding:12px;width:190px;border-radius:10px;border:1px solid #334155;background:#0b1220;color:#e2e8f0"><div id="pinMsg" style="color:#f87171;font-size:13px;min-height:18px"></div><button id="pinBtn" style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:12px 30px;font-size:15px;font-weight:700">เข้าใช้งาน</button>';
+  document.body.appendChild(g);
+  const inp=g.querySelector('#pinInp'),msg=g.querySelector('#pinMsg'),btn=g.querySelector('#pinBtn');
+  async function submit(){
+    const v=(inp.value||'').trim(); if(!v) return;
+    msg.style.color='#94a3b8'; msg.textContent='กำลังเข้าสู่ระบบ…';
+    if(await ensureEvalSession(v)){ g.remove(); loadRoster(); }
+    else{ msg.style.color='#f87171'; msg.textContent='PIN ไม่ถูกต้อง'; inp.value=''; inp.focus(); }
+  }
+  btn.onclick=submit; inp.onkeydown=e=>{ if(e.key==='Enter') submit(); }; inp.focus();
+}
+async function startApp(){ if(await ensureEvalSession()){ loadRoster(); } else { showPinGate(); } }
 const TH_M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 function bkkToday(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Bangkok'});}
 function thDate(ymd){const [y,m,d]=ymd.split('-').map(Number);return `${d} ${TH_M[m-1]} ${y+543}`;}
@@ -251,29 +257,21 @@ let RANGE='today';
 document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on'); RANGE=b.dataset.r;
-  document.getElementById('dayPick').style.display=(RANGE==='day'?'block':'none');
   document.getElementById('monthPick').style.display=(RANGE==='month'?'block':'none');
   renderSum();
 });
-const dayInput=document.getElementById('dayInput');
-dayInput.value=TODAY; dayInput.onchange=renderSum;
 const monthInput=document.getElementById('monthInput');
 monthInput.value=TODAY.slice(0,7); monthInput.onchange=renderSum;
-
 async function renderSum(){
   let from,to,lbl;
   if(RANGE==='today'){from=to=TODAY;lbl=thDate(TODAY);}
-  else if(RANGE==='day'){const d=dayInput.value||TODAY;from=to=d;lbl=thDate(d);}
   else{
     const ym=monthInput.value||TODAY.slice(0,7); const [y,m]=ym.split('-').map(Number);
     from=`${ym}-01`; const last=new Date(y,m,0).getDate(); to=`${ym}-${String(last).padStart(2,'0')}`;
     lbl=`${TH_M[m-1]} ${y+543}`;
   }
-  const {data}=await sb.from('staff_eval_events')
-    .select('emp,event_type,bill_no,logged_by,created_at')
-    .gte('event_date',from).lte('event_date',to);
+  const {data}=await sb.from('staff_eval_events').select('emp,event_type,bill_no').gte('event_date',from).lte('event_date',to);
   const ev=data||[];
-  // --- ตารางอันดับพนักงาน ---
   const agg={}; ROSTER.forEach(r=>agg[r.name]={sup:0,pro:0});
   ev.forEach(e=>{if(agg[e.emp])agg[e.emp][e.event_type==='supervise'?'sup':'pro']++;});
   const bills=new Set(ev.filter(e=>e.bill_no).map(e=>e.bill_no));
@@ -289,56 +287,6 @@ async function renderSum(){
   });
   h+='</table>';
   document.getElementById('sumTbl').innerHTML=h;
-  // --- สรุปฝั่งคนขีด ---
-  renderScorers(ev);
-}
-
-function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-
-function renderScorers(ev){
-  const box=document.getElementById('scorerList');
-  const by={};
-  ev.forEach(e=>{
-    const k=e.logged_by||'(ไม่ระบุ)';
-    by[k]=by[k]||{sup:0,pro:0,emps:{}};
-    by[k][e.event_type==='supervise'?'sup':'pro']++;
-    const em=by[k].emps[e.emp]=by[k].emps[e.emp]||{sup:0,pro:0,items:[]};
-    em[e.event_type==='supervise'?'sup':'pro']++;
-    em.items.push(e);
-  });
-  const keys=Object.keys(by).sort((a,b)=>(by[b].sup+by[b].pro)-(by[a].sup+by[a].pro));
-  if(!keys.length){box.innerHTML='<div class="muted">ยังไม่มีการขีดในช่วงนี้</div>';return;}
-  box.innerHTML='';
-  keys.forEach(k=>{
-    const s=by[k]; const total=s.sup+s.pro;
-    const el=document.createElement('div'); el.className='srow';
-    // เรียงพนักงานในรายละเอียดตามจำนวนครั้งมากสุด
-    const empKeys=Object.keys(s.emps).sort((a,b)=>(s.emps[b].sup+s.emps[b].pro)-(s.emps[a].sup+s.emps[a].pro));
-    let body='';
-    empKeys.forEach(en=>{
-      const em=s.emps[en];
-      // เรียงรายการตามเวลา
-      em.items.sort((x,y)=>new Date(x.created_at)-new Date(y.created_at));
-      let items='';
-      em.items.forEach(it=>{
-        const t=it.created_at?new Date(it.created_at).toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit'}):'--:--';
-        const isSup=it.event_type==='supervise';
-        items+=`<div class="sitem">${t} <span class="${isSup?'r':'g'}">${isSup?'🔴 ต้องคุม':'🟢 เชิงรุก'}</span>${it.bill_no?(' • บิล '+esc(it.bill_no)):''}</div>`;
-      });
-      body+=`<div class="semp">
-        <div class="ehead">${esc(en)}<span class="ec">🔴<b class="r">${em.sup}</b> · 🟢<b class="g">${em.pro}</b></span></div>
-        ${items}
-      </div>`;
-    });
-    el.innerHTML=`<div class="shead">
-        <span class="sname">${esc(k)}</span>
-        <span class="scnt">ขีด ${total} ครั้ง · 🔴<b class="r">${s.sup}</b> 🟢<b class="g">${s.pro}</b></span>
-        <span class="chev">▼</span>
-      </div>
-      <div class="sbody">${body}</div>`;
-    el.querySelector('.shead').onclick=()=>el.classList.toggle('open');
-    box.appendChild(el);
-  });
 }
 
 // ===== Tabs =====
@@ -350,7 +298,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
   if(b.dataset.tab==='hist')renderHist();
 });
 
-loadRoster();
+startApp();
 </script>
 </body>
 </html>
