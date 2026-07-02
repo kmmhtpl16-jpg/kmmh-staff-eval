@@ -45,6 +45,8 @@ td.name{text-align:left;font-weight:700}
 .seg button{flex:1;padding:9px;border-radius:8px;border:1px solid var(--line);background:#0b1220;color:var(--mut);font-size:13px;font-weight:600}
 .seg button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
 .muted{color:var(--mut);font-size:12px;text-align:center;margin-top:8px;line-height:1.5}
+.copybtn{width:100%;margin-top:12px;padding:12px;border-radius:10px;border:1px solid var(--blue);background:#0b1220;color:#93c5fd;font-size:14px;font-weight:700;cursor:pointer}
+.copybtn:active{transform:scale(.98)}
 .hint{font-size:12px;color:var(--mut);line-height:1.5;margin-top:6px}
 .hrow{display:flex;align-items:center;gap:8px;padding:9px 6px;border-bottom:1px solid var(--line);font-size:14px}
 .hrow .meta{flex:1}
@@ -120,6 +122,7 @@ td.name{text-align:left;font-weight:700}
 <div class="card">
 <div class="seg" id="rangeSeg">
 <button data-r="today" class="on">วันนี้</button>
+<button data-r="week">สัปดาห์นี้</button>
 <button data-r="day">เลือกวัน</button>
 <button data-r="month">เดือนนี้</button>
 </div>
@@ -131,7 +134,8 @@ td.name{text-align:left;font-weight:700}
 </div>
 <div class="recon" id="sumRecon">—</div>
 <div id="sumTbl"></div>
-<div class="muted">คะแนน = เชิงรุก − ต้องคุม (สูง = ดี) • เรียงตามอันดับ</div>
+<button id="copyBtn" class="copybtn">📋 คัดลอกสรุป (สำหรับแจ้งพนักงาน)</button>
+<div class="muted">คะแนน = เชิงรุก − ต้องคุม (สูง = ดี) • เรียงตามอันดับ<br>💡 สรุปสัปดาห์ (จันทร์–เสาร์) ส่งเข้า Telegram อัตโนมัติทุกเย็นวันเสาร์</div>
 </div>
 
 <!-- สรุปฝั่งคนขีด -->
@@ -159,6 +163,18 @@ const sb=supabase.createClient(SB_URL,SB_KEY);
 const TH_M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 function bkkToday(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Bangkok'});}
 function thDate(ymd){const [y,m,d]=ymd.split('-').map(Number);return `${d} ${TH_M[m-1]} ${y+543}`;}
+function isoUTC(dt){const p=n=>String(n).padStart(2,'0');return `${dt.getUTCFullYear()}-${p(dt.getUTCMonth()+1)}-${p(dt.getUTCDate())}`;}
+// สัปดาห์ = จันทร์ ถึง เสาร์ ของสัปดาห์ที่ ymd ตกอยู่
+function weekMonSat(ymd){
+const [y,m,d]=ymd.split('-').map(Number);
+const dt=new Date(Date.UTC(y,m-1,d));
+const sinceMon=(dt.getUTCDay()+6)%7;
+const mon=new Date(dt.getTime()-sinceMon*86400000);
+const sat=new Date(mon.getTime()+5*86400000);
+const f=isoUTC(mon),t=isoUTC(sat);
+return {from:f,to:t,lbl:`${thDate(f)} – ${thDate(t)}`};
+}
+function medal(i){return i===0?'🥇':i===1?'🥈':i===2?'🥉':'   ';}
 const TODAY=bkkToday();
 document.getElementById('todayLbl').textContent='วันที่ '+thDate(TODAY);
 
@@ -265,6 +281,35 @@ toast('ลบแล้ว'); renderHist();
 
 // ===== สรุป =====
 let RANGE='today';
+let LAST_SUM=null;
+function buildCopyText(){
+if(!LAST_SUM)return '';
+const {lbl,rows,totalEv}=LAST_SUM;
+let t='📊 สรุปความกระตือรือร้น'+(RANGE==='week'?'รายสัปดาห์':'')+'\n🗓 '+lbl+'\nกิจมั่งมีโฮม · พนักงานหน้าร้าน\n';
+if(totalEv===0){t+='\nช่วงนี้ยังไม่มีการลงคะแนนในระบบ';}
+else{
+let rank=0,prev=null;
+rows.forEach((r,i)=>{
+if(prev===null||r.score!==prev){rank=i+1;prev=r.score;}
+const sign=r.score>0?'+':'';
+t+='\n'+medal(rank-1)+' '+rank+'. '+r.name+'  '+sign+r.score+' (🟢'+r.pro+' −🔴'+r.sup+')';
+});
+t+='\n\nรวมทั้งช่วง: ขีด '+totalEv+' ครั้ง';
+}
+t+='\n\n🟢 เชิงรุก = หยิบงานเอง · 🔴 ต้องคุม = ยังต้องมีคนกำกับ\nคะแนน = เชิงรุก − ต้องคุม (สูง = ดี) • เป็นสรุปให้กำลังใจ รางวัลสรุปสิ้นเดือน';
+return t;
+}
+document.getElementById('copyBtn').onclick=async()=>{
+const txt=buildCopyText();
+if(!txt){toast('ยังไม่มีข้อมูลสรุป',false);return;}
+try{await navigator.clipboard.writeText(txt);toast('คัดลอกแล้ว ✓ วางแจ้งพนักงานได้เลย');}
+catch(e){
+const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+document.body.appendChild(ta);ta.focus();ta.select();
+try{document.execCommand('copy');toast('คัดลอกแล้ว ✓');}catch(_){toast('คัดลอกไม่สำเร็จ',false);}
+document.body.removeChild(ta);
+}
+};
 document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{
 document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.remove('on'));
 b.classList.add('on'); RANGE=b.dataset.r;
@@ -280,6 +325,7 @@ monthInput.value=TODAY.slice(0,7); monthInput.onchange=renderSum;
 async function renderSum(){
 let from,to,lbl;
 if(RANGE==='today'){from=to=TODAY;lbl=thDate(TODAY);}
+else if(RANGE==='week'){const w=weekMonSat(TODAY);from=w.from;to=w.to;lbl='สัปดาห์นี้ '+w.lbl;}
 else if(RANGE==='day'){const d=dayInput.value||TODAY;from=to=d;lbl=thDate(d);}
 else{
 const ym=monthInput.value||TODAY.slice(0,7); const [y,m]=ym.split('-').map(Number);
@@ -296,7 +342,8 @@ ev.forEach(e=>{if(agg[e.emp])agg[e.emp][e.event_type==='supervise'?'sup':'pro']+
 const bills=new Set(ev.filter(e=>e.bill_no).map(e=>e.bill_no));
 document.getElementById('sumRecon').innerHTML=`${lbl} — ขีด <b>${ev.length}</b> ครั้ง • บิลไม่ซ้ำ <b>${bills.size}</b>`;
 const rows=ROSTER.map(r=>{const a=agg[r.name];a.name=r.name;a.score=a.pro-a.sup;return a;});
-rows.sort((x,y)=>y.score-x.score);
+rows.sort((x,y)=>y.score-x.score||y.pro-x.pro||x.sup-y.sup);
+LAST_SUM={lbl,rows,totalEv:ev.length};
 let h=`<table><tr><th>อันดับ</th><th>ชื่อ</th><th>🔴 ต้องคุม</th><th>🟢 เชิงรุก</th><th>คะแนน</th></tr>`;
 rows.forEach((r,i)=>{
 const sc=r.score>0?'pos':(r.score<0?'neg':'');
