@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ประเมินขยัน หน้าร้าน KMMH</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ประเมินขยัน">
+<meta name="theme-color" content="#1e40af">
 <style>
 :root{
 --bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#e2e8f0; --mut:#94a3b8;
@@ -72,9 +80,28 @@ td.name{text-align:left;font-weight:700}
 .semp .ehead .ec b.r{color:#f87171} .semp .ehead .ec b.g{color:#4ade80}
 .sitem{font-size:12px;color:var(--mut);padding:3px 0 3px 10px}
 .sitem .r{color:#f87171} .sitem .g{color:#4ade80}
+#gate{position:fixed;inset:0;z-index:100;background:var(--bg);display:none;align-items:center;justify-content:center;padding:20px}
+#gate .box{width:100%;max-width:340px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px 24px;text-align:center}
+#gate .lg{font-size:42px;line-height:1}
+#gate h2{margin:8px 0 4px;font-size:20px;font-weight:700}
+#gate p{color:var(--mut);font-size:13px;margin:0 0 18px}
+#gate input{text-align:center;font-size:22px;letter-spacing:8px;margin-bottom:14px}
+#gate button{width:100%;padding:13px;border:none;border-radius:10px;background:var(--blue);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+#gate button:disabled{opacity:.6}
+#gate .err{color:#fca5a5;font-size:13px;margin-top:10px;min-height:16px}
 </style>
 </head>
 <body>
+<div id="gate">
+<div class="box">
+<div class="lg">📋</div>
+<h2>ประเมินขยัน หน้าร้าน</h2>
+<p>ใส่รหัส PIN เพื่อเข้าใช้งาน</p>
+<input id="pinInput" type="password" inputmode="numeric" autocomplete="off" placeholder="รหัส PIN">
+<button id="pinBtn">เข้าสู่ระบบ</button>
+<div class="err" id="pinErr"></div>
+</div>
+</div>
 <header>
 <h1>📋 ประเมินขยัน หน้าร้าน</h1>
 <div class="sub" id="todayLbl">—</div>
@@ -159,7 +186,7 @@ td.name{text-align:left;font-weight:700}
 <script>
 const SB_URL="https://hfystbdqjhftrlelmkjm.supabase.co";
 const SB_KEY="sb_publishable_Cz_p8O1rAs2ohPDtnKS_BA_LYUGiw8r";
-const sb=supabase.createClient(SB_URL,SB_KEY);
+const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:"staff_eval_auth"}});
 const TH_M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 function bkkToday(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Bangkok'});}
 function thDate(ymd){const [y,m,d]=ymd.split('-').map(Number);return `${d} ${TH_M[m-1]} ${y+543}`;}
@@ -414,7 +441,31 @@ if(b.dataset.tab==='sum')renderSum();
 if(b.dataset.tab==='hist')renderHist();
 });
 
-loadRoster();
+// ===== PIN Gate (RLS: authenticated-only) =====
+const gate=document.getElementById('gate');
+const pinInput=document.getElementById('pinInput');
+const pinBtn=document.getElementById('pinBtn');
+const pinErr=document.getElementById('pinErr');
+function showApp(){gate.style.display='none';loadRoster();}
+async function doLogin(pin){
+pinErr.textContent=''; pinBtn.disabled=true; pinBtn.textContent='กำลังเข้าสู่ระบบ...';
+try{
+const r=await fetch(SB_URL+'/functions/v1/login',{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},body:JSON.stringify({pin})});
+const j=await r.json();
+if(!r.ok||!j.access_token){pinErr.textContent=(j&&j.error==='invalid_pin')?'รหัส PIN ไม่ถูกต้อง':'เข้าสู่ระบบไม่สำเร็จ ลองใหม่';return;}
+const {error}=await sb.auth.setSession({access_token:j.access_token,refresh_token:j.refresh_token});
+if(error){pinErr.textContent='ตั้งค่าเซสชันไม่สำเร็จ';return;}
+pinInput.value=''; showApp();
+}catch(e){pinErr.textContent='เชื่อมต่อไม่ได้ ลองใหม่';}
+finally{pinBtn.disabled=false; pinBtn.textContent='เข้าสู่ระบบ';}
+}
+pinBtn.onclick=()=>{const p=(pinInput.value||'').trim();if(!p){pinErr.textContent='ใส่รหัส PIN ก่อน';return;}doLogin(p);};
+pinInput.addEventListener('keydown',e=>{if(e.key==='Enter')pinBtn.click();});
+(async()=>{
+try{const {data}=await sb.auth.getSession();
+if(data&&data.session){showApp();return;}}catch(e){}
+gate.style.display='flex'; setTimeout(()=>pinInput.focus(),100);
+})();
 </script>
 </body>
 </html>
