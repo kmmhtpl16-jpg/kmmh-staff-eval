@@ -24,11 +24,7 @@
   .emp-block .nm{font-weight:700;font-size:16px;margin-bottom:8px}
   .crit{margin:8px 0}
   .crit .q{font-size:13px;color:#cbd5e1;margin-bottom:4px}
-  .crit.rev{border:1px solid var(--gold);background:#2a220a;border-radius:10px;padding:8px 10px;margin:10px 0}
-  .crit.rev .q{color:#fde68a;font-weight:700}
-  .revtag{display:block;font-size:11px;font-weight:700;color:#fde68a;margin-bottom:3px;letter-spacing:.2px}
   .scale{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:2px}
-  .crit.rev .scale{color:#d6c58a}
   .stars{display:flex;gap:2px;font-size:32px;line-height:1;margin:2px 0}
   .stars .st{cursor:pointer;color:#475569;padding:6px 8px;user-select:none;-webkit-user-select:none;touch-action:manipulation;transition:transform .05s}
   .stars .st.on{color:var(--gold)}
@@ -175,12 +171,8 @@ function serverAlert(msg,title){
 }
 
 function starRow(subId,q,idx){
-  const wrap=document.createElement('div'); wrap.className='crit'+(q.reversed?' rev':'');
-  if(q.reversed){
-    const tag=document.createElement('span'); tag.className='revtag';
-    tag.textContent='⚠️ ข้อนี้ถามกลับด้าน — ดาวมาก = แย่';
-    wrap.appendChild(tag);
-  }
+  // ตั้งใจไม่ทำเครื่องหมายว่าข้อไหนกลับด้าน — ถ้าบอก ก็เท่ากับเฉลยข้อสอบ
+  const wrap=document.createElement('div'); wrap.className='crit';
   const qd=document.createElement('div'); qd.className='q'; qd.textContent=(idx+1)+') '+q.text; wrap.appendChild(qd);
   const box=document.createElement('div'); box.className='stars';
   for(let i=1;i<=5;i++){
@@ -265,9 +257,12 @@ async function loadFormForRater(raterId){
     DIRS={}; QUESTIONS.forEach(function(q){ DIRS[q.dimension]=(q.direction===-1?-1:1); });
     const hasRev=QUESTIONS.some(function(q){return q.reversed;});
     notice.style.display='block';
-    notice.innerHTML='📌 <b>ฟอร์มของแต่ละคนไม่เหมือนกัน</b><br>'+
-      esc(data.note||'มีคำถามหนึ่งข้อที่ถามกลับด้าน อ่านก่อนกดทุกครั้ง')+
-      (hasRev?'<br>ข้อที่มี<b>กรอบสีเหลือง</b>คือข้อที่ถามกลับด้าน — <b>ดาวมาก = แย่</b>':'');
+    notice.innerHTML='📌 <b>อ่านคำถามให้ครบทุกข้อก่อนกดดาว</b><br>'+
+      (hasRev
+        ? 'ในฟอร์มนี้มี <b>1 ข้อที่ถามกลับด้าน</b> — ข้อนั้น <b>ดาวมาก = แย่</b> ไม่ใช่ดี<br>'+
+          '<b>ระบบไม่บอกว่าเป็นข้อไหน</b> ต้องอ่านเอง · ดูป้ายใต้ดาวประกอบได้<br>'+
+          'ฟอร์มของแต่ละคนไม่เหมือนกัน ทั้งคำถามและลำดับชื่อ'
+        : esc(data.note||'อ่านคำถามให้ครบทุกข้อก่อนกดดาว'));
   }
 
   list.innerHTML='';
