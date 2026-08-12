@@ -245,42 +245,51 @@ tr.clickable:hover td{background:#f8fafc}
     <!-- ── ใบเตือน ── -->
     <div id="paneNotice">
       <div class="card">
-        <h2 style="margin-top:0">ออกใบเตือน</h2>
-        <div class="row2">
+        <h2 style="margin-top:0">เก็บใบเตือน</h2>
+        <p class="note">
+          ใบเตือนต้องปริ้นให้เซ็นอยู่แล้ว — ที่นี่จึงเก็บ<b>ไฟล์สแกนของตัวจริง</b>
+          พร้อมข้อมูลเท่าที่ต้องใช้ค้นและนับอายุความ ไม่ต้องพิมพ์รายละเอียดซ้ำ
+        </p>
+        <div class="row3">
           <div><label>ใคร</label><select id="nPerson"></select></div>
           <div><label>ระดับ</label><select id="nLevel"></select></div>
-        </div>
-        <div class="row2">
-          <div>
-            <label>วันที่เกิดเรื่อง <span class="mini">(อายุความ 1 ปีนับจากวันนี้)</span></label>
-            <input id="nOffense" type="date">
-          </div>
-          <div><label>วันที่ออกหนังสือ</label><input id="nIssued" type="date"></div>
+          <div><label>วันที่บนเอกสาร</label><input id="nIssued" type="date"></div>
         </div>
         <label>เรื่องอะไร <span class="mini">(ใช้เทียบว่าเป็นเรื่องเดิมไหม เขียนสั้น ๆ ให้ซ้ำกันได้)</span></label>
         <input id="nTopic" placeholder="เช่น มาสายซ้ำ · ขาดงานโดยไม่แจ้ง">
-        <label>เกิดอะไรขึ้น <span class="mini">(วัน เวลา สถานที่ พฤติการณ์ — อย่าเขียนกว้าง ๆ ว่าผิดระเบียบ)</span></label>
-        <textarea id="nDetail" placeholder="เช่น มาสาย 45 นาที วันที่ 10 พ.ค. 69 โดยไม่แจ้งล่วงหน้า เป็นครั้งที่ 3 ในเดือนนี้"></textarea>
-        <div class="row2">
-          <div><label>ขัดข้อบังคับข้อไหน</label><input id="nRule" placeholder="เว้นว่างได้"></div>
-          <div><label>ใครสั่งให้ออก</label><input id="nOrdered" placeholder="เว้นว่างได้"></div>
-        </div>
-        <label>โทษถ้าทำผิดซ้ำ</label>
-        <input id="nCons" value="หากกระทำผิดซ้ำในเรื่องเดิมอีก บริษัทจะเลิกจ้างโดยไม่จ่ายค่าชดเชย">
-        <div class="row3">
-          <div><label>พนักงานรับทราบด้วยวิธีไหน</label>
-            <select id="nAck">
-              <option value="">— ยังไม่ได้แจ้ง —</option>
-              <option>เซ็นรับทราบ</option>
-              <option>ไม่ยอมเซ็น มีพยานรับรอง</option>
-              <option>ส่งไปรษณีย์ตอบรับ</option>
-            </select></div>
-          <div><label>วันที่รับทราบ</label><input id="nAckDate" type="date"></div>
-          <div><label>พยาน</label><input id="nWitness" placeholder="กรณีไม่ยอมเซ็น"></div>
-        </div>
-        <label>ชื่อไฟล์เอกสารตัวจริง</label>
-        <input id="nDoc" placeholder="เช่น ใบเตือน_ต้อม_K009.docx — เว้นว่างได้">
-        <div style="margin-top:12px"><button class="primary" onclick="saveNotice()">บันทึกใบเตือน</button></div>
+
+        <label>ไฟล์สแกนใบเตือนที่เซ็นแล้ว <span class="mini">(PDF หรือรูปถ่าย · ไม่เกิน 15 MB)</span></label>
+        <input id="nFile" type="file" accept="application/pdf,image/jpeg,image/png,image/webp,image/heic">
+        <div id="nFileInfo" class="mini" style="margin-top:4px"></div>
+
+        <details style="margin-top:14px">
+          <summary style="cursor:pointer;color:var(--dim);font-size:14px">ใส่รายละเอียดเพิ่ม (ไม่บังคับ)</summary>
+          <div style="margin-top:10px">
+            <label>วันที่เกิดเรื่องจริง
+              <span class="mini">— ถ้าใส่ ระบบจะนับอายุความ 1 ปีจากวันนี้ · ถ้าเว้นว่างจะนับจากวันที่บนเอกสาร</span>
+            </label>
+            <input id="nOffense" type="date">
+            <div class="row2">
+              <div><label>ขัดข้อบังคับข้อไหน</label><input id="nRule" placeholder="เว้นว่างได้"></div>
+              <div><label>ใครสั่งให้ออก</label><input id="nOrdered" placeholder="เว้นว่างได้"></div>
+            </div>
+            <div class="row3">
+              <div><label>พนักงานรับทราบด้วยวิธีไหน</label>
+                <select id="nAck">
+                  <option value="">— ยังไม่ได้แจ้ง —</option>
+                  <option>เซ็นรับทราบ</option>
+                  <option>ไม่ยอมเซ็น มีพยานรับรอง</option>
+                  <option>ส่งไปรษณีย์ตอบรับ</option>
+                </select></div>
+              <div><label>วันที่รับทราบ</label><input id="nAckDate" type="date"></div>
+              <div><label>พยาน</label><input id="nWitness" placeholder="กรณีไม่ยอมเซ็น"></div>
+            </div>
+            <label>หมายเหตุสั้น ๆ</label>
+            <input id="nDetail" placeholder="เว้นว่างได้ — รายละเอียดตัวจริงอยู่ในไฟล์สแกนแล้ว">
+          </div>
+        </details>
+
+        <div style="margin-top:12px"><button class="primary" id="nSaveBtn" onclick="saveNotice()">บันทึกใบเตือน</button></div>
         <div id="nErr" class="err"></div>
         <div id="nWarn"></div>
       </div>
@@ -478,7 +487,7 @@ function paintDocs(){
     (d.levels||[]).map(l=>'<option>'+esc(l)+'</option>').join('');
   document.getElementById('tKind').innerHTML =
     (d.kinds||[]).map(k=>'<option>'+esc(k)+'</option>').join('');
-  ['nOffense','nIssued','tDate'].forEach(id=>{
+  ['nIssued','tDate'].forEach(id=>{
     const el = document.getElementById(id); if(!el.value) el.value = bkkToday();
   });
 
@@ -490,16 +499,25 @@ function paintDocs(){
     const tag = n.status==='revoked' ? '<span class="pill">ยกเลิกแล้ว</span>'
               : live ? '<span class="pill good">ยังอ้างอิงได้ · เหลือ '+esc(n.days_left)+' วัน</span>'
                      : '<span class="pill warn">พ้น 1 ปีแล้ว · อ้างเพื่อเลิกจ้างไม่ได้</span>';
+    const kb = n.doc_size ? Math.round(n.doc_size/1024) : null;
     return '<div class="box">'+
       '<b>'+esc(n.person)+'</b> · '+esc(n.level)+' '+tag+
       '<br><b>เรื่อง:</b> '+esc(n.topic)+
-      '<br><span class="mini">เกิดเรื่อง '+esc(n.offense_date)+' · ออกหนังสือ '+esc(n.issued_date)+
+      '<br><span class="mini">วันที่บนเอกสาร '+esc(n.issued_date)+
+        (n.offense_date ? ' · เกิดเรื่อง '+esc(n.offense_date)
+                        : ' · <b>นับอายุความจากวันที่เอกสาร</b> (ไม่ได้ใส่วันเกิดเรื่อง)')+
         (n.ack_method?' · '+esc(n.ack_method)+(n.ack_date?' '+esc(n.ack_date):''):' · <b>ยังไม่ได้แจ้งให้รับทราบ</b>')+
         (n.witness?' · พยาน '+esc(n.witness):'')+'</span>'+
-      '<br>'+esc(n.detail)+
+      (n.detail?'<br>'+esc(n.detail):'')+
       (n.rule_ref?'<br><span class="mini">อ้างข้อบังคับ: '+esc(n.rule_ref)+'</span>':'')+
-      (n.doc_file?'<br><span class="mini">ไฟล์: '+esc(n.doc_file)+'</span>':'')+
-      '<br><span class="mini">บันทึกโดย '+esc(n.logged_by)+'</span>'+
+      '<div style="margin-top:8px">'+
+        (n.has_file
+          ? '<button onclick="viewDoc(\''+esc(n.doc_path)+'\')">📎 เปิดดูไฟล์สแกน'+
+            (kb?' <span class="mini">('+kb+' KB)</span>':'')+'</button>'
+          : '<span class="pill bad">ยังไม่ได้แนบไฟล์สแกน</span> '+
+            '<button onclick="pickFileFor('+n.id+')">แนบไฟล์ตอนนี้</button>')+
+      '</div>'+
+      '<span class="mini">บันทึกโดย '+esc(n.logged_by)+'</span>'+
       (ROLE==='owner' && n.status==='active'
         ? '<br><button class="danger" style="margin-top:8px" onclick="revokeNotice('+n.id+')">ยกเลิกใบนี้</button>' : '')+
     '</div>';
@@ -526,40 +544,117 @@ function paintDocs(){
       '</div>').join('') : '<p class="note">ยังไม่มีบันทึกการพูดคุย</p>');
 }
 
+/* ── ไฟล์สแกน ─────────────────────────────────────────────
+   bucket เป็นส่วนตัว เบราว์เซอร์แตะตรงไม่ได้
+   ทั้งการอัปและการเปิดดูต้องขอลิงก์ชั่วคราวจากเซิร์ฟเวอร์ โดยส่งรหัสไปด้วยทุกครั้ง
+   ลิงก์ดูไฟล์หมดอายุใน 2 นาที — ส่งต่อให้คนอื่นก็เปิดไม่ได้หลังหมดเวลา */
+const DOC_FN = SB_URL + '/functions/v1/hr-doc';
+
+async function docFn(payload){
+  const res = await fetch(DOC_FN, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},
+    body: JSON.stringify({...payload, pin: PIN})
+  });
+  const out = await res.json();
+  if(!res.ok || out.error) throw new Error(out.error || ('เชื่อมต่อไม่ได้ ('+res.status+')'));
+  return out;
+}
+
+async function uploadScan(file, person){
+  if(!file) return null;
+  if(file.size > 15*1024*1024) throw new Error('ไฟล์ใหญ่เกิน 15 MB — ถ่ายใหม่หรือลดความละเอียดลง');
+  const got = await docFn({action:'upload', person, filename:file.name,
+                           contentType:file.type, size:file.size});
+  const put = await fetch(got.signedUrl, {
+    method:'PUT',
+    headers:{'Content-Type': file.type || 'application/octet-stream'},
+    body: file
+  });
+  if(!put.ok) throw new Error('อัปไฟล์ไม่สำเร็จ ('+put.status+')');
+  return {path: got.path, mime: file.type || null, size: file.size};
+}
+
+async function viewDoc(path){
+  try{
+    toast('กำลังเปิดไฟล์…');
+    const r = await docFn({action:'view', path});
+    window.open(r.url, '_blank', 'noopener');
+  }catch(e){ toast(e.message); }
+}
+
+/* แนบไฟล์ให้ใบที่บันทึกไว้แล้ว */
+function pickFileFor(id){
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'application/pdf,image/jpeg,image/png,image/webp,image/heic';
+  inp.onchange = async () => {
+    const f = inp.files && inp.files[0]; if(!f) return;
+    try{
+      toast('กำลังอัปไฟล์…');
+      const up = await uploadScan(f, '');
+      const r = await rpc('hr_notice_attach', {p_pin:PIN, p_id:id,
+        p_doc_path:up.path, p_doc_mime:up.mime, p_doc_size:up.size});
+      toast(r.ok ? 'แนบไฟล์แล้ว' : (r.error||'ไม่สำเร็จ'));
+      reload();
+    }catch(e){ toast(e.message); }
+  };
+  inp.click();
+}
+
 async function saveNotice(){
   const err = document.getElementById('nErr'); err.textContent='';
   document.getElementById('nWarn').innerHTML='';
-  const detail = document.getElementById('nDetail').value.trim();
-  const topic  = document.getElementById('nTopic').value.trim();
+  const topic = document.getElementById('nTopic').value.trim();
+  const person = document.getElementById('nPerson').value;
   if(!topic){ err.textContent = 'ใส่เรื่องที่เตือนด้วย — ใช้เทียบว่าเป็นเรื่องเดิมไหม'; return; }
-  if(detail.length < 10){ err.textContent = 'เขียนรายละเอียดให้ชัดกว่านี้ — ต้องมีวัน เวลา และพฤติการณ์จริง'; return; }
+  if(!document.getElementById('nIssued').value){ err.textContent = 'ใส่วันที่บนเอกสารด้วย'; return; }
+
+  const btn = document.getElementById('nSaveBtn');
+  btn.disabled = true;
   try{
+    const f = document.getElementById('nFile').files[0];
+    let up = null;
+    if(f){ document.getElementById('nFileInfo').textContent = 'กำลังอัปไฟล์…'; up = await uploadScan(f, person); }
+
     const r = await rpc('hr_notice_save', {
-      p_pin: PIN,
-      p_person: document.getElementById('nPerson').value,
+      p_pin: PIN, p_person: person,
       p_level: document.getElementById('nLevel').value,
-      p_offense_date: document.getElementById('nOffense').value,
       p_issued_date: document.getElementById('nIssued').value,
-      p_topic: topic, p_detail: detail,
+      p_topic: topic,
+      p_offense_date: document.getElementById('nOffense').value || null,
+      p_detail: document.getElementById('nDetail').value.trim() || null,
       p_rule_ref: document.getElementById('nRule').value.trim() || null,
-      p_consequence: document.getElementById('nCons').value.trim() || null,
       p_ordered_by: document.getElementById('nOrdered').value.trim() || null,
       p_ack_method: document.getElementById('nAck').value || null,
       p_ack_date: document.getElementById('nAckDate').value || null,
       p_witness: document.getElementById('nWitness').value.trim() || null,
-      p_doc_file: document.getElementById('nDoc').value.trim() || null
+      p_doc_path: up ? up.path : null,
+      p_doc_mime: up ? up.mime : null,
+      p_doc_size: up ? up.size : null
     });
     if(!r.ok){ err.textContent = r.error || 'บันทึกไม่สำเร็จ'; return; }
+
+    let warn = '';
     if(r.same_topic_live > 0){
-      document.getElementById('nWarn').innerHTML =
-        '<div class="box warn"><b>คนนี้เคยถูกเตือนเรื่องเดียวกันแล้ว '+r.same_topic_live+' ใบ และยังอยู่ในอายุ 1 ปี</b>'+
+      warn += '<div class="box warn"><b>คนนี้เคยถูกเตือนเรื่องเดียวกันแล้ว '+r.same_topic_live+' ใบ และยังอยู่ในอายุ 1 ปี</b>'+
         '<br><span class="mini">การผิดซ้ำเรื่องเดิมภายใน 1 ปี เป็นเงื่อนไขที่ใช้อ้างได้ตามกฎหมายแรงงาน — '+
         'ก่อนดำเนินการขั้นต่อไปควรตรวจกับผู้รู้ด้านแรงงานอีกครั้ง</span></div>';
     }
-    document.getElementById('nDetail').value=''; document.getElementById('nTopic').value='';
+    if(!up){
+      warn += '<div class="box warn"><b>ยังไม่ได้แนบไฟล์สแกน</b> — บันทึกไว้แล้ว '+
+        'แต่ยังไม่มีตัวเอกสารเป็นหลักฐาน แนบทีหลังได้จากปุ่มในรายการด้านล่าง</div>';
+    }
+    document.getElementById('nWarn').innerHTML = warn;
+
+    document.getElementById('nTopic').value='';
+    document.getElementById('nDetail').value='';
+    document.getElementById('nFile').value='';
+    document.getElementById('nFileInfo').textContent='';
     toast('บันทึกใบเตือนแล้ว');
     reload();
-  }catch(e){ err.textContent = e.message; }
+  }catch(e){ err.textContent = e.message; document.getElementById('nFileInfo').textContent=''; }
+  finally{ btn.disabled = false; }
 }
 
 async function revokeNotice(id){
