@@ -230,6 +230,97 @@ tr.clickable:hover td{background:#f8fafc}
     </div>
   </div>
 
+  <!-- แท็บ · ใบเตือน + บันทึกการพูดคุย -->
+  <div id="tab-docs" class="tabpane hide">
+    <div class="box warn">
+      <b>สองอย่างนี้ไม่มีผลกับคะแนนในกระดาน</b> — เก็บเป็นประวัติและหลักฐานอย่างเดียว
+      ถ้าเรื่องนั้นควรมีผลกับคะแนนด้วย ต้องบันทึกเป็น<b>เคส</b>แยกอีกทางหนึ่ง
+    </div>
+
+    <div class="side">
+      <button id="docNotice" class="on cut" onclick="setDoc('notice')">📄 ใบเตือน</button>
+      <button id="docTalk" class="praise" onclick="setDoc('talk')">💬 บันทึกการพูดคุย</button>
+    </div>
+
+    <!-- ── ใบเตือน ── -->
+    <div id="paneNotice">
+      <div class="card">
+        <h2 style="margin-top:0">ออกใบเตือน</h2>
+        <div class="row2">
+          <div><label>ใคร</label><select id="nPerson"></select></div>
+          <div><label>ระดับ</label><select id="nLevel"></select></div>
+        </div>
+        <div class="row2">
+          <div>
+            <label>วันที่เกิดเรื่อง <span class="mini">(อายุความ 1 ปีนับจากวันนี้)</span></label>
+            <input id="nOffense" type="date">
+          </div>
+          <div><label>วันที่ออกหนังสือ</label><input id="nIssued" type="date"></div>
+        </div>
+        <label>เรื่องอะไร <span class="mini">(ใช้เทียบว่าเป็นเรื่องเดิมไหม เขียนสั้น ๆ ให้ซ้ำกันได้)</span></label>
+        <input id="nTopic" placeholder="เช่น มาสายซ้ำ · ขาดงานโดยไม่แจ้ง">
+        <label>เกิดอะไรขึ้น <span class="mini">(วัน เวลา สถานที่ พฤติการณ์ — อย่าเขียนกว้าง ๆ ว่าผิดระเบียบ)</span></label>
+        <textarea id="nDetail" placeholder="เช่น มาสาย 45 นาที วันที่ 10 พ.ค. 69 โดยไม่แจ้งล่วงหน้า เป็นครั้งที่ 3 ในเดือนนี้"></textarea>
+        <div class="row2">
+          <div><label>ขัดข้อบังคับข้อไหน</label><input id="nRule" placeholder="เว้นว่างได้"></div>
+          <div><label>ใครสั่งให้ออก</label><input id="nOrdered" placeholder="เว้นว่างได้"></div>
+        </div>
+        <label>โทษถ้าทำผิดซ้ำ</label>
+        <input id="nCons" value="หากกระทำผิดซ้ำในเรื่องเดิมอีก บริษัทจะเลิกจ้างโดยไม่จ่ายค่าชดเชย">
+        <div class="row3">
+          <div><label>พนักงานรับทราบด้วยวิธีไหน</label>
+            <select id="nAck">
+              <option value="">— ยังไม่ได้แจ้ง —</option>
+              <option>เซ็นรับทราบ</option>
+              <option>ไม่ยอมเซ็น มีพยานรับรอง</option>
+              <option>ส่งไปรษณีย์ตอบรับ</option>
+            </select></div>
+          <div><label>วันที่รับทราบ</label><input id="nAckDate" type="date"></div>
+          <div><label>พยาน</label><input id="nWitness" placeholder="กรณีไม่ยอมเซ็น"></div>
+        </div>
+        <label>ชื่อไฟล์เอกสารตัวจริง</label>
+        <input id="nDoc" placeholder="เช่น ใบเตือน_ต้อม_K009.docx — เว้นว่างได้">
+        <div style="margin-top:12px"><button class="primary" onclick="saveNotice()">บันทึกใบเตือน</button></div>
+        <div id="nErr" class="err"></div>
+        <div id="nWarn"></div>
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0">ใบเตือนทั้งหมด <span id="nCount" class="pill"></span></h2>
+        <div id="noticeList"></div>
+      </div>
+    </div>
+
+    <!-- ── บันทึกการพูดคุย ── -->
+    <div id="paneTalk" class="hide">
+      <div class="card">
+        <h2 style="margin-top:0">บันทึกการพูดคุย</h2>
+        <div class="row3">
+          <div><label>ใคร</label><select id="tPerson"></select></div>
+          <div><label>วันที่คุย</label><input id="tDate" type="date"></div>
+          <div><label>ประเภท</label><select id="tKind"></select></div>
+        </div>
+        <label>คุยเรื่องอะไร เกิดอะไรขึ้น</label>
+        <textarea id="tSummary" placeholder="เขียนเป็นข้อเท็จจริง ไม่ตัดสินนิสัย"></textarea>
+        <label>ตกลงกันว่าอะไร <span class="mini">(เขียนให้วัดผลได้)</span></label>
+        <textarea id="tAgree" placeholder="เช่น เป้าสาย = 0 นาที · แจ้งล่วงหน้าทุกครั้งที่ลา"></textarea>
+        <label>พนักงานชี้แจงว่าอะไร</label>
+        <textarea id="tSay" placeholder="เว้นว่างได้ — แต่ควรมี เพราะเป็นสิทธิ์ของเขาที่จะได้พูด"></textarea>
+        <div class="row2">
+          <div><label>นัดทบทวนผลวันไหน</label><input id="tFollow" type="date"></div>
+          <div><label>ใครอยู่ในวงคุยบ้าง</label><input id="tWho" placeholder="เว้นว่างได้"></div>
+        </div>
+        <label>ชื่อไฟล์เอกสาร</label>
+        <input id="tDoc" placeholder="เช่น บันทึกการพูดคุย_ต้อม_K009.docx — เว้นว่างได้">
+        <div style="margin-top:12px"><button class="primary" onclick="saveTalk()">บันทึก</button></div>
+        <div id="tErr" class="err"></div>
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0">บันทึกทั้งหมด <span id="tCount" class="pill"></span></h2>
+        <div id="talkList"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- แท็บ 5 · หลังบ้าน -->
   <div id="tab-admin" class="tabpane hide">
     <div class="card">
@@ -328,8 +419,9 @@ function enterApp(){
   sel.innerHTML = opts;
 
   const tabs = ROLE === 'owner'
-    ? [['board','กระดาน'],['case','บันทึกเคส'],['level','เลือกระดับขั้น'],['close','ปิดงวด'],['admin','หลังบ้าน']]
-    : [['case','บันทึกเคส']];
+    ? [['board','กระดาน'],['case','บันทึกเคส'],['docs','ใบเตือน · บันทึกคุย'],
+       ['level','เลือกระดับขั้น'],['close','ปิดงวด'],['admin','หลังบ้าน']]
+    : [['case','บันทึกเคส'],['docs','ใบเตือน · บันทึกคุย']];
   document.getElementById('tabs').innerHTML =
     tabs.map((t,i)=>'<button class="'+(i===0?'on':'')+'" onclick="showTab(\''+t[0]+'\',this)">'+t[1]+'</button>').join('');
   showTab(tabs[0][0], document.querySelector('#tabs button'));
@@ -356,7 +448,153 @@ async function reload(){
     }
     CASEDATA = await rpc('board100_case_form', {p_period: per, p_pin: PIN});
     paintCaseForm();
+    DOCS = await rpc('hr_docs_form', {p_pin: PIN});
+    paintDocs();
   }catch(e){ toast(e.message); }
+}
+
+/* ── ใบเตือน + บันทึกการพูดคุย ─────────────────────────────
+   ทั้งสองอย่างไม่มีผลกับคะแนนในกระดาน — เก็บเป็นประวัติและหลักฐาน
+   อายุความใบเตือนนับจาก "วันที่ทำผิด" ไม่ใช่วันที่ออกหนังสือ */
+let DOCS = null;
+
+function setDoc(which){
+  document.getElementById('docNotice').classList.toggle('on', which==='notice');
+  document.getElementById('docTalk').classList.toggle('on', which==='talk');
+  document.getElementById('paneNotice').classList.toggle('hide', which!=='notice');
+  document.getElementById('paneTalk').classList.toggle('hide', which!=='talk');
+}
+
+function paintDocs(){
+  const d = DOCS;
+  if(!d || !d.ok) return;
+
+  const opts = (d.people||[]).map(p=>'<option value="'+esc(p.name)+'">'+esc(p.name)+'</option>').join('');
+  ['nPerson','tPerson'].forEach(id=>{
+    const el = document.getElementById(id); const keep = el.value;
+    el.innerHTML = opts; if(keep) el.value = keep;
+  });
+  document.getElementById('nLevel').innerHTML =
+    (d.levels||[]).map(l=>'<option>'+esc(l)+'</option>').join('');
+  document.getElementById('tKind').innerHTML =
+    (d.kinds||[]).map(k=>'<option>'+esc(k)+'</option>').join('');
+  ['nOffense','nIssued','tDate'].forEach(id=>{
+    const el = document.getElementById(id); if(!el.value) el.value = bkkToday();
+  });
+
+  /* ── รายการใบเตือน ── */
+  const ns = d.notices||[];
+  document.getElementById('nCount').textContent = ns.length + ' ใบ';
+  document.getElementById('noticeList').innerHTML = ns.length ? ns.map(n=>{
+    const live = n.status==='active' && n.still_usable;
+    const tag = n.status==='revoked' ? '<span class="pill">ยกเลิกแล้ว</span>'
+              : live ? '<span class="pill good">ยังอ้างอิงได้ · เหลือ '+esc(n.days_left)+' วัน</span>'
+                     : '<span class="pill warn">พ้น 1 ปีแล้ว · อ้างเพื่อเลิกจ้างไม่ได้</span>';
+    return '<div class="box">'+
+      '<b>'+esc(n.person)+'</b> · '+esc(n.level)+' '+tag+
+      '<br><b>เรื่อง:</b> '+esc(n.topic)+
+      '<br><span class="mini">เกิดเรื่อง '+esc(n.offense_date)+' · ออกหนังสือ '+esc(n.issued_date)+
+        (n.ack_method?' · '+esc(n.ack_method)+(n.ack_date?' '+esc(n.ack_date):''):' · <b>ยังไม่ได้แจ้งให้รับทราบ</b>')+
+        (n.witness?' · พยาน '+esc(n.witness):'')+'</span>'+
+      '<br>'+esc(n.detail)+
+      (n.rule_ref?'<br><span class="mini">อ้างข้อบังคับ: '+esc(n.rule_ref)+'</span>':'')+
+      (n.doc_file?'<br><span class="mini">ไฟล์: '+esc(n.doc_file)+'</span>':'')+
+      '<br><span class="mini">บันทึกโดย '+esc(n.logged_by)+'</span>'+
+      (ROLE==='owner' && n.status==='active'
+        ? '<br><button class="danger" style="margin-top:8px" onclick="revokeNotice('+n.id+')">ยกเลิกใบนี้</button>' : '')+
+    '</div>';
+  }).join('') : '<p class="note">ยังไม่มีใบเตือนในระบบ</p>';
+
+  /* ── รายการบันทึกการพูดคุย ── */
+  const ts = d.talks||[];
+  document.getElementById('tCount').textContent = ts.length + ' รายการ';
+  const due = ts.filter(t=>t.due).length;
+  document.getElementById('talkList').innerHTML =
+    (due ? '<div class="box warn"><b>ถึงกำหนดทบทวนผลแล้ว '+due+' รายการ</b> — ยังไม่ได้บันทึกผล</div>' : '') +
+    (ts.length ? ts.map(t=>
+      '<div class="box">'+
+        '<b>'+esc(t.person)+'</b> · '+esc(t.kind)+' · '+esc(t.talk_date)+
+        (t.due?' <span class="pill bad">ถึงกำหนดทบทวน</span>':'')+
+        '<br>'+esc(t.summary)+
+        (t.agreement?'<br><b>ตกลงกันว่า:</b> '+esc(t.agreement):'')+
+        (t.employee_say?'<br><b>พนักงานชี้แจง:</b> '+esc(t.employee_say):'')+
+        (t.follow_up_date?'<br><span class="mini">นัดทบทวน '+esc(t.follow_up_date)+
+          (t.follow_up_note?' · ผล: '+esc(t.follow_up_note):' · ยังไม่ได้บันทึกผล')+'</span>':'')+
+        (t.attendees?'<br><span class="mini">อยู่ในวงคุย: '+esc(t.attendees)+'</span>':'')+
+        (t.doc_file?'<br><span class="mini">ไฟล์: '+esc(t.doc_file)+'</span>':'')+
+        '<br><span class="mini">บันทึกโดย '+esc(t.logged_by)+'</span>'+
+      '</div>').join('') : '<p class="note">ยังไม่มีบันทึกการพูดคุย</p>');
+}
+
+async function saveNotice(){
+  const err = document.getElementById('nErr'); err.textContent='';
+  document.getElementById('nWarn').innerHTML='';
+  const detail = document.getElementById('nDetail').value.trim();
+  const topic  = document.getElementById('nTopic').value.trim();
+  if(!topic){ err.textContent = 'ใส่เรื่องที่เตือนด้วย — ใช้เทียบว่าเป็นเรื่องเดิมไหม'; return; }
+  if(detail.length < 10){ err.textContent = 'เขียนรายละเอียดให้ชัดกว่านี้ — ต้องมีวัน เวลา และพฤติการณ์จริง'; return; }
+  try{
+    const r = await rpc('hr_notice_save', {
+      p_pin: PIN,
+      p_person: document.getElementById('nPerson').value,
+      p_level: document.getElementById('nLevel').value,
+      p_offense_date: document.getElementById('nOffense').value,
+      p_issued_date: document.getElementById('nIssued').value,
+      p_topic: topic, p_detail: detail,
+      p_rule_ref: document.getElementById('nRule').value.trim() || null,
+      p_consequence: document.getElementById('nCons').value.trim() || null,
+      p_ordered_by: document.getElementById('nOrdered').value.trim() || null,
+      p_ack_method: document.getElementById('nAck').value || null,
+      p_ack_date: document.getElementById('nAckDate').value || null,
+      p_witness: document.getElementById('nWitness').value.trim() || null,
+      p_doc_file: document.getElementById('nDoc').value.trim() || null
+    });
+    if(!r.ok){ err.textContent = r.error || 'บันทึกไม่สำเร็จ'; return; }
+    if(r.same_topic_live > 0){
+      document.getElementById('nWarn').innerHTML =
+        '<div class="box warn"><b>คนนี้เคยถูกเตือนเรื่องเดียวกันแล้ว '+r.same_topic_live+' ใบ และยังอยู่ในอายุ 1 ปี</b>'+
+        '<br><span class="mini">การผิดซ้ำเรื่องเดิมภายใน 1 ปี เป็นเงื่อนไขที่ใช้อ้างได้ตามกฎหมายแรงงาน — '+
+        'ก่อนดำเนินการขั้นต่อไปควรตรวจกับผู้รู้ด้านแรงงานอีกครั้ง</span></div>';
+    }
+    document.getElementById('nDetail').value=''; document.getElementById('nTopic').value='';
+    toast('บันทึกใบเตือนแล้ว');
+    reload();
+  }catch(e){ err.textContent = e.message; }
+}
+
+async function revokeNotice(id){
+  const note = prompt('ยกเลิกใบเตือนนี้เพราะอะไร (อย่างน้อย 10 ตัวอักษร)');
+  if(note === null) return;
+  if(note.trim().length < 10){ toast('ต้องเขียนเหตุผลอย่างน้อย 10 ตัวอักษร'); return; }
+  try{
+    const r = await rpc('hr_notice_set_status', {p_pin:PIN, p_id:id, p_status:'revoked', p_note:note.trim()});
+    toast(r.ok ? 'ยกเลิกแล้ว' : (r.error||'ไม่สำเร็จ'));
+    reload();
+  }catch(e){ toast(e.message); }
+}
+
+async function saveTalk(){
+  const err = document.getElementById('tErr'); err.textContent='';
+  const summary = document.getElementById('tSummary').value.trim();
+  if(summary.length < 10){ err.textContent = 'เล่าเรื่องที่คุยให้ยาวกว่านี้อีกหน่อย (อย่างน้อย 10 ตัวอักษร)'; return; }
+  try{
+    const r = await rpc('hr_talk_save', {
+      p_pin: PIN,
+      p_person: document.getElementById('tPerson').value,
+      p_talk_date: document.getElementById('tDate').value,
+      p_kind: document.getElementById('tKind').value,
+      p_summary: summary,
+      p_agreement: document.getElementById('tAgree').value.trim() || null,
+      p_employee_say: document.getElementById('tSay').value.trim() || null,
+      p_follow_up_date: document.getElementById('tFollow').value || null,
+      p_attendees: document.getElementById('tWho').value.trim() || null,
+      p_doc_file: document.getElementById('tDoc').value.trim() || null
+    });
+    if(!r.ok){ err.textContent = r.error || 'บันทึกไม่สำเร็จ'; return; }
+    ['tSummary','tAgree','tSay','tWho','tDoc'].forEach(id=>document.getElementById(id).value='');
+    toast('บันทึกแล้ว');
+    reload();
+  }catch(e){ err.textContent = e.message; }
 }
 
 /* ───────── แท็บกระดาน ───────── */
