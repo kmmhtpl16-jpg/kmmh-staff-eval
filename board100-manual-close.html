@@ -65,6 +65,37 @@ tr.clickable:hover td{background:#f8fafc}
 .lv{display:flex;gap:6px;flex-wrap:wrap}
 .lv button{flex:1;min-width:64px;padding:7px 4px;font-size:14px}
 .lv button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+/* ── เลือกหัวข้อเคส: แยกฝั่ง แยกหมวด สีบอกระดับความร้ายแรง ── */
+.side{display:flex;gap:8px;margin:6px 0 12px}
+.side button{flex:1;padding:11px;font-weight:600;font-size:15px}
+.side button.on.cut{background:#fef2f2;border-color:var(--bad);color:var(--bad)}
+.side button.on.praise{background:#f0fdf4;border-color:var(--good);color:var(--good)}
+.fields{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.fields button{padding:6px 12px;border-radius:999px;font-size:14px}
+.fields button.on{background:#0f172a;color:#fff;border-color:#0f172a}
+.tlist{max-height:400px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:8px;background:#fbfdfe}
+.titem{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:9px;
+  border:1px solid transparent;cursor:pointer;margin-bottom:4px;background:#fff}
+.titem:hover{background:#f8fafc}
+.titem.on{border-color:var(--brand);background:#f0fdfa;box-shadow:0 0 0 1px var(--brand)}
+.bar{width:5px;align-self:stretch;border-radius:3px;flex:none;min-height:34px}
+.sv-เบา{background:#facc15}.sv-กลาง{background:#f97316}.sv-หนัก{background:#dc2626}
+.sv-บันทึกไว้{background:#94a3b8}.sv-เล็ก{background:#86efac}.sv-กลางเพิ่ม{background:#22c55e}.sv-ใหญ่{background:#15803d}
+.tmain{flex:1;min-width:0}
+.tlabel{font-size:15px;line-height:1.45}
+.tmeta{font-size:12px;color:var(--dim);margin-top:2px}
+.sv{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;flex:none}
+.sv.เบา{background:#fef9c3;color:#854d0e}
+.sv.กลาง{background:#ffedd5;color:#9a3412}
+.sv.หนัก{background:#fee2e2;color:#991b1b}
+.sv.บันทึกไว้{background:#f1f5f9;color:#475569}
+.sv.เล็ก{background:#dcfce7;color:#166534}
+.sv.กลางเพิ่ม{background:#bbf7d0;color:#166534}
+.sv.ใหญ่{background:#86efac;color:#14532d}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:8px 0 2px}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
 </style>
 </head>
 <body>
@@ -129,8 +160,18 @@ tr.clickable:hover td{background:#f8fafc}
         </div>
       </div>
       <label>เรื่องอะไร</label>
-      <select id="cType"></select>
-      <div id="cTypeDetail" class="note" style="margin-top:6px"></div>
+      <div class="side">
+        <button id="sideCut" class="on cut" onclick="setSide('หัก')">🔴 เคสหัก</button>
+        <button id="sidePraise" class="praise" onclick="setSide('เพิ่ม')">🟢 เคสชื่นชม</button>
+      </div>
+      <div class="fields" id="fieldFilter"></div>
+      <label style="margin-top:0;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="onlyMyJob" checked style="width:auto" onchange="paintTypes()">
+        <span>แสดงเฉพาะหัวข้อที่ตรงกับงานของคนที่เลือก</span>
+      </label>
+      <div class="legend" id="legend"></div>
+      <div class="tlist" id="tlist"></div>
+      <div id="cTypeDetail" class="note" style="margin-top:8px"></div>
       <div class="row2">
         <div>
           <label>เลขบิล (ถ้ามี)</label>
@@ -390,53 +431,119 @@ function paintCaseForm(){
     (c.people||[]).map(p=>'<option value="'+esc(p.name)+'">'+esc(p.name)+' — '+esc(p.jobs)+
       (p.on_board?'':' (ยังไม่มีกระดาน)')+'</option>').join('');
 
-  const groups = {};
-  (c.case_types||[]).forEach(t=>{
-    const g = (t.kind === 'เพิ่ม' ? '🟢 เคสชื่นชม · ' : '🔴 เคสหัก · ') + (t.field_label||t.field);
-    (groups[g] = groups[g] || []).push(t);
-  });
-  document.getElementById('cType').innerHTML = Object.keys(groups).map(g=>
-    '<optgroup label="'+esc(g)+'">'+groups[g].map(t=>
-      '<option value="'+esc(t.code)+'">'+esc(t.label)+
-      (t.pending?' (รอเจ้าของตีระดับ)':'')+'</option>').join('')+'</optgroup>').join('');
-
-  document.getElementById('cType').onchange = showTypeDetail;
-  showTypeDetail();
+  document.getElementById('cPerson').onchange = paintTypes;
+  paintTypes();
   const dt = document.getElementById('cDate');
   if(!dt.value) dt.value = bkkToday();
 
   const list = c.cases || [];
   document.getElementById('caseCount').textContent = list.length + ' เคส';
   document.getElementById('caseList').innerHTML = list.length ? list.map(x=>
-    '<div class="box"><b>'+esc(x.person)+'</b> · '+esc(x.date||'')+
-    (x.bill_no?' · บิล '+esc(x.bill_no):'')+
-    '<br>'+(x.kind==='เพิ่ม'?'🟢 ':'🔴 ')+esc(x.label||x.code)+
-    (x.pending?' <span class="pill warn">รอเจ้าของตีระดับ</span>':'')+
-    (ROLE==='owner' && x.points!=null ? ' <span class="pill '+(x.points<0?'bad':'good')+'">'+
-       (x.points>0?'+':'')+num(x.points,2)+'</span>' : ' <span class="pill">'+esc(x.severity||'')+'</span>')+
-    '<br><span class="mini">'+esc(x.note||'')+' · บันทึกโดย '+esc(x.logged_by||'—')+'</span>'+
+    '<div class="box" style="border-left:5px solid transparent" '+
+      'data-sv="'+esc(svClass(x))+'">'+
+    '<div style="display:flex;gap:8px;align-items:flex-start">'+
+      '<div class="bar sv-'+svClass(x)+'"></div><div style="flex:1;min-width:0">'+
+      '<b>'+esc(x.person)+'</b> · '+esc(x.date||'')+
+      (x.bill_no?' · บิล '+esc(x.bill_no):'')+
+      '<br>'+(x.kind==='เพิ่ม'?'🟢 ':'🔴 ')+esc(x.label||x.code)+
+      ' <span class="sv '+svClass(x)+'">'+esc(x.pending?'รอตีระดับ':(x.severity||'—'))+'</span>'+
+      (ROLE==='owner' && x.points!=null ? ' <span class="pill '+(x.points<0?'bad':'good')+'">'+
+         (x.points>0?'+':'')+num(x.points,2)+'</span>' : '')+
+      '<br><span class="mini">'+esc(x.note||'')+' · บันทึกโดย '+esc(x.logged_by||'—')+'</span>'+
+      '</div></div>'+
     (ROLE==='owner' && !c.locked ? '<br><button class="danger" style="margin-top:8px" onclick="delCase('+x.id+')">ลบเคสนี้</button>':'')+
     '</div>').join('') : '<p class="note">ยังไม่มีเคสในงวดนี้</p>';
 }
 
+/* ── เลือกหัวข้อเคส ─────────────────────────────────────────
+   แยก 2 ฝั่งก่อน (หัก / ชื่นชม) แล้วกรองตามหมวด
+   แถบสีซ้ายบอกความร้ายแรง — เข้มขึ้น = หนักขึ้น
+   HR เห็นระดับ (เบา/กลาง/หนัก) แต่ไม่เห็นตัวเลขคะแนน ตามที่ตกลงไว้ */
+let SIDE = 'หัก', FIELD = 'ทั้งหมด', PICKED = null;
+
+const SV_ORDER = {'เบา':1,'กลาง':2,'หนัก':3,'บันทึกไว้':0,'เล็ก':1,'ใหญ่':3};
+/* ระดับ "กลาง" มีทั้งสองฝั่ง ใช้ชื่อคลาสแยกกันไม่ให้สีชนกัน */
+function svClass(t){ return (t.severity==='กลาง' && t.kind==='เพิ่ม') ? 'กลางเพิ่ม' : (t.severity||'บันทึกไว้'); }
+
+function setSide(side){
+  SIDE = side; FIELD = 'ทั้งหมด'; PICKED = null;
+  document.getElementById('sideCut').classList.toggle('on', side==='หัก');
+  document.getElementById('sidePraise').classList.toggle('on', side==='เพิ่ม');
+  paintTypes();
+}
+
+function paintTypes(){
+  const all = (CASEDATA.case_types||[]).filter(t => t.kind === SIDE);
+
+  /* กรองตามงานของคนที่เลือก — หัวข้อที่ใช้กับทุกงานจะขึ้นเสมอ */
+  const pname = document.getElementById('cPerson').value;
+  const person = (CASEDATA.people||[]).find(p=>p.name===pname);
+  const onlyMine = document.getElementById('onlyMyJob').checked;
+  const matchJob = t => {
+    if(!onlyMine || !person) return true;
+    const jobs = t.jobs || ['*'];
+    if(jobs.includes('*')) return true;
+    return (person.job_codes||[]).some(j => jobs.includes(j));
+  };
+  const list = all.filter(matchJob);
+
+  /* ปุ่มกรองหมวด */
+  const fields = [...new Set(list.map(t=>t.field_label||t.field))];
+  document.getElementById('fieldFilter').innerHTML =
+    ['ทั้งหมด', ...fields].map(f=>
+      '<button class="'+(FIELD===f?'on':'')+'" onclick="setField(\''+esc(f)+'\')">'+esc(f)+
+      ' <span class="mini">'+(f==='ทั้งหมด'?list.length:list.filter(t=>(t.field_label||t.field)===f).length)+'</span></button>'
+    ).join('');
+
+  /* คำอธิบายสี */
+  const legend = SIDE==='หัก'
+    ? [['เบา','เบา'],['กลาง','กลาง'],['หนัก','หนัก']]
+    : [['บันทึกไว้','บันทึกไว้ (ไม่คิดคะแนน)'],['เล็ก','เล็ก'],['กลางเพิ่ม','กลาง'],['ใหญ่','ใหญ่']];
+  document.getElementById('legend').innerHTML =
+    legend.map(l=>'<span><i class="sv-'+l[0]+'"></i>'+esc(l[1])+'</span>').join('');
+
+  const show = FIELD==='ทั้งหมด' ? list : list.filter(t=>(t.field_label||t.field)===FIELD);
+  show.sort((a,b)=> (a.field_label||'').localeCompare(b.field_label||'','th')
+                 || (SV_ORDER[b.severity]||0) - (SV_ORDER[a.severity]||0));
+
+  document.getElementById('tlist').innerHTML = show.length ? show.map(t=>
+    '<div class="titem'+(PICKED===t.code?' on':'')+'" onclick="pickType(\''+esc(t.code)+'\')">'+
+      '<div class="bar sv-'+svClass(t)+'"></div>'+
+      '<div class="tmain">'+
+        '<div class="tlabel">'+esc(t.label)+'</div>'+
+        '<div class="tmeta">'+esc(t.field_label||t.field)+
+          (t.jobs && !t.jobs.includes('*') ? ' · ใช้กับ '+t.jobs.map(esc).join(' ') : ' · ทุกงาน')+
+          (t.pending?' · <b>รอเจ้าของตีระดับ</b>':'')+'</div>'+
+      '</div>'+
+      '<span class="sv '+svClass(t)+'">'+esc(t.pending?'รอตีระดับ':(t.severity||'—'))+
+        (ROLE==='owner' && t.points!=null && !t.pending ? ' '+(t.points>0?'+':'')+t.points : '')+'</span>'+
+    '</div>').join('')
+    : '<p class="note" style="padding:10px">ไม่มีหัวข้อในหมวดนี้ที่ตรงกับงานของคนที่เลือก — ติ๊กออกจากช่อง "แสดงเฉพาะหัวข้อที่ตรงกับงาน" เพื่อดูทั้งหมด</p>';
+
+  if(PICKED && !show.some(t=>t.code===PICKED)) { PICKED = null; }
+  showTypeDetail();
+}
+
+function setField(f){ FIELD = f; paintTypes(); }
+function pickType(code){ PICKED = code; paintTypes(); }
+
 function showTypeDetail(){
-  const code = document.getElementById('cType').value;
-  const t = (CASEDATA.case_types||[]).find(x=>x.code===code);
+  const t = (CASEDATA.case_types||[]).find(x=>x.code===PICKED);
   document.getElementById('cTypeDetail').innerHTML = t
-    ? esc(t.detail||'') + (ROLE==='owner' && t.points!=null
-        ? ' <span class="pill '+(t.points<0?'bad':'good')+'">'+(t.points>0?'+':'')+t.points+'</span>' : '')
-    : '';
+    ? '<b>เลือกอยู่:</b> '+esc(t.label)+(t.detail?'<br>'+esc(t.detail):'')
+    : '<span class="pill warn">ยังไม่ได้เลือกหัวข้อ</span>';
 }
 
 async function saveCase(){
   const err = document.getElementById('cErr'); err.textContent='';
   const note = document.getElementById('cNote').value.trim();
+  if(!PICKED){ err.textContent = 'ยังไม่ได้เลือกว่าเป็นเรื่องอะไร — แตะหัวข้อในรายการก่อน'; return; }
   if(note.length < 10){ err.textContent = 'ช่วยเล่าให้ยาวกว่านี้อีกหน่อย (อย่างน้อย 10 ตัวอักษร)'; return; }
   try{
     const r = await rpc('board100_save_case', {
       p_period: document.getElementById('period').value,
       p_person: document.getElementById('cPerson').value,
-      p_case_code: document.getElementById('cType').value,
+      p_case_code: PICKED,
       p_case_date: document.getElementById('cDate').value,
       p_bill_no: document.getElementById('cBill').value.trim() || null,
       p_note: note,
@@ -444,6 +551,7 @@ async function saveCase(){
     });
     if(!r.ok){ err.textContent = r.error || 'บันทึกไม่สำเร็จ'; return; }
     document.getElementById('cNote').value=''; document.getElementById('cBill').value='';
+    PICKED = null;
     toast('บันทึกเคสแล้ว');
     reload();
   }catch(e){ err.textContent = e.message; }
