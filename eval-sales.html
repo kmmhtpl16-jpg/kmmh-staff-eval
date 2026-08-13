@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ประเมินคนขาย รายเดือน · KMMH</title>
+<!-- ไอคอนชุดเดียวกับหน้าแรก · ?v=2 บังคับให้เครื่องที่เคยเปิดแล้วโหลดรูปใหม่ -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<link rel="icon" href="favicon.ico?v=2" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=2">
 <style>
   :root{
     --bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#e2e8f0; --mut:#94a3b8;
@@ -58,6 +63,19 @@
 .mbox button{margin-top:16px;width:100%;padding:13px;border:0;border-radius:11px;background:var(--blue);color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit}
 .pill{font-size:12px;color:var(--mut)}
   .muted{color:var(--mut);font-size:13px}
+  /* ===== ข้อถามแบบเลือกชื่อ (ถามครั้งเดียวท้ายฟอร์ม) ===== */
+  .vq{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#0b1220}
+  .vq.need{border-color:var(--red)}
+  .vq .vt{font-size:14px;font-weight:700;line-height:1.5;margin-bottom:2px}
+  .vq .vh{font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:8px}
+  .vq .must{color:#fca5a5;font-weight:700}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:#111c30;color:#cbd5e1;
+    font-size:14px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:inherit}
+  .chip:active{transform:scale(.96)}
+  .chip.on{background:#1d4ed8;border-color:#3b82f6;color:#fff;font-weight:700}
+  .chip.on.bad{background:#b91c1c;border-color:#ef4444}
+  .chip.skip{color:var(--mut);font-style:italic}
 </style>
 </head>
 <body>
@@ -73,11 +91,13 @@
     <select id="raterSel"><option value="">— เลือกชื่อ —</option></select>
     <div class="hint" id="dupHint" style="display:none"></div>
     <div class="hint">เลือกชื่อตัวเองก่อน แล้วให้ดาวคนขายทุกคน (1–5 ดาว ทั้ง 3 ข้อ)<br>
+      ท้ายฟอร์มมีข้อที่ตอบด้วยการเลือกชื่อ ตอบครั้งเดียว ไม่ได้ถามทีละคน<br>
       คะแนนเป็นความลับ เจ้าของร้านเท่านั้นที่เห็นว่าใครให้เท่าไหร่</div>
   </div>
 
   <div id="formNotice" class="notice" style="display:none"></div>
   <div id="subjList"></div>
+  <div id="voteBox"></div>
 
   <button class="btn blue" id="submitBtn">ส่งคะแนนประเมิน</button>
 
@@ -131,8 +151,16 @@ const CRIT_FALLBACK=[
   {dimension:'reason', text:'ใช้เหตุผลมากกว่าอารมณ์ (แยกเรื่องงานกับอคติส่วนตัว)',   direction:1, reversed:false, label_low:'แทบไม่เป็นเลย', label_high:'เป็นแบบนี้เสมอ'},
 ];
 
+// ข้อถามแบบเลือกชื่อสำรอง — ใช้เฉพาะกรณี sales_eval_form() เรียกไม่ได้
+const VOTE_FALLBACK=[
+  {kind:'top',    text:'เดือนนี้ ใครทำงานดีที่สุดในสายตาคุณ',            hint:'เลือกได้คนเดียว', sign:1,  required:true},
+  {kind:'bottom', text:'เดือนนี้ ใครควรปรับปรุงมากที่สุดในสายตาคุณ',      hint:'เลือกได้คนเดียว · ต้องไม่ใช่คนเดียวกับข้อบน', sign:-1, required:true},
+];
+
 let SUBJECTS=[];          // ลำดับเฉพาะของผู้ประเมินคนนี้ (มาจาก sales_eval_form)
 let QUESTIONS=[];         // คำถามเฉพาะของผู้ประเมินคนนี้
+let VOTE_QS=[];           // ข้อถามแบบเลือกชื่อ ถามครั้งเดียวท้ายฟอร์ม
+let VOTE_PICKS={};        // {kind: subject_id}
 let DIRS=null;            // {tone:1|-1, fair:1|-1, reason:1|-1} ส่งกลับตอน submit
 let LAST_STATUS=null;
 let FORM_LOCKED=false;
@@ -192,12 +220,81 @@ function resetStars(){
   SUBJECTS.forEach(s=>{ scores[s.id]={}; });
   document.querySelectorAll('.stars').forEach(b=>paintStars(b,0));
 }
+
+// ===== ข้อถามแบบเลือกชื่อ =====
+// ถามครั้งเดียวท้ายฟอร์ม ไม่ได้ถามรายคน จำนวนครั้งที่ต้องกดจึงไม่โตตามจำนวนคนขาย
+function renderVotes(){
+  const box=document.getElementById('voteBox');
+  box.innerHTML='';
+  if(!VOTE_QS.length||!SUBJECTS.length) return;
+
+  const head=document.createElement('div'); head.className='card';
+  head.innerHTML='<div class="sec-title">🗳️ อีกไม่กี่ข้อ — เลือกชื่อ ไม่ต้องให้ดาว</div>'+
+    '<div class="muted">ตอบครั้งเดียว ไม่ได้ถามทีละคน · เจ้าของเห็นผลรวมอย่างเดียว ไม่มีใครรู้ว่าใครเลือกใคร</div>';
+  box.appendChild(head);
+
+  VOTE_QS.forEach(function(q){
+    const w=document.createElement('div'); w.className='vq'; w.dataset.kind=q.kind;
+    const t=document.createElement('div'); t.className='vt';
+    t.innerHTML=esc(q.text)+(q.required?' <span class="must">*</span>':'');
+    w.appendChild(t);
+    const h=document.createElement('div'); h.className='vh';
+    h.textContent=q.hint||(q.required?'ต้องตอบ':'ข้ามได้');
+    w.appendChild(h);
+
+    const cs=document.createElement('div'); cs.className='chips';
+    SUBJECTS.forEach(function(sub){
+      const c=document.createElement('button'); c.type='button'; c.className='chip';
+      c.textContent=sub.name; c.dataset.id=sub.id;
+      c.onclick=function(){
+        if(FORM_LOCKED) return;
+        if(VOTE_PICKS[q.kind]===sub.id){ delete VOTE_PICKS[q.kind]; paintVotes(); return; }
+        // กันเลือกคนเดียวกันทั้งข้อ "ดีที่สุด" และ "ควรปรับปรุงมากที่สุด"
+        const other=(q.kind==='top')?'bottom':(q.kind==='bottom'?'top':null);
+        if(other&&VOTE_PICKS[other]===sub.id){
+          toast('คนนี้ถูกเลือกในอีกข้อแล้ว — สองข้อนี้ต้องคนละคน',false); return;
+        }
+        VOTE_PICKS[q.kind]=sub.id; paintVotes();
+      };
+      cs.appendChild(c);
+    });
+    if(!q.required){
+      const sk=document.createElement('button'); sk.type='button'; sk.className='chip skip';
+      sk.textContent='ยังไม่ชัดเจน'; sk.dataset.id='';
+      sk.onclick=function(){ if(FORM_LOCKED)return; delete VOTE_PICKS[q.kind]; paintVotes(); };
+      cs.appendChild(sk);
+    }
+    w.appendChild(cs);
+    box.appendChild(w);
+  });
+  paintVotes();
+}
+function paintVotes(){
+  document.querySelectorAll('#voteBox .vq').forEach(function(w){
+    const kind=w.dataset.kind;
+    const q=VOTE_QS.find(function(x){return x.kind===kind;})||{};
+    const picked=VOTE_PICKS[kind];
+    w.classList.remove('need');
+    w.querySelectorAll('.chip').forEach(function(c){
+      const on=(c.dataset.id!==''&&+c.dataset.id===picked);
+      c.classList.toggle('on',on);
+      c.classList.toggle('bad',on&&q.sign===-1);
+    });
+  });
+}
+function firstMissingVote(){
+  for(const q of VOTE_QS){ if(q.required&&!VOTE_PICKS[q.kind]) return q; }
+  return null;
+}
 function lockForm(locked){
   FORM_LOCKED=locked;
   const list=document.getElementById('subjList');
+  const vbox=document.getElementById('voteBox');
   const btn=document.getElementById('submitBtn');
   list.style.opacity=locked?'0.4':'1';
   list.style.pointerEvents=locked?'none':'auto';
+  vbox.style.opacity=locked?'0.4':'1';
+  vbox.style.pointerEvents=locked?'none':'auto';
   btn.disabled=locked;
   btn.textContent=locked?'🔒 ประเมินเดือนนี้ไปแล้ว':'ส่งคะแนนประเมิน';
   btn.style.background=locked?'#475569':'var(--blue)';
@@ -232,12 +329,15 @@ function renderPlaceholder(){
   document.getElementById('formNotice').style.display='none';
   document.getElementById('subjList').innerHTML=
     '<div class="card"><div class="muted">👆 เลือกชื่อตัวเองด้านบนก่อน แล้วรายชื่อคนขายกับคำถามจะขึ้นให้</div></div>';
+  document.getElementById('voteBox').innerHTML='';
+  VOTE_QS=[]; VOTE_PICKS={};
   FORM_READY=false;
 }
 
 // ===== ขั้นที่ 2: เลือกชื่อแล้วดึงฟอร์มเฉพาะของคนนั้น =====
 async function loadFormForRater(raterId){
-  SUBJECTS=[]; QUESTIONS=[]; DIRS=null; FORM_READY=false;
+  SUBJECTS=[]; QUESTIONS=[]; VOTE_QS=[]; VOTE_PICKS={}; DIRS=null; FORM_READY=false;
+  document.getElementById('voteBox').innerHTML='';
   for(const k in scores) delete scores[k];
   const list=document.getElementById('subjList');
   const notice=document.getElementById('formNotice');
@@ -249,11 +349,12 @@ async function loadFormForRater(raterId){
     // ถอยไปใช้ฟอร์มพื้นฐาน (ไม่กลับด้าน) เพื่อไม่ให้พนักงานติดค้าง
     const {data:subs,error:e2}=await sb.rpc('sales_eval_subjects');
     if(e2||!subs){ list.innerHTML='<div class="card"><div class="muted" style="color:#fecaca">โหลดฟอร์มไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง</div></div>'; return; }
-    SUBJECTS=subs; QUESTIONS=CRIT_FALLBACK.slice(); DIRS=null;
+    SUBJECTS=subs; QUESTIONS=CRIT_FALLBACK.slice(); VOTE_QS=VOTE_FALLBACK.slice(); DIRS=null;
     notice.style.display='none';
   }else{
     SUBJECTS=data.subjects;
     QUESTIONS=(data.questions&&data.questions.length)?data.questions:CRIT_FALLBACK.slice();
+    VOTE_QS=(data.vote_questions&&data.vote_questions.length)?data.vote_questions:VOTE_FALLBACK.slice();
     DIRS={}; QUESTIONS.forEach(function(q){ DIRS[q.dimension]=(q.direction===-1?-1:1); });
     const hasRev=QUESTIONS.some(function(q){return q.reversed;});
     notice.style.display='block';
@@ -273,6 +374,7 @@ async function loadFormForRater(raterId){
     QUESTIONS.forEach(function(q,i){ blk.appendChild(starRow(sub.id,q,i)); });
     list.appendChild(blk);
   });
+  renderVotes();
   FORM_READY=true;
   showLockState();
 }
@@ -293,7 +395,19 @@ async function submitScores(){
   payload.forEach(function(p){var k=p.tone+'|'+p.fair+'|'+p.reason; if(!pats[k]){pats[k]=1;npat++;}});
   if(payload.length>=2&&npat===1){ flatAlert(); return; }
 
-  const args={p_period:PERIOD,p_rater_id:+raterId,p_scores:payload};
+  // กันลืมตอบข้อที่ต้องตอบ — พาไปที่ข้อนั้นเลย ไม่ใช่แค่ขึ้นข้อความ
+  const miss=firstMissingVote();
+  if(miss){
+    const w=document.querySelector('#voteBox .vq[data-kind="'+miss.kind+'"]');
+    if(w){ w.classList.add('need'); w.scrollIntoView({behavior:'smooth',block:'center'}); }
+    toast('ยังไม่ได้ตอบ: '+miss.text,false);
+    return;
+  }
+
+  const votes={};
+  VOTE_QS.forEach(function(q){ if(VOTE_PICKS[q.kind]) votes[q.kind]=String(VOTE_PICKS[q.kind]); });
+
+  const args={p_period:PERIOD,p_rater_id:+raterId,p_scores:payload,p_votes:votes};
   if(DIRS) args.p_dirs=DIRS;   // ทิศทางที่ฟอร์มนี้แสดงจริง — เซิร์ฟเวอร์ตรวจซ้ำอีกชั้น
 
   const btn=document.getElementById('submitBtn'); btn.disabled=true; btn.textContent='กำลังส่ง…';
@@ -302,6 +416,7 @@ async function submitScores(){
   if(error||!data||!data.ok){
     if(data&&data.flat){ flatAlert(); return; }
     if(data&&data.straightline){ serverAlert(data.error,'โปรดอ่านคำถามอีกครั้ง'); return; }
+    if(data&&(data.vote_missing||data.vote_same)){ serverAlert(data.error,'ตรวจข้อเลือกชื่ออีกครั้ง'); return; }
     if(data&&data.stale){
       showAlert('ฟอร์มไม่ตรงกับระบบ',['ฟอร์มที่เปิดอยู่เก่ากว่าที่ระบบใช้ตอนนี้','กดปุ่มด้านล่างเพื่อโหลดฟอร์มใหม่ แล้วให้ดาวอีกครั้ง'],'โหลดฟอร์มใหม่');
       document.getElementById('mBtn').onclick=function(){ closeAlert(); document.getElementById('mBtn').onclick=closeAlert; loadFormForRater(raterId); };
