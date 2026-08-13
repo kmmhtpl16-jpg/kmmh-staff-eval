@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0f766e">
 <title>กระดานรวม 100 คะแนน · KMMH</title>
+<!-- ไอคอนชุดเดียวกับหน้าแรก · ?v=2 บังคับให้เครื่องที่เคยเปิดแล้วโหลดรูปใหม่ -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<link rel="icon" href="favicon.ico?v=2" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=2">
 <style>
 :root{
   --bg:#f4f6f8; --card:#fff; --line:#e2e8f0; --ink:#0f172a; --dim:#64748b;
@@ -35,6 +40,18 @@ th{color:var(--dim);font-weight:600;font-size:13px}
 tr.clickable{cursor:pointer}
 tr.clickable:hover td{background:#f8fafc}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+/* ปุ่มลัดไปโปรแกรมอื่นในชุดเดียวกัน — เปิดได้ทั้งเจ้าของและ HR */
+.shortcuts{display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 16px}
+.shortcuts a{display:inline-block;text-decoration:none;font-size:14px;color:var(--brand);
+  background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px}
+.shortcuts a:hover{background:#f0fdfa;border-color:var(--brand)}
+/* รูปประกอบเคส */
+.mini-btn{padding:3px 9px;font-size:12.5px;border-radius:7px;margin-right:4px}
+.photoprev{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.photoprev figure{margin:0;position:relative;width:84px}
+.photoprev img{width:84px;height:84px;object-fit:cover;border-radius:9px;border:1px solid var(--line);display:block}
+.photoprev button{position:absolute;top:-7px;right:-7px;width:24px;height:24px;padding:0;line-height:1;
+  border-radius:999px;background:#fff;color:var(--bad);border-color:#fecaca;font-size:13px}
 .tabs button{border-radius:999px}
 .tabs button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .hide{display:none}
@@ -123,9 +140,11 @@ tr.clickable:hover td{background:#f8fafc}
     งวด <select id="period" style="width:auto;display:inline-block;padding:4px 8px" onchange="reload()"></select>
     <span id="roleTag" class="pill"></span>
     <span id="lockTag"></span>
+    <span id="svcLink"></span>
   </p>
 
   <div class="tabs" id="tabs"></div>
+  <div class="shortcuts" id="shortcuts"></div>
 
   <!-- แท็บ 1 · กระดาน -->
   <div id="tab-board" class="tabpane hide">
@@ -181,7 +200,15 @@ tr.clickable:hover td{background:#f8fafc}
       </div>
       <label>เกิดอะไรขึ้น <span class="mini">(อย่างน้อย 10 ตัวอักษร)</span></label>
       <textarea id="cNote" placeholder="เล่าสั้น ๆ ว่าเกิดอะไร ใครเกี่ยวข้อง ผลเป็นยังไง"></textarea>
-      <div style="margin-top:12px"><button class="primary" onclick="saveCase()">บันทึกเคส</button></div>
+
+      <label>รูปประกอบ <span class="mini">(ไม่บังคับ · ได้สูงสุด 3 รูป · กดแล้วถ่ายจากมือถือได้เลย)</span></label>
+      <div>
+        <button type="button" onclick="pickCasePhotos()">📷 เลือกรูป</button>
+        <span id="cPhotoCount" class="mini"></span>
+      </div>
+      <div id="cPhotoPrev" class="photoprev"></div>
+
+      <div style="margin-top:12px"><button class="primary" id="cSaveBtn" onclick="saveCase()">บันทึกเคส</button></div>
       <div id="cErr" class="err"></div>
     </div>
 
@@ -251,7 +278,8 @@ tr.clickable:hover td{background:#f8fafc}
           พร้อมข้อมูลเท่าที่ต้องใช้ค้นและนับอายุความ ไม่ต้องพิมพ์รายละเอียดซ้ำ
         </p>
         <div class="row3">
-          <div><label>ใคร</label><select id="nPerson"></select></div>
+          <div><label>ใคร</label><select id="nPerson"></select>
+            <div id="nWho" class="mini" style="margin-top:4px"></div></div>
           <div><label>ระดับ</label><select id="nLevel"></select></div>
           <div><label>วันที่บนเอกสาร</label><input id="nIssued" type="date"></div>
         </div>
@@ -302,26 +330,47 @@ tr.clickable:hover td{background:#f8fafc}
     <!-- ── บันทึกการพูดคุย ── -->
     <div id="paneTalk" class="hide">
       <div class="card">
-        <h2 style="margin-top:0">บันทึกการพูดคุย</h2>
+        <h2 style="margin-top:0">เก็บบันทึกการพูดคุย</h2>
+        <p class="note">
+          บันทึกการพูดคุยต้องปริ้นให้เซ็นอยู่แล้ว — ที่นี่จึงเก็บ<b>ไฟล์สแกนของตัวจริง</b>
+          พร้อมข้อมูลเท่าที่ต้องใช้ค้นและตั้งเตือน ไม่ต้องพิมพ์รายละเอียดซ้ำ<br>
+          <b>ข้อชี้แจงที่พนักงานเขียนด้วยลายมือ พิมพ์ซ้ำแล้วหลักฐานหายไป</b> — ลายมือกับลายเซ็นคือตัวหลักฐาน
+        </p>
         <div class="row3">
-          <div><label>ใคร</label><select id="tPerson"></select></div>
-          <div><label>วันที่คุย</label><input id="tDate" type="date"></div>
+          <div><label>ใคร</label><select id="tPerson"></select>
+            <div id="tWho2" class="mini" style="margin-top:4px"></div></div>
+          <div><label>วันที่บนเอกสาร</label><input id="tDate" type="date"></div>
           <div><label>ประเภท</label><select id="tKind"></select></div>
         </div>
-        <label>คุยเรื่องอะไร เกิดอะไรขึ้น</label>
-        <textarea id="tSummary" placeholder="เขียนเป็นข้อเท็จจริง ไม่ตัดสินนิสัย"></textarea>
-        <label>ตกลงกันว่าอะไร <span class="mini">(เขียนให้วัดผลได้)</span></label>
-        <textarea id="tAgree" placeholder="เช่น เป้าสาย = 0 นาที · แจ้งล่วงหน้าทุกครั้งที่ลา"></textarea>
-        <label>พนักงานชี้แจงว่าอะไร</label>
-        <textarea id="tSay" placeholder="เว้นว่างได้ — แต่ควรมี เพราะเป็นสิทธิ์ของเขาที่จะได้พูด"></textarea>
-        <div class="row2">
-          <div><label>นัดทบทวนผลวันไหน</label><input id="tFollow" type="date"></div>
-          <div><label>ใครอยู่ในวงคุยบ้าง</label><input id="tWho" placeholder="เว้นว่างได้"></div>
-        </div>
-        <label>ชื่อไฟล์เอกสาร</label>
-        <input id="tDoc" placeholder="เช่น บันทึกการพูดคุย_ต้อม_K009.docx — เว้นว่างได้">
-        <div style="margin-top:12px"><button class="primary" onclick="saveTalk()">บันทึก</button></div>
+        <label>เรื่องอะไร <span class="mini">(ใช้เทียบว่าเป็นเรื่องเดิมไหม เขียนสั้น ๆ ให้ซ้ำกันได้)</span></label>
+        <input id="tTopic" placeholder="เช่น มาสายซ้ำ · ขาดงานเกินสิทธิ์">
+
+        <label>ไฟล์สแกนบันทึกที่เซ็นแล้ว <span class="mini">(PDF หรือรูปถ่าย · ไม่เกิน 15 MB)</span></label>
+        <input id="tFile" type="file" accept="application/pdf,image/jpeg,image/png,image/webp,image/heic">
+        <div id="tFileInfo" class="mini" style="margin-top:4px"></div>
+
+        <label>นัดทบทวนผลวันไหน
+          <span class="mini">— ช่องเดียวที่ระบบต้องใช้ทำงานต่อ ถึงวันแล้วยังไม่บันทึกผลจะขึ้นเตือนให้</span>
+        </label>
+        <input id="tFollow" type="date">
+
+        <details style="margin-top:14px">
+          <summary style="cursor:pointer;color:var(--dim);font-size:14px">ใส่รายละเอียดเพิ่ม (ไม่บังคับ)</summary>
+          <div style="margin-top:10px">
+            <label>ใครอยู่ในวงคุยบ้าง</label>
+            <input id="tWho" placeholder="เว้นว่างได้ — ปกติมีอยู่ในเอกสารแล้ว">
+            <label>สรุปสั้น ๆ</label>
+            <input id="tSummary" placeholder="เว้นว่างได้ — ตัวเต็มอยู่ในไฟล์สแกนแล้ว">
+            <label>ตกลงกันว่าอะไร <span class="mini">(เขียนให้วัดผลได้)</span></label>
+            <textarea id="tAgree" placeholder="เว้นว่างได้ — ใส่เฉพาะตอนอยากค้นเจอง่าย เช่น เป้าสาย = 0 นาที"></textarea>
+            <label>พนักงานชี้แจงว่าอะไร</label>
+            <textarea id="tSay" placeholder="เว้นว่างได้ — ถ้าเขาเขียนด้วยลายมือในเอกสาร อย่าพิมพ์ซ้ำ ตัวจริงมีค่ากว่า"></textarea>
+          </div>
+        </details>
+
+        <div style="margin-top:12px"><button class="primary" id="tSaveBtn" onclick="saveTalk()">บันทึก</button></div>
         <div id="tErr" class="err"></div>
+        <div id="tWarn"></div>
       </div>
       <div class="card">
         <h2 style="margin-top:0">บันทึกทั้งหมด <span id="tCount" class="pill"></span></h2>
@@ -415,6 +464,16 @@ function enterApp(){
   document.getElementById('gate').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
   document.getElementById('roleTag').textContent = ROLE === 'owner' ? 'เจ้าของ' : 'HR';
+  // กระดานทีมบริการเป็นคนละชุดคะแนน (ผลงาน 50 · โปร่งใส 25 · วินัย 25) จึงแยกหน้า
+  // ปุ่มลัดไปโปรแกรมอื่น — HR เปิดได้ด้วย จะได้ไม่ต้องจำลิงก์แยกกันหลายอัน
+  const links = [
+    ['eval-sales.html', '⭐', 'ประเมินคนขาย รายเดือน'],
+    ['index.html',      '📊', 'ประเมินขยัน หน้าร้าน']
+  ];
+  if(ROLE === 'owner') links.unshift(['board100-service.html', '🧰', 'กระดานทีมบริการ 7 คน']);
+  document.getElementById('shortcuts').innerHTML =
+    links.map(l => '<a href="'+l[0]+'">'+l[1]+' '+l[2]+' →</a>').join('');
+  document.getElementById('svcLink').innerHTML = '';
 
   // งวดให้เลือก: ย้อนหลัง 12 เดือนจากเดือนนี้
   const sel = document.getElementById('period');
@@ -467,6 +526,19 @@ async function reload(){
    อายุความใบเตือนนับจาก "วันที่ทำผิด" ไม่ใช่วันที่ออกหนังสือ */
 let DOCS = null;
 
+/* ชื่อ-สกุลเต็มของคนที่เลือกอยู่ — เอกสาร HR ใช้ชื่อเต็ม เลือกผิดคนแล้วแก้ทีหลังยาก */
+function showWho(){
+  [['nPerson','nWho'],['tPerson','tWho2']].forEach(function(pair){
+    const sel = document.getElementById(pair[0]), box = document.getElementById(pair[1]);
+    if(!sel || !box) return;
+    const p = ((DOCS && DOCS.people) || []).find(x => x.name === sel.value);
+    box.innerHTML = p
+      ? esc(p.full_name || '') + (p.active ? '' :
+          ' <span class="pill bad">ลาออกแล้ว ' + esc(p.resigned_date || '') + '</span>')
+      : '';
+  });
+}
+
 function setDoc(which){
   document.getElementById('docNotice').classList.toggle('on', which==='notice');
   document.getElementById('docTalk').classList.toggle('on', which==='talk');
@@ -478,11 +550,16 @@ function paintDocs(){
   const d = DOCS;
   if(!d || !d.ok) return;
 
-  const opts = (d.people||[]).map(p=>'<option value="'+esc(p.name)+'">'+esc(p.name)+'</option>').join('');
+  // รายชื่อมาจากทะเบียนพนักงาน — ติดรหัสท้ายชื่อ เพราะมีชื่อเล่นซ้ำกัน (โอ๋ · K008 กับ โอ๋ 1 · K006)
+  const opts = (d.people||[]).map(p=>
+    '<option value="'+esc(p.name)+'">'+esc(p.label||p.name)+'</option>').join('');
   ['nPerson','tPerson'].forEach(id=>{
     const el = document.getElementById(id); const keep = el.value;
-    el.innerHTML = opts; if(keep) el.value = keep;
+    el.innerHTML = opts;
+    if(keep && (d.people||[]).some(p=>p.name===keep)) el.value = keep;
+    el.onchange = showWho;
   });
+  showWho();
   document.getElementById('nLevel').innerHTML =
     (d.levels||[]).map(l=>'<option>'+esc(l)+'</option>').join('');
   document.getElementById('tKind').innerHTML =
@@ -501,7 +578,8 @@ function paintDocs(){
                      : '<span class="pill warn">พ้น 1 ปีแล้ว · อ้างเพื่อเลิกจ้างไม่ได้</span>';
     const kb = n.doc_size ? Math.round(n.doc_size/1024) : null;
     return '<div class="box">'+
-      '<b>'+esc(n.person)+'</b> · '+esc(n.level)+' '+tag+
+      '<b>'+esc(n.person)+'</b>'+(n.emp_code?' <span class="mini">'+esc(n.emp_code)+'</span>':'')+
+      ' · '+esc(n.level)+' '+tag+
       '<br><b>เรื่อง:</b> '+esc(n.topic)+
       '<br><span class="mini">วันที่บนเอกสาร '+esc(n.issued_date)+
         (n.offense_date ? ' · เกิดเรื่อง '+esc(n.offense_date)
@@ -529,19 +607,31 @@ function paintDocs(){
   const due = ts.filter(t=>t.due).length;
   document.getElementById('talkList').innerHTML =
     (due ? '<div class="box warn"><b>ถึงกำหนดทบทวนผลแล้ว '+due+' รายการ</b> — ยังไม่ได้บันทึกผล</div>' : '') +
-    (ts.length ? ts.map(t=>
-      '<div class="box">'+
-        '<b>'+esc(t.person)+'</b> · '+esc(t.kind)+' · '+esc(t.talk_date)+
+    (ts.length ? ts.map(t=>{
+      const kb = t.doc_size ? Math.round(t.doc_size/1024) : null;
+      return '<div class="box">'+
+        '<b>'+esc(t.person)+'</b>'+(t.emp_code?' <span class="mini">'+esc(t.emp_code)+'</span>':'')+
+        ' · '+esc(t.kind)+' · '+esc(t.talk_date)+
         (t.due?' <span class="pill bad">ถึงกำหนดทบทวน</span>':'')+
-        '<br>'+esc(t.summary)+
+        (t.same_topic_times > 1 ? ' <span class="pill warn">คุยเรื่องนี้มาแล้ว '+t.same_topic_times+' ครั้ง</span>' : '')+
+        '<br><b>เรื่อง:</b> '+esc(t.topic || '—')+
+        (t.summary?'<br>'+esc(t.summary):'')+
         (t.agreement?'<br><b>ตกลงกันว่า:</b> '+esc(t.agreement):'')+
         (t.employee_say?'<br><b>พนักงานชี้แจง:</b> '+esc(t.employee_say):'')+
         (t.follow_up_date?'<br><span class="mini">นัดทบทวน '+esc(t.follow_up_date)+
-          (t.follow_up_note?' · ผล: '+esc(t.follow_up_note):' · ยังไม่ได้บันทึกผล')+'</span>':'')+
+          (t.follow_up_note?' · ผล: '+esc(t.follow_up_note):' · <b>ยังไม่ได้บันทึกผล</b>')+'</span>':'')+
         (t.attendees?'<br><span class="mini">อยู่ในวงคุย: '+esc(t.attendees)+'</span>':'')+
-        (t.doc_file?'<br><span class="mini">ไฟล์: '+esc(t.doc_file)+'</span>':'')+
-        '<br><span class="mini">บันทึกโดย '+esc(t.logged_by)+'</span>'+
-      '</div>').join('') : '<p class="note">ยังไม่มีบันทึกการพูดคุย</p>');
+        '<div style="margin-top:8px">'+
+          (t.has_file
+            ? '<button onclick="viewDoc(\''+esc(t.doc_path)+'\')">📎 เปิดดูไฟล์สแกน'+
+              (kb?' <span class="mini">('+kb+' KB)</span>':'')+'</button>'
+            : '<span class="pill bad">ยังไม่ได้แนบไฟล์สแกน</span> '+
+              '<button onclick="pickFileFor('+t.id+',\'talk\')">แนบไฟล์ตอนนี้</button>')+
+          (t.due ? ' <button onclick="noteFollowUp('+t.id+')">บันทึกผลการทบทวน</button>' : '')+
+        '</div>'+
+        '<span class="mini">บันทึกโดย '+esc(t.logged_by)+'</span>'+
+      '</div>';
+    }).join('') : '<p class="note">ยังไม่มีบันทึกการพูดคุย</p>');
 }
 
 /* ── ไฟล์สแกน ─────────────────────────────────────────────
@@ -561,10 +651,10 @@ async function docFn(payload){
   return out;
 }
 
-async function uploadScan(file, person){
+async function uploadScan(file, person, kind){
   if(!file) return null;
   if(file.size > 15*1024*1024) throw new Error('ไฟล์ใหญ่เกิน 15 MB — ถ่ายใหม่หรือลดความละเอียดลง');
-  const got = await docFn({action:'upload', person, filename:file.name,
+  const got = await docFn({action:'upload', kind: kind || 'notice', person, filename:file.name,
                            contentType:file.type, size:file.size});
   const put = await fetch(got.signedUrl, {
     method:'PUT',
@@ -583,8 +673,9 @@ async function viewDoc(path){
   }catch(e){ toast(e.message); }
 }
 
-/* แนบไฟล์ให้ใบที่บันทึกไว้แล้ว */
-function pickFileFor(id){
+/* แนบไฟล์ให้เอกสารที่บันทึกไว้แล้ว — ใช้ได้ทั้งใบเตือนและบันทึกการพูดคุย */
+function pickFileFor(id, kind){
+  const k = kind || 'notice';
   const inp = document.createElement('input');
   inp.type = 'file';
   inp.accept = 'application/pdf,image/jpeg,image/png,image/webp,image/heic';
@@ -592,9 +683,9 @@ function pickFileFor(id){
     const f = inp.files && inp.files[0]; if(!f) return;
     try{
       toast('กำลังอัปไฟล์…');
-      const up = await uploadScan(f, '');
-      const r = await rpc('hr_notice_attach', {p_pin:PIN, p_id:id,
-        p_doc_path:up.path, p_doc_mime:up.mime, p_doc_size:up.size});
+      const up = await uploadScan(f, '', k);
+      const r = await rpc(k === 'talk' ? 'hr_talk_attach' : 'hr_notice_attach',
+        {p_pin:PIN, p_id:id, p_doc_path:up.path, p_doc_mime:up.mime, p_doc_size:up.size});
       toast(r.ok ? 'แนบไฟล์แล้ว' : (r.error||'ไม่สำเร็จ'));
       reload();
     }catch(e){ toast(e.message); }
@@ -670,26 +761,81 @@ async function revokeNotice(id){
 
 async function saveTalk(){
   const err = document.getElementById('tErr'); err.textContent='';
-  const summary = document.getElementById('tSummary').value.trim();
-  if(summary.length < 10){ err.textContent = 'เล่าเรื่องที่คุยให้ยาวกว่านี้อีกหน่อย (อย่างน้อย 10 ตัวอักษร)'; return; }
+  document.getElementById('tWarn').innerHTML='';
+  const topic = document.getElementById('tTopic').value.trim();
+  const person = document.getElementById('tPerson').value;
+  if(topic.length < 3){ err.textContent = 'ใส่ว่าคุยเรื่องอะไร — ใช้เทียบว่าเป็นเรื่องเดิมไหม'; return; }
+  if(!document.getElementById('tDate').value){ err.textContent = 'ใส่วันที่บนเอกสารด้วย'; return; }
+
+  const btn = document.getElementById('tSaveBtn');
+  btn.disabled = true;
   try{
+    const f = document.getElementById('tFile').files[0];
+    let up = null;
+    if(f){ document.getElementById('tFileInfo').textContent = 'กำลังอัปไฟล์…'; up = await uploadScan(f, person, 'talk'); }
+
     const r = await rpc('hr_talk_save', {
       p_pin: PIN,
-      p_person: document.getElementById('tPerson').value,
+      p_person: person,
       p_talk_date: document.getElementById('tDate').value,
       p_kind: document.getElementById('tKind').value,
-      p_summary: summary,
+      p_topic: topic,
+      p_summary: document.getElementById('tSummary').value.trim() || null,
       p_agreement: document.getElementById('tAgree').value.trim() || null,
       p_employee_say: document.getElementById('tSay').value.trim() || null,
       p_follow_up_date: document.getElementById('tFollow').value || null,
       p_attendees: document.getElementById('tWho').value.trim() || null,
-      p_doc_file: document.getElementById('tDoc').value.trim() || null
+      p_doc_path: up ? up.path : null,
+      p_doc_mime: up ? up.mime : null,
+      p_doc_size: up ? up.size : null
     });
     if(!r.ok){ err.textContent = r.error || 'บันทึกไม่สำเร็จ'; return; }
-    ['tSummary','tAgree','tSay','tWho','tDoc'].forEach(id=>document.getElementById(id).value='');
+
+    let warn = '';
+    const rep = (r.repeat||[]).length;
+    if(rep > 0){
+      warn += '<div class="box warn"><b>เคยคุยเรื่องเดียวกันกับคนนี้มาแล้ว '+rep+' ครั้ง</b>'+
+        '<br><span class="mini">ครั้งล่าสุด '+esc(r.repeat[0].talk_date)+' — คุยเรื่องเดิมซ้ำแปลว่าครั้งก่อนยังไม่ได้ผล '+
+        'ลองดูว่าข้อตกลงเดิมวัดผลได้จริงหรือเปล่า</span></div>';
+    }
+    const nsame = (r.notices_same_topic||[]).length;
+    if(nsame > 0){
+      warn += '<div class="box warn"><b>คนนี้มีใบเตือนเรื่องเดียวกันที่ยังไม่ถูกยกเลิกอยู่ '+nsame+' ใบ</b>'+
+        '<br><span class="mini">ก่อนดำเนินการขั้นต่อไปควรตรวจกับผู้รู้ด้านแรงงานอีกครั้ง</span></div>';
+    }
+    if(!up){
+      warn += '<div class="box warn"><b>ยังไม่ได้แนบไฟล์สแกน</b> — บันทึกไว้แล้ว '+
+        'แต่ยังไม่มีตัวเอกสารเป็นหลักฐาน แนบทีหลังได้จากปุ่มในรายการด้านล่าง</div>';
+    }
+    document.getElementById('tWarn').innerHTML = warn;
+
+    ['tTopic','tSummary','tAgree','tSay','tWho'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('tFile').value='';
+    document.getElementById('tFileInfo').textContent='';
     toast('บันทึกแล้ว');
     reload();
-  }catch(e){ err.textContent = e.message; }
+  }catch(e){ err.textContent = e.message; document.getElementById('tFileInfo').textContent=''; }
+  finally{ btn.disabled = false; }
+}
+
+/* บันทึกผลการทบทวนของรายการที่ถึงกำหนดแล้ว */
+async function noteFollowUp(id){
+  const note = prompt('ผลการทบทวนเป็นยังไง');
+  if(note === null) return;
+  if(!note.trim()){ toast('ยังไม่ได้เขียนผล'); return; }
+  const t = ((DOCS && DOCS.talks) || []).find(x => x.id === id);
+  if(!t){ toast('ไม่พบรายการ'); return; }
+  try{
+    const r = await rpc('hr_talk_save', {
+      p_pin: PIN, p_id: id,
+      p_person: t.person, p_talk_date: t.talk_date, p_kind: t.kind, p_topic: t.topic,
+      p_summary: t.summary, p_agreement: t.agreement, p_employee_say: t.employee_say,
+      p_follow_up_date: t.follow_up_date, p_follow_up_note: note.trim(),
+      p_attendees: t.attendees
+    });
+    toast(r.ok ? 'บันทึกผลแล้ว' : (r.error||'ไม่สำเร็จ'));
+    reload();
+  }catch(e){ toast(e.message); }
 }
 
 /* ───────── แท็บกระดาน ───────── */
@@ -783,6 +929,7 @@ function paintCaseForm(){
       (ROLE==='owner' && x.points!=null ? ' <span class="pill '+(x.points<0?'bad':'good')+'">'+
          (x.points>0?'+':'')+num(x.points,2)+'</span>' : '')+
       '<br><span class="mini">'+esc(x.note||'')+' · บันทึกโดย '+esc(x.logged_by||'—')+'</span>'+
+      caseDocsHtml(x, c.locked)+
       '</div></div>'+
     (ROLE==='owner' && !c.locked ? '<br><button class="danger" style="margin-top:8px" onclick="delCase('+x.id+')">ลบเคสนี้</button>':'')+
     '</div>').join('') : '<p class="note">ยังไม่มีเคสในงวดนี้</p>';
@@ -867,6 +1014,89 @@ function showTypeDetail(){
     : '<span class="pill warn">ยังไม่ได้เลือกหัวข้อ</span>';
 }
 
+/* ── รูปประกอบเคส ─────────────────────────────────────────
+   เก็บที่ bucket ส่วนตัวชุดเดียวกับไฟล์สแกนใบเตือน (โฟลเดอร์ cases/)
+   เปิดดูต้องขอลิงก์ชั่วคราวทุกครั้ง ลิงก์หมดอายุใน 2 นาที
+   รูปอัปหลังเคสถูกบันทึกแล้ว เพราะต้องมีเลขเคสก่อนถึงจะผูกกันได้ */
+const MAX_CASE_PHOTOS = 3;
+let CASE_PHOTOS = [];
+
+function pickCasePhotos(){
+  if(CASE_PHOTOS.length >= MAX_CASE_PHOTOS){ toast('แนบได้สูงสุด '+MAX_CASE_PHOTOS+' รูป'); return; }
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/jpeg,image/png,image/webp,image/heic';
+  inp.multiple = true;
+  inp.onchange = () => {
+    const files = Array.from(inp.files || []);
+    let skipped = 0;
+    for(const f of files){
+      if(CASE_PHOTOS.length >= MAX_CASE_PHOTOS){ skipped++; continue; }
+      if(f.size > 15*1024*1024){ toast(f.name+' ใหญ่เกิน 15 MB'); continue; }
+      CASE_PHOTOS.push(f);
+    }
+    if(skipped) toast('แนบได้สูงสุด '+MAX_CASE_PHOTOS+' รูป — ตัดออก '+skipped+' รูป');
+    paintCasePhotos();
+  };
+  inp.click();
+}
+
+function dropCasePhoto(i){ CASE_PHOTOS.splice(i,1); paintCasePhotos(); }
+
+function paintCasePhotos(){
+  const box = document.getElementById('cPhotoPrev');
+  const cnt = document.getElementById('cPhotoCount');
+  if(!box) return;
+  cnt.textContent = CASE_PHOTOS.length ? CASE_PHOTOS.length+'/'+MAX_CASE_PHOTOS+' รูป' : '';
+  box.innerHTML = CASE_PHOTOS.map((f,i)=>
+    '<figure><img src="'+URL.createObjectURL(f)+'" alt="">'+
+    '<button type="button" title="เอาออก" onclick="dropCasePhoto('+i+')">✕</button></figure>').join('');
+}
+
+/* ปุ่มดูรูป/ลบรูป ในรายการเคสที่บันทึกไปแล้ว */
+function caseDocsHtml(x, locked){
+  const docs = x.docs || [];
+  let h = '';
+  if(docs.length){
+    h += '<div style="margin-top:6px"><span class="mini">📷 </span>'+
+      docs.map((d,i)=>'<button class="mini-btn" onclick="viewDoc(\''+d.path+'\')">รูป '+(i+1)+'</button>'+
+        (locked ? '' : '<button class="mini-btn danger" title="ลบรูปนี้" onclick="delCaseDoc('+d.id+')">✕</button>')
+      ).join('')+'</div>';
+  }
+  if(!locked && docs.length < MAX_CASE_PHOTOS){
+    h += '<div style="margin-top:6px"><button class="mini-btn" onclick="addCasePhoto('+x.id+')">📷 เพิ่มรูป</button></div>';
+  }
+  return h;
+}
+
+/* แนบรูปเพิ่มให้เคสที่บันทึกไปแล้ว */
+function addCasePhoto(caseId){
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/jpeg,image/png,image/webp,image/heic';
+  inp.onchange = async () => {
+    const f = inp.files && inp.files[0]; if(!f) return;
+    try{
+      toast('กำลังอัปรูป…');
+      const up = await uploadScan(f, '', 'case');
+      const a = await rpc('board100_case_attach',
+        {p_pin:PIN, p_case_id:caseId, p_doc_path:up.path, p_doc_mime:up.mime, p_doc_size:up.size});
+      toast(a.ok ? 'แนบรูปแล้ว' : (a.error||'แนบไม่สำเร็จ'));
+      reload();
+    }catch(e){ toast(e.message); }
+  };
+  inp.click();
+}
+
+async function delCaseDoc(id){
+  if(!confirm('ลบรูปนี้?')) return;
+  try{
+    const r = await rpc('board100_case_doc_delete', {p_pin:PIN, p_doc_id:id});
+    toast(r.ok ? 'ลบรูปแล้ว' : (r.error||'ลบไม่สำเร็จ'));
+    reload();
+  }catch(e){ toast(e.message); }
+}
+
 async function saveCase(){
   const err = document.getElementById('cErr'); err.textContent='';
   const note = document.getElementById('cNote').value.trim();
@@ -883,9 +1113,32 @@ async function saveCase(){
       p_pin: PIN
     });
     if(!r.ok){ err.textContent = r.error || 'บันทึกไม่สำเร็จ'; return; }
+
+    /* เคสบันทึกแล้ว — อัปรูปตามทีละใบ ถ้ารูปไหนพลาดก็บอกเฉพาะใบนั้น เคสไม่หาย */
+    const files = CASE_PHOTOS.slice();
+    let okPhotos = 0, failPhotos = 0;
+    if(files.length){
+      const btn = document.getElementById('cSaveBtn');
+      if(btn){ btn.disabled = true; btn.textContent = 'กำลังอัปรูป…'; }
+      for(let i=0;i<files.length;i++){
+        toast('กำลังอัปรูป '+(i+1)+'/'+files.length+'…');
+        try{
+          const up = await uploadScan(files[i], document.getElementById('cPerson').value, 'case');
+          const a  = await rpc('board100_case_attach',
+            {p_pin:PIN, p_case_id:r.id, p_doc_path:up.path, p_doc_mime:up.mime, p_doc_size:up.size});
+          if(!a.ok) throw new Error(a.error||'แนบรูปไม่สำเร็จ');
+          okPhotos++;
+        }catch(e){ failPhotos++; err.textContent = 'รูปที่ '+(i+1)+': '+e.message+' (เคสบันทึกแล้ว กด "เพิ่มรูป" ในรายการเคสได้)'; }
+      }
+      if(btn){ btn.disabled = false; btn.textContent = 'บันทึกเคส'; }
+    }
+
     document.getElementById('cNote').value=''; document.getElementById('cBill').value='';
+    CASE_PHOTOS = []; paintCasePhotos();
     PICKED = null;
-    toast('บันทึกเคสแล้ว');
+    toast(files.length
+      ? 'บันทึกเคสแล้ว · แนบรูป '+okPhotos+'/'+files.length+' รูป'+(failPhotos?' (พลาด '+failPhotos+')':'')
+      : 'บันทึกเคสแล้ว');
     reload();
   }catch(e){ err.textContent = e.message; }
 }
