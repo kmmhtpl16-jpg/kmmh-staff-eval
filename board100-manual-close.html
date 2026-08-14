@@ -957,7 +957,7 @@ function paintCaseForm(){
 
   document.getElementById('cPerson').innerHTML =
     (c.people||[]).map(p=>'<option value="'+esc(p.name)+'">'+esc(p.name)+' — '+esc(p.jobs)+
-      (p.on_board?'':' (ยังไม่มีกระดาน)')+'</option>').join('');
+      (p.team ? ' · '+esc(p.team) : ' (ยังไม่มีกระดาน)')+'</option>').join('');
 
   document.getElementById('cPerson').onchange = paintTypes;
   paintTypes();
