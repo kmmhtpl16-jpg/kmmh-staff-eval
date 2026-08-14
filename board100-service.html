@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#6d28d9">
+<title>กระดานทีมบริการ 100 คะแนน · KMMH</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<link rel="icon" href="favicon.ico?v=2" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=2">
+<style>
+:root{
+  --bg:#f4f6f8; --card:#fff; --line:#e2e8f0; --ink:#0f172a; --dim:#64748b;
+  --brand:#0f766e; --brand2:#115e59; --warn:#b45309; --bad:#b91c1c; --good:#15803d;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Thai","Sarabun",sans-serif;
+  font-size:16px;line-height:1.6}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}
+h2{font-size:17px;margin:24px 0 8px}
+.sub{color:var(--dim);font-size:14px;margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--line);background:#fff;padding:9px 14px}
+button:hover{background:#f8fafc}
+button.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+button.primary:hover{background:var(--brand2)}
+button.danger{background:#fff;color:var(--bad);border-color:#fecaca}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,select,textarea{font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:9px;width:100%;background:#fff}
+textarea{min-height:78px;resize:vertical}
+label{display:block;font-size:14px;color:var(--dim);margin:10px 0 4px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--dim);font-weight:600;font-size:13px}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:#f8fafc}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+/* ปุ่มลัดไปโปรแกรมอื่นในชุดเดียวกัน — เปิดได้ทั้งเจ้าของและ HR */
+.shortcuts{display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 16px}
+.shortcuts a{display:inline-block;text-decoration:none;font-size:14px;color:var(--brand);
+  background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px}
+.shortcuts a:hover{background:#f0fdfa;border-color:var(--brand)}
+/* รูปประกอบเคส */
+.mini-btn{padding:3px 9px;font-size:12.5px;border-radius:7px;margin-right:4px}
+.photoprev{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.photoprev figure{margin:0;position:relative;width:84px}
+.photoprev img{width:84px;height:84px;object-fit:cover;border-radius:9px;border:1px solid var(--line);display:block}
+.photoprev button{position:absolute;top:-7px;right:-7px;width:24px;height:24px;padding:0;line-height:1;
+  border-radius:999px;background:#fff;color:var(--bad);border-color:#fecaca;font-size:13px}
+.tabs button{border-radius:999px}
+.tabs button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.hide{display:none}
+.grade{display:inline-block;min-width:26px;text-align:center;padding:1px 7px;border-radius:6px;font-weight:700}
+.gA{background:#dcfce7;color:#166534}.gB{background:#dbeafe;color:#1e40af}
+.gC{background:#fef3c7;color:#92400e}.gD{background:#fee2e2;color:#991b1b}
+.gE{background:#fecaca;color:#7f1d1d}.gNone{background:#f1f5f9;color:#64748b}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;background:#f1f5f9;color:var(--dim)}
+.pill.warn{background:#fef3c7;color:#92400e}
+.pill.bad{background:#fee2e2;color:#991b1b}
+.pill.good{background:#dcfce7;color:#166534}
+.note{font-size:13px;color:var(--dim)}
+.box{border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0;background:#fbfdfe}
+.box.warn{background:#fffbeb;border-color:#fde68a}
+.box.bad{background:#fef2f2;border-color:#fecaca}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:700px){.row2,.row3{grid-template-columns:1fr}
+  table{font-size:13px} th,td{padding:7px 4px}}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
+  background:#0f172a;color:#fff;padding:11px 18px;border-radius:10px;opacity:0;
+  transition:opacity .25s;pointer-events:none;max-width:92vw;z-index:99;font-size:14px}
+#toast.on{opacity:1}
+.gate{max-width:340px;margin:12vh auto}
+.gate input{text-align:center;font-size:26px;letter-spacing:.35em;padding:14px}
+.err{color:var(--bad);font-size:14px;margin-top:8px}
+.mini{font-size:12px;color:var(--dim)}
+.lv{display:flex;gap:6px;flex-wrap:wrap}
+.lv button{flex:1;min-width:64px;padding:7px 4px;font-size:14px}
+.lv button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+/* ── เลือกหัวข้อเคส: แยกฝั่ง แยกหมวด สีบอกระดับความร้ายแรง ── */
+.side{display:flex;gap:8px;margin:6px 0 12px}
+.side button{flex:1;padding:11px;font-weight:600;font-size:15px}
+.side button.on.cut{background:#fef2f2;border-color:var(--bad);color:var(--bad)}
+.side button.on.praise{background:#f0fdf4;border-color:var(--good);color:var(--good)}
+.fields{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.fields button{padding:6px 12px;border-radius:999px;font-size:14px}
+.fields button.on{background:#0f172a;color:#fff;border-color:#0f172a}
+.tlist{max-height:400px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:8px;background:#fbfdfe}
+.titem{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:9px;
+  border:1px solid transparent;cursor:pointer;margin-bottom:4px;background:#fff}
+.titem:hover{background:#f8fafc}
+.titem.on{border-color:var(--brand);background:#f0fdfa;box-shadow:0 0 0 1px var(--brand)}
+.bar{width:5px;align-self:stretch;border-radius:3px;flex:none;min-height:34px}
+.sv-เบา{background:#facc15}.sv-กลาง{background:#f97316}.sv-หนัก{background:#dc2626}
+.sv-บันทึกไว้{background:#94a3b8}.sv-เล็ก{background:#86efac}.sv-กลางเพิ่ม{background:#22c55e}.sv-ใหญ่{background:#15803d}
+.tmain{flex:1;min-width:0}
+.tlabel{font-size:15px;line-height:1.45}
+.tmeta{font-size:12px;color:var(--dim);margin-top:2px}
+.sv{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;flex:none}
+.sv.เบา{background:#fef9c3;color:#854d0e}
+.sv.กลาง{background:#ffedd5;color:#9a3412}
+.sv.หนัก{background:#fee2e2;color:#991b1b}
+.sv.บันทึกไว้{background:#f1f5f9;color:#475569}
+.sv.เล็ก{background:#dcfce7;color:#166534}
+.sv.กลางเพิ่ม{background:#bbf7d0;color:#166534}
+.sv.ใหญ่{background:#86efac;color:#14532d}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:8px 0 2px}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+</style>
+<style>
+/* หน้านี้ใช้สีม่วงแยกจากกระดานทีมขาย จะได้รู้ทันทีว่าเปิดอยู่หน้าไหน */
+:root{ --brand:#6d28d9; --brand2:#5b21b6 }
+</style>
+</head>
+<body>
+
+<!-- ───────── ด่านใส่รหัส ───────── -->
+<div id="gate" class="wrap">
+  <div class="card" style="max-width:420px;margin:40px auto">
+    <h1>กระดานทีมบริการ 100 คะแนน</h1>
+    <p class="sub">ร้านกิจมั่งมีโฮม · ต้อม แซ้งค์ ไนท์ แป๋ง พีพี โอที จ๋า</p>
+    <label>ใส่รหัส</label>
+    <input id="pin" type="password" inputmode="numeric" placeholder="••••" autocomplete="off">
+    <div style="margin-top:12px"><button class="primary" onclick="doLogin()">เข้าใช้งาน</button></div>
+    <div id="gateErr" class="err"></div>
+    <p class="note" style="margin-top:14px">
+      หน้านี้เปิดได้เฉพาะรหัสเจ้าของ เพราะเห็นคะแนนและเกรด<br>
+      <b>บันทึกเคสของทีมบริการ ทำที่หน้ากระดานรวมเหมือนเดิม</b> ไม่ต้องมาหน้านี้
+    </p>
+  </div>
+</div>
+
+<!-- ───────── ตัวโปรแกรม ───────── -->
+<div id="app" class="wrap hide">
+  <h1>กระดานทีมบริการ 100 คะแนน</h1>
+  <p class="sub">
+    งวด <select id="period" style="width:auto;display:inline-block;padding:4px 8px" onchange="reload()"></select>
+    <span id="roleTag" class="pill"></span>
+    <span id="lockTag"></span>
+  </p>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="shortcuts" id="shortcuts"></div>
+
+  <!-- แท็บ 1 · กระดาน -->
+  <div id="tab-board" class="tabpane hide">
+    <div id="boardWarn"></div>
+    <div class="card">
+      <table>
+        <thead><tr>
+          <th>คน</th><th>ผลงาน /50</th><th>โปร่งใส /25</th><th>วินัย /25</th><th>รวม</th><th>เกรด</th>
+        </tr></thead>
+        <tbody id="boardBody"></tbody>
+      </table>
+      <p class="note" style="margin-top:10px">แตะที่ชื่อเพื่อดูที่มาของคะแนนและเคสของคนนั้น</p>
+    </div>
+    <div id="detail"></div>
+    <div class="card">
+      <h2 style="margin-top:0">โครงคะแนนของทีมนี้</h2>
+      <p class="note" style="margin:0">
+        <b>ผลงาน 50</b> = ระดับขั้นที่เจ้าของเลือก − เคสหัก + เคสชื่นชม ·
+        <b>โปร่งใส 25</b> = เริ่มเต็ม 25 แล้วบวกลบด้วยเคส ·
+        <b>วินัย 25</b> = นาทีสายจากสแกนนิ้ว (สาย 12 นาที = 1 คะแนน) − เคสเรื่องอารมณ์/กิริยา<br>
+        <b>ไม่มีฟอร์มเพื่อนประเมิน</b> ปิดงวดไม่ต้องรอใครส่งฟอร์ม ·
+        เกรดตันที่ C ถ้าโปร่งใสต่ำกว่า 15 หรือวินัยต่ำกว่า 15
+      </p>
+    </div>
+  </div>
+
+  <!-- แท็บ 2 · เลือกระดับขั้น -->
+  <div id="tab-level" class="tabpane hide">
+    <div class="card">
+      <h2 style="margin-top:0">เลือกระดับขั้นผลงาน</h2>
+      <p class="note">
+        เลือกแล้วระบบเอาไปลบเคสหัก บวกเคสชื่นชมให้เอง ·
+        <b>แนะนำให้ใช้ 75% เป็นค่ามาตรฐาน</b>ของคนที่ทำงานครบตามหน้าที่
+        แล้วปล่อยให้ 100% เป็นสิ่งที่ต้องไต่ขึ้นไปด้วยเคสชื่นชม
+      </p>
+      <div id="levelList"></div>
+    </div>
+  </div>
+
+  <!-- แท็บ 3 · ปิดงวด -->
+  <div id="tab-close" class="tabpane hide">
+    <div class="card">
+      <h2 style="margin-top:0">สถานะงวด</h2>
+      <div id="closeState"></div>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0">ปิดงวด</h2>
+      <p class="note">ปิดแล้วตัวเลขจะถูกตรึงไว้ · บันทึกเคสและแก้คะแนนไม่ได้อีก</p>
+      <label>หมายเหตุ (ไม่บังคับ)</label>
+      <input id="closeNote" placeholder="เช่น ปิดหลังคุยกับหัวหน้าทีมแล้ว">
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="primary" onclick="closePeriod(false)">ปิดงวด</button>
+        <button class="danger" onclick="closePeriod(true)">ปิดทั้งที่ข้อมูลไม่ครบ</button>
+      </div>
+      <div id="closeErr" class="err"></div>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0">เปิดงวดกลับ</h2>
+      <p class="note">ต้องเขียนเหตุผลอย่างน้อย 10 ตัวอักษร เก็บเป็นประวัติ · ปิดใหม่จะได้เลข snapshot ถัดไป ของเดิมไม่ลบ</p>
+      <label>เหตุผล</label>
+      <input id="reopenReason" placeholder="เช่น พบว่านำเข้าสแกนนิ้วไม่ครบเดือน">
+      <div style="margin-top:12px"><button onclick="reopenPeriod()">เปิดงวดกลับ</button></div>
+      <div id="reopenErr" class="err"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────
+   กระดานทีมบริการ 7 คน · ผลงาน 50 / โปร่งใส 25 / วินัย 25
+   ตรรกะคะแนนทั้งหมดอยู่ในฐานข้อมูล (RPC svc100_*) หน้านี้ไม่คำนวณคะแนนเอง
+   สร้าง 13 ส.ค. 69 แทนไฟล์เดิมของ 12 ส.ค. ที่หาไม่เจอ
+   ───────────────────────────────────────────────────────────── */
+const SB_URL = 'https://hfystbdqjhftrlelmkjm.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmeXN0YmRxamhmdHJsZWxta2ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNTc3MDUsImV4cCI6MjA5NDczMzcwNX0.cyRCwh0G6ArSevhsKa6kmPnYhLRRJYrxhlH0ED_JJaE';
+
+/* รหัสเก็บไว้ในหน่วยความจำระหว่างเปิดหน้าเท่านั้น ปิดหน้าแล้วหาย ไม่เขียนลงเครื่อง */
+let PIN = '', ROLE = '', DATA = null;
+
+async function rpc(fn, args){
+  const res = await fetch(SB_URL + '/rest/v1/rpc/' + fn, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},
+    body: JSON.stringify(args || {})
+  });
+  if(!res.ok) throw new Error('เชื่อมต่อฐานข้อมูลไม่ได้ (' + res.status + ')');
+  return await res.json();
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'), 2600);
+}
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function num(v, d){ return v==null || v==='' ? '—' : Number(v).toFixed(d==null?2:d); }
+function gradeTag(g){
+  if(!g) return '<span class="grade gNone">—</span>';
+  return '<span class="grade g'+esc(g)+'">'+esc(g)+'</span>';
+}
+function bkkToday(){
+  const d = new Date(Date.now() + (new Date().getTimezoneOffset()*60000) + 7*3600000);
+  return d.toISOString().slice(0,10);
+}
+function periodOf(dateStr){ return dateStr.slice(0,7); }
+
+/* ───────── ด่านใส่รหัส ───────── */
+document.getElementById('pin').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
+async function doLogin(){
+  const p = document.getElementById('pin').value.trim();
+  const err = document.getElementById('gateErr');
+  err.textContent = '';
+  if(!p){ err.textContent = 'กรุณาใส่รหัส'; return; }
+  try{
+    const r = await rpc('svc100_board', {p_period: periodOf(bkkToday()), p_pin: p});
+    if(r && r.ok){ PIN = p; ROLE = r.role || 'owner'; DATA = r; enterApp(); return; }
+    err.textContent = (r && r.error) || 'รหัสไม่ถูกต้อง — หน้านี้เปิดได้เฉพาะรหัสเจ้าของ';
+  }catch(e){ err.textContent = e.message; }
+}
+
+function enterApp(){
+  document.getElementById('gate').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+  document.getElementById('roleTag').textContent = 'เจ้าของ';
+
+  // ปุ่มลัดชุดเดียวกับกระดานทีมขาย
+  const links = [
+    ['board100-manual-close.html', '📋', 'กระดานทีมขาย · บันทึกเคส'],
+    ['eval-sales.html',            '⭐', 'ประเมินคนขาย รายเดือน'],
+    ['index.html',                 '📊', 'ประเมินขยัน หน้าร้าน']
+  ];
+  document.getElementById('shortcuts').innerHTML =
+    links.map(l => '<a href="'+l[0]+'">'+l[1]+' '+l[2]+' →</a>').join('');
+
+  // งวดให้เลือก: ย้อนหลัง 12 เดือนจากเดือนนี้
+  const sel = document.getElementById('period');
+  const now = new Date(Date.now() + 7*3600000);
+  let opts = '';
+  for(let i=0;i<12;i++){
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth()-i, 1));
+    opts += '<option value="'+d.toISOString().slice(0,7)+'">'+d.toISOString().slice(0,7)+'</option>';
+  }
+  sel.innerHTML = opts;
+
+  const tabs = [['board','กระดาน'],['level','เลือกระดับขั้น'],['close','ปิดงวด']];
+  document.getElementById('tabs').innerHTML =
+    tabs.map((t,i)=>'<button class="'+(i===0?'on':'')+'" onclick="showTab(\''+t[0]+'\',this)">'+t[1]+'</button>').join('');
+  showTab('board', document.querySelector('#tabs button'));
+  reload();
+}
+
+function showTab(name, btn){
+  document.querySelectorAll('.tabpane').forEach(p=>p.classList.add('hide'));
+  document.getElementById('tab-'+name).classList.remove('hide');
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+}
+
+/* ───────── โหลดข้อมูลใหม่ทั้งหน้า ───────── */
+async function reload(){
+  try{
+    DATA = await rpc('svc100_board', {p_period: document.getElementById('period').value, p_pin: PIN});
+    if(!DATA.ok){ toast(DATA.error || 'โหลดกระดานไม่ได้'); return; }
+    document.getElementById('detail').innerHTML = '';
+    paintBoard(); paintLevels(); paintClose();
+  }catch(e){ toast(e.message); }
+}
+
+/* ───────── แท็บกระดาน ───────── */
+function paintBoard(){
+  const d = DATA;
+  document.getElementById('lockTag').innerHTML =
+    d.period_status === 'closed'
+      ? '<span class="pill bad">ปิดงวดแล้ว</span>'
+      : '<span class="pill good">งวดเปิดอยู่</span>';
+
+  let warn = '';
+  const noLevel = (d.rows||[]).filter(r=>r.perf_level==null).map(r=>r.person);
+  if(noLevel.length){
+    warn += '<div class="box warn"><b>ยังไม่ได้เลือกระดับขั้นผลงาน '+noLevel.length+' คน</b> — '+
+      noLevel.map(esc).join(' · ')+'<br><span class="mini">คนที่ยังไม่เลือก จะยังไม่มีคะแนนรวมและเกรด</span></div>';
+  }
+  const waiting = (d.rows||[]).filter(r=>r.waiting>0);
+  if(waiting.length){
+    warn += '<div class="box warn"><b>มีเคสที่หัวข้อยังรอตีระดับ</b> — '+
+      waiting.map(r=>esc(r.person)+' '+r.waiting+' เคส').join(' · ')+
+      '<br><span class="mini">เคสพวกนี้ยังหัก 0 · ปิดงวดไม่ได้จนกว่าจะตีระดับครบ (ทำที่แท็บหลังบ้านของกระดานทีมขาย)</span></div>';
+  }
+  document.getElementById('boardWarn').innerHTML = warn;
+
+  document.getElementById('boardBody').innerHTML = (d.rows||[]).map((r,i)=>
+    '<tr class="clickable" onclick="showDetail('+i+')">'+
+      '<td><b>'+esc(r.person)+'</b>'+(r.cases&&r.cases.length?' <span class="pill">'+r.cases.length+' เคส</span>':'')+'</td>'+
+      '<td>'+(r.perf==null?'<span class="pill warn">รอเลือก</span>':num(r.perf))+'</td>'+
+      '<td>'+num(r.transparency)+'</td>'+
+      '<td>'+num(r.discipline)+'</td>'+
+      '<td><b>'+num(r.total)+'</b></td>'+
+      '<td>'+gradeTag(r.grade)+(r.capped_at_c?' <span class="pill bad">ตัน C</span>':'')+'</td>'+
+    '</tr>').join('');
+}
+
+function showDetail(i){
+  const r = (DATA.rows||[])[i]; if(!r) return;
+  const plus = v => (v>0?'+':'')+num(v,2);
+  const cases = (r.cases||[]).map(c =>
+    '<li>'+esc(c.date||'')+' · '+esc(c.label||c.code||'')+
+    ' <span class="pill '+((c.points||0)<0?'bad':'good')+'">'+plus(c.points)+'</span>'+
+    (c.note?'<br><span class="mini">'+esc(c.note)+'</span>':'')+'</li>').join('');
+
+  document.getElementById('detail').innerHTML =
+    '<div class="card"><h2 style="margin-top:0">'+esc(r.person)+
+      ' <span class="pill">'+esc((r.jobs||[]).map(j=>j.job+' '+Math.round(j.share*100)+'%').join(' · '))+'</span></h2>'+
+    '<div class="row3">'+
+      '<div class="box"><b>ผลงาน '+num(r.perf)+'/50</b><br><span class="mini">'+
+        'ระดับขั้นที่เลือก: '+(r.perf_level==null?'ยังไม่เลือก':r.perf_level+'%')+
+        ' · หักเคส '+num(r.perf_deduct,2)+' · ชื่นชม '+plus(r.perf_bonus)+'</span></div>'+
+      '<div class="box"><b>โปร่งใส '+num(r.transparency)+'/25</b><br><span class="mini">'+
+        'เริ่มที่ '+num(r.trans_base,0)+' · หักเคส '+num(r.trans_deduct,2)+' · ชื่นชม '+plus(r.trans_bonus)+'</span></div>'+
+      '<div class="box"><b>วินัย '+num(r.discipline)+'/25</b><br><span class="mini">'+
+        'สายรวม '+esc(r.late_minutes)+' นาที → '+num(r.disc_attend,2)+
+        ' · หักเคสกิริยา '+num(r.disc_deduct,2)+' · ชื่นชม '+plus(r.disc_bonus)+
+        '<br>ที่มา: '+esc(r.discipline_source||'—')+'</span></div>'+
+    '</div>'+
+    (r.cap_reason ? '<div class="box bad"><b>เกรดตันที่ C</b> — '+esc(r.cap_reason)+'</div>' : '')+
+    (r.missing && r.missing.length ? '<div class="box warn">ยังขาด: '+r.missing.map(esc).join(' · ')+'</div>' : '')+
+    (cases ? '<h2>เคสของคนนี้</h2><ul>'+cases+'</ul>'
+           : '<p class="note">ยังไม่มีเคสในงวดนี้ — บันทึกเคสทำที่หน้ากระดานทีมขาย</p>')+
+    '<button onclick="document.getElementById(\'detail\').innerHTML=\'\'">ปิด</button></div>';
+  const dv = document.getElementById('detail');
+  if(dv.scrollIntoView) dv.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+/* ───────── แท็บเลือกระดับขั้น ───────── */
+const LEVELS = [
+  [100,'ทำครบ และมีของที่ทำเกินให้เห็น'],
+  [75,'ทำครบตามที่ตกลง ไม่ต้องตาม'],
+  [50,'ทำครบเมื่อมีคนตาม'],
+  [25,'ต้องมีคนตามเก็บเป็นประจำ']
+];
+function paintLevels(){
+  const rubric = DATA.rubric || [];
+  document.getElementById('levelList').innerHTML = (DATA.rows||[]).map(r=>{
+    const job = (r.jobs||[])[0] ? r.jobs[0].job : '';
+    const btns = LEVELS.map(l=>{
+      const desc = (rubric.find(x=>x.job===job && x.level===l[0]) || {}).detail || l[1];
+      return '<button class="'+(r.perf_level==l[0]?'on':'')+'" title="'+esc(desc)+'" '+
+        'onclick="setLevel(\''+esc(r.person)+'\','+l[0]+')">'+l[0]+'%</button>';
+    }).join('');
+    const cur = r.perf_level==null ? '<span class="pill warn">ยังไม่เลือก</span>'
+      : '<span class="pill good">'+r.perf_level+'%</span>';
+    const desc = (rubric.find(x=>x.job===job && x.level==r.perf_level) || {}).detail;
+    return '<div class="box"><b>'+esc(r.person)+'</b> <span class="mini">'+
+      esc((r.jobs||[]).map(j=>j.job+' '+Math.round(j.share*100)+'%').join(' · '))+'</span> '+cur+
+      '<div class="lv" style="margin-top:8px">'+btns+'</div>'+
+      (desc ? '<div class="mini" style="margin-top:6px">'+esc(desc)+'</div>' : '')+
+      '</div>';
+  }).join('');
+}
+async function setLevel(person, level){
+  try{
+    /* ฟังก์ชันนี้ไม่มีค่าตั้งต้นให้สักช่อง ต้องส่งครบทั้ง 7 ช่องเสมอ ไม่งั้นหาฟังก์ชันไม่เจอ */
+    const r = await rpc('svc100_save_manual', {
+      p_period: document.getElementById('period').value,
+      p_person: person,
+      p_perf_level: level,
+      p_transparency: null,
+      p_discipline_override: null,
+      p_note: null,
+      p_pin: PIN
+    });
+    if(!r.ok){ toast(r.error||'บันทึกไม่สำเร็จ'); return; }
+    toast(person + ' → ' + level + '%');
+    reload();
+  }catch(e){ toast(e.message); }
+}
+
+/* ───────── แท็บปิดงวด ───────── */
+function paintClose(){
+  const d = DATA;
+  const missing = (d.rows||[]).filter(r=>r.total==null).map(r=>r.person);
+  const waiting = (d.rows||[]).filter(r=>r.waiting>0).map(r=>r.person);
+  let html = d.period_status === 'closed'
+    ? '<div class="box bad"><b>งวดนี้ปิดแล้ว</b>'+
+      (d.closed_at?' เมื่อ '+esc(String(d.closed_at).slice(0,16).replace('T',' ')):'')+
+      (d.closed_by?' โดย '+esc(d.closed_by):'')+
+      (d.close_note?'<br>หมายเหตุ: '+esc(d.close_note):'')+
+      (d.reopen_count?'<br><span class="mini">เคยเปิดกลับ '+esc(d.reopen_count)+' ครั้ง'+
+        (d.last_reopen_reason?' · ครั้งล่าสุด: '+esc(d.last_reopen_reason):'')+'</span>':'')+'</div>'
+    : '<div class="box good">งวดนี้ยังเปิดอยู่</div>';
+  if(missing.length) html += '<div class="box warn"><b>ยังไม่มีคะแนนรวม '+missing.length+' คน</b> — '+missing.map(esc).join(' · ')+'</div>';
+  if(waiting.length) html += '<div class="box warn"><b>ยังมีเคสรอตีระดับ</b> — '+waiting.map(esc).join(' · ')+'</div>';
+  if(!missing.length && !waiting.length && d.period_status !== 'closed')
+    html += '<div class="box good">ข้อมูลครบแล้ว ปิดงวดได้เลย · ทีมนี้ไม่ต้องรอฟอร์มเพื่อนประเมิน</div>';
+  document.getElementById('closeState').innerHTML = html;
+}
+async function closePeriod(force){
+  const err = document.getElementById('closeErr'); err.textContent='';
+  const note = document.getElementById('closeNote').value.trim();
+  if(force && !confirm('ปิดงวดทั้งที่ข้อมูลยังไม่ครบ?\nตัวเลขจะถูกตรึงตามที่เห็นตอนนี้')) return;
+  try{
+    const r = await rpc('svc100_close_period', {
+      p_period: document.getElementById('period').value,
+      p_pin: PIN, p_note: note || null, p_force: !!force
+    });
+    if(!r.ok){
+      let m = r.error || 'ปิดไม่สำเร็จ';
+      if(r.missing_score && r.missing_score.length) m += '\n• ยังไม่มีคะแนน: ' + r.missing_score.join(', ');
+      if(r.waiting_severity && r.waiting_severity.length) m += '\n• หัวข้อรอตีระดับ: ' + r.waiting_severity.join(', ');
+      err.style.whiteSpace='pre-line'; err.textContent = m; return;
+    }
+    document.getElementById('closeNote').value='';
+    toast('ปิดงวดแล้ว (snapshot '+r.snapshot_no+' · '+r.people+' คน)');
+    reload();
+  }catch(e){ err.textContent = e.message; }
+}
+async function reopenPeriod(){
+  const err = document.getElementById('reopenErr'); err.textContent='';
+  const reason = document.getElementById('reopenReason').value.trim();
+  if(reason.length < 10){ err.textContent = 'ต้องเขียนเหตุผลอย่างน้อย 10 ตัวอักษร'; return; }
+  try{
+    const r = await rpc('svc100_reopen_period', {
+      p_period: document.getElementById('period').value, p_pin: PIN, p_reason: reason});
+    if(!r.ok){ err.textContent = r.error||'เปิดกลับไม่สำเร็จ'; return; }
+    document.getElementById('reopenReason').value='';
+    toast('เปิดงวดกลับแล้ว'); reload();
+  }catch(e){ err.textContent = e.message; }
+}
+</script>
+</body>
+</html>

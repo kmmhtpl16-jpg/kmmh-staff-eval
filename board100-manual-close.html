@@ -190,6 +190,30 @@ tr.clickable:hover td{background:#f8fafc}
       </label>
       <div class="legend" id="legend"></div>
       <div class="tlist" id="tlist"></div>
+
+      <div style="margin-top:10px">
+        <button type="button" id="ntToggle" onclick="toggleNewType()">➕ เพิ่มหัวข้อใหม่</button>
+      </div>
+      <div id="ntForm" class="box hide" style="margin-top:10px">
+        <div id="ntSideTag" style="font-weight:600"></div>
+        <div id="ntHint" class="note" style="margin:4px 0 0"></div>
+        <label>ลงช่องไหน</label>
+        <select id="ntField"></select>
+        <label>หัวข้อ <span class="mini">(เขียนเป็นเรื่องที่เกิด ไม่ใช่ชื่อคน)</span></label>
+        <input id="ntLabel" placeholder="เช่น จอดรถขวางทางเข้าออกหน้าร้าน">
+        <label>เงื่อนไขกันเข้าใจผิด <span class="mini">(ไม่บังคับ แต่ช่วยมากตอนพนักงานเถียง)</span></label>
+        <textarea id="ntDetail" placeholder="เช่น ถ้าย้ายรถทันทีที่ถูกบอก ไม่นับ"></textarea>
+        <div id="ntSevWrap" class="hide">
+          <label>ระดับความรุนแรง</label>
+          <div class="lv" id="ntSev"></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="primary" onclick="saveNewType()">บันทึกหัวข้อ</button>
+          <button onclick="toggleNewType(false)">ยกเลิก</button>
+        </div>
+        <div id="ntErr" class="err"></div>
+      </div>
+
       <div id="cTypeDetail" class="note" style="margin-top:8px"></div>
       <div class="row2">
         <div>
@@ -385,6 +409,12 @@ tr.clickable:hover td{background:#f8fafc}
       <h2 style="margin-top:0">หัวข้อที่ HR เพิ่มเอง รอตีระดับ <span id="pendingCount" class="pill"></span></h2>
       <p class="note">ตีระดับแล้วระบบจะเติมคะแนนย้อนให้เคสที่ค้างทันที · <b>ปิดงวดไม่ได้ถ้ายังมีเคสรอตีระดับ</b></p>
       <div id="pendingList"></div>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0">หัวข้อเคสทั้งหมด <span id="allTypeCount" class="pill"></span></h2>
+      <p class="note">หัวข้อที่เคยมีเคสบันทึกไปแล้ว <b>ลบไม่ได้ ให้ปิดใช้งานแทน</b> — ไม่งั้นประวัติงวดเก่าจะอ่านไม่รู้เรื่อง<br>
+        ปิดใช้งานแล้วหัวข้อจะไม่ขึ้นให้เลือกตอนบันทึกเคสใหม่ แต่เคสเก่าที่ใช้หัวข้อนี้ยังอยู่ครบ</p>
+      <div id="allTypeList"></div>
     </div>
     <div class="card">
       <h2 style="margin-top:0">เปลี่ยนรหัส HR</h2>
@@ -949,6 +979,9 @@ function setSide(side){
   SIDE = side; FIELD = 'ทั้งหมด'; PICKED = null;
   document.getElementById('sideCut').classList.toggle('on', side==='หัก');
   document.getElementById('sidePraise').classList.toggle('on', side==='เพิ่ม');
+  // สลับฝั่งแล้วระดับที่เลือกไว้ใช้ไม่ได้ (คนละชุด) ต้องเลือกใหม่
+  NT_SEV = null;
+  if(!document.getElementById('ntForm').classList.contains('hide')) toggleNewType(true);
   paintTypes();
 }
 
@@ -1002,6 +1035,81 @@ function paintTypes(){
 
   if(PICKED && !show.some(t=>t.code===PICKED)) { PICKED = null; }
   showTypeDetail();
+}
+
+/* ── เพิ่มหัวข้อเคสใหม่ ─────────────────────────────────────
+   เจ้าของ: เพิ่มพร้อมตีระดับได้เลย
+   HR: เพิ่มได้ แต่เข้าสถานะ "รอเจ้าของตีระดับ" และหัก 0 ไปก่อน
+       เหตุผล — คนที่รู้ว่าเรื่องนี้หักกี่คะแนน จะเผลอเลือกหัวข้อตามคะแนนที่อยากให้
+       เจ้าของตีระดับเมื่อไหร่ ระบบเติมคะแนนย้อนให้เคสที่ค้างทันที */
+const NT_FIELDS = [
+  ['perf',  'ผลงาน'],
+  ['trans', 'โปร่งใส / ซื่อสัตย์'],
+  ['mat',   'วุฒิภาวะ · กิริยา (ทีมบริการนับเป็นวินัย)']
+];
+const NT_SEV_CUT = ['เบา','กลาง','หนัก'];
+const NT_SEV_ADD = ['บันทึกไว้','เล็ก','กลาง','ใหญ่'];
+let NT_SEV = null;
+
+function toggleNewType(show){
+  const box = document.getElementById('ntForm');
+  const open = (show === undefined) ? box.classList.contains('hide') : !!show;
+  box.classList.toggle('hide', !open);
+  document.getElementById('ntToggle').textContent = open ? '✕ ปิดกล่องเพิ่มหัวข้อ' : '➕ เพิ่มหัวข้อใหม่';
+  if(!open) return;
+
+  NT_SEV = null;
+  document.getElementById('ntErr').textContent = '';
+  document.getElementById('ntSideTag').textContent =
+    (SIDE === 'หัก' ? '🔴 เพิ่มหัวข้อฝั่งเคสหัก' : '🟢 เพิ่มหัวข้อฝั่งเคสชื่นชม');
+  document.getElementById('ntHint').innerHTML = ROLE === 'owner'
+    ? 'ตั้งเป็นใช้กับทุกงานก่อน · ระดับที่เลือกจะใช้ทันที'
+    : 'บันทึกเคสด้วยหัวข้อนี้ได้เลย แต่<b>ยังหัก 0 คะแนน</b>จนกว่าเจ้าของจะตีระดับให้ · ระบบจะแจ้งเจ้าของอัตโนมัติ';
+  document.getElementById('ntField').innerHTML =
+    NT_FIELDS.map(f=>'<option value="'+f[0]+'">'+f[1]+'</option>').join('');
+  document.getElementById('ntSevWrap').classList.toggle('hide', ROLE !== 'owner');
+  paintNtSev();
+  if(box.scrollIntoView) box.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function paintNtSev(){
+  const list = SIDE === 'หัก' ? NT_SEV_CUT : NT_SEV_ADD;
+  document.getElementById('ntSev').innerHTML = list.map(sv=>
+    '<button type="button" class="'+(NT_SEV===sv?'on':'')+'" onclick="setNtSev(\''+sv+'\')">'+sv+'</button>'
+  ).join('');
+}
+function setNtSev(sv){ NT_SEV = sv; paintNtSev(); }
+
+async function saveNewType(){
+  const err = document.getElementById('ntErr'); err.textContent = '';
+  const label  = document.getElementById('ntLabel').value.trim();
+  const field  = document.getElementById('ntField').value;
+  const detail = document.getElementById('ntDetail').value.trim() || null;
+
+  if(label.length < 5){ err.textContent = 'เขียนหัวข้อให้ครบประโยคหน่อย (อย่างน้อย 5 ตัวอักษร)'; return; }
+  if(ROLE === 'owner' && !NT_SEV){ err.textContent = 'เลือกระดับความรุนแรงด้วย'; return; }
+
+  const dup = (CASEDATA.case_types||[]).find(t => t.label === label);
+  if(dup){ err.textContent = 'มีหัวข้อชื่อนี้อยู่แล้ว (' + (dup.field_label||dup.field) + ')'; return; }
+
+  try{
+    const r = ROLE === 'owner'
+      ? await rpc('board100_save_case_type', {
+          p_pin:PIN, p_field:field, p_label:label, p_severity:NT_SEV,
+          p_jobs:['*'], p_detail:detail, p_code:null, p_active:true, p_kind:SIDE })
+      : await rpc('board100_propose_case_type', {
+          p_pin:PIN, p_field:field, p_label:label,
+          p_jobs:['*'], p_detail:detail, p_kind:SIDE });
+    if(!r.ok){ err.textContent = r.error || 'บันทึกหัวข้อไม่สำเร็จ'; return; }
+
+    document.getElementById('ntLabel').value = '';
+    document.getElementById('ntDetail').value = '';
+    NT_SEV = null;
+    toggleNewType(false);
+    if(r.code) PICKED = r.code;
+    toast(ROLE === 'owner' ? 'เพิ่มหัวข้อแล้ว' : 'เพิ่มหัวข้อแล้ว — รอเจ้าของตีระดับ (ยังหัก 0)');
+    reload();
+  }catch(e){ err.textContent = e.message; }
 }
 
 function setField(f){ FIELD = f; paintTypes(); }
@@ -1284,11 +1392,53 @@ function paintAdmin(){
       '<button onclick="setSeverity(\''+esc(t.code)+'\',\''+s+'\')">'+s+'</button>').join('')+'</div></div>'
   ).join('') : '<p class="note">ไม่มีหัวข้อรอตีระดับ</p>';
 
+  /* หัวข้อทั้งหมด — ปิด/เปิดใช้งาน และลบได้เฉพาะที่ยังไม่มีใครถูกบันทึก */
+  const all = (a.case_types||[]).slice().sort((x,y)=>
+    (x.kind===y.kind ? 0 : (x.kind==='หัก' ? -1 : 1)) ||
+    String(x.field).localeCompare(String(y.field)) ||
+    String(x.label).localeCompare(String(y.label),'th'));
+  document.getElementById('allTypeCount').textContent =
+    all.length + ' หัวข้อ · ปิดอยู่ ' + all.filter(t=>!t.active).length;
+  document.getElementById('allTypeList').innerHTML = all.map(t=>
+    '<div class="box" style="opacity:'+(t.active?1:0.55)+'">'+
+      '<b>'+(t.kind==='หัก'?'🔴 ':'🟢 ')+esc(t.label)+'</b> '+
+      '<span class="mini">'+esc(t.field_label||t.field)+' · '+
+        esc(t.pending?'รอตีระดับ':(t.severity||'—'))+' · ใช้ไปแล้ว '+(t.used||0)+' เคส'+
+        (t.proposed_by?' · เพิ่มโดย '+esc(t.proposed_by):'')+'</span>'+
+      (t.detail?'<br><span class="mini">'+esc(t.detail)+'</span>':'')+
+      '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'+
+        '<button class="mini-btn" onclick="setTypeActive(\''+esc(t.code)+'\','+(!t.active)+')">'+
+          (t.active?'ปิดใช้งาน':'เปิดใช้งานกลับ')+'</button>'+
+        ((t.used||0)===0 ? '<button class="mini-btn danger" onclick="delType(\''+esc(t.code)+'\')">ลบทิ้ง</button>' : '')+
+      '</div>'+
+    '</div>').join('') || '<p class="note">ยังไม่มีหัวข้อ</p>';
+
   const cfg = (DATA && DATA.config) || {};
   document.getElementById('cfgList').innerHTML = Object.keys(cfg).map(k=>
     '<div style="border-bottom:1px solid var(--line);padding:7px 0">'+
     '<b>'+esc(cfg[k].label||k)+'</b> = '+esc(cfg[k].value)+
     (cfg[k].note?'<br><span class="mini">'+esc(cfg[k].note)+'</span>':'')+'</div>').join('');
+}
+async function setTypeActive(code, active){
+  const t = ((ADMIN||{}).case_types||[]).find(x=>x.code===code);
+  if(!t){ toast('ไม่พบหัวข้อนี้'); return; }
+  if(!active && !confirm('ปิดใช้งาน "'+t.label+'"?\nเคสเก่าที่ใช้หัวข้อนี้ยังอยู่ครบ แค่ไม่ขึ้นให้เลือกใหม่')) return;
+  try{
+    /* ส่งค่าเดิมกลับไปครบทุกช่อง เปลี่ยนเฉพาะสถานะเปิด/ปิด */
+    const r = await rpc('board100_save_case_type', {
+      p_pin:PIN, p_field:t.field, p_label:t.label, p_severity:t.severity,
+      p_jobs:t.jobs||['*'], p_detail:t.detail, p_code:code, p_active:!!active, p_kind:t.kind });
+    toast(r.ok ? (active?'เปิดใช้งานกลับแล้ว':'ปิดใช้งานแล้ว') : (r.error||'ไม่สำเร็จ'));
+    reload();
+  }catch(e){ toast(e.message); }
+}
+async function delType(code){
+  if(!confirm('ลบหัวข้อนี้ทิ้ง?')) return;
+  try{
+    const r = await rpc('board100_delete_case_type', {p_code:code, p_pin:PIN});
+    toast(r.ok ? 'ลบหัวข้อแล้ว' : (r.error||'ลบไม่สำเร็จ'));
+    reload();
+  }catch(e){ toast(e.message); }
 }
 async function setSeverity(code, sev){
   try{
