@@ -47,6 +47,23 @@ tr.clickable:hover td{background:#f8fafc}
 .shortcuts a:hover{background:#f0fdfa;border-color:var(--brand)}
 /* รูปประกอบเคส */
 .mini-btn{padding:3px 9px;font-size:12.5px;border-radius:7px;margin-right:4px}
+/* แถบสัดส่วนคะแนน — บอกว่ากระดานของคนนี้แบ่งคะแนนยังไง */
+.wbox{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0 4px;background:#fbfdfd}
+.wbox .whead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.wbox .whead b{font-size:15px}
+.wbar{display:flex;height:26px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.wbar span{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  color:#fff;white-space:nowrap;overflow:hidden;transition:filter .15s}
+.wbar span.dim{filter:saturate(.25) opacity(.55)}
+.wbar span.hit{box-shadow:inset 0 0 0 3px #0f172a}
+.w-perf{background:#0f766e} .w-trans{background:#2563eb} .w-mat{background:#b45309}
+.w-team{background:#7c3aed} .w-disc{background:#64748b}
+.wlist{margin-top:10px;display:grid;gap:6px}
+.wlist .wrow{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.5}
+.wlist .wdot{width:11px;height:11px;border-radius:3px;flex:none;margin-top:5px}
+.wlist .wname{font-weight:700;flex:none;min-width:74px}
+.wlist .wsrc{color:var(--dim)}
+.wnote{margin-top:9px;font-size:12.5px;color:var(--dim);line-height:1.55}
 .photoprev{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .photoprev figure{margin:0;position:relative;width:84px}
 .photoprev img{width:84px;height:84px;object-fit:cover;border-radius:9px;border:1px solid var(--line);display:block}
@@ -178,6 +195,8 @@ tr.clickable:hover td{background:#f8fafc}
           <input id="cDate" type="date">
         </div>
       </div>
+      <div id="wBox"></div>
+
       <label>เรื่องอะไร</label>
       <div class="side">
         <button id="sideCut" class="on cut" onclick="setSide('หัก')">🔴 เคสหัก</button>
@@ -1034,6 +1053,7 @@ function paintTypes(){
     : '<p class="note" style="padding:10px">ไม่มีหัวข้อในหมวดนี้ที่ตรงกับงานของคนที่เลือก — ติ๊กออกจากช่อง "แสดงเฉพาะหัวข้อที่ตรงกับงาน" เพื่อดูทั้งหมด</p>';
 
   if(PICKED && !show.some(t=>t.code===PICKED)) { PICKED = null; }
+  paintWeights();
   showTypeDetail();
 }
 
@@ -1110,6 +1130,54 @@ async function saveNewType(){
     toast(ROLE === 'owner' ? 'เพิ่มหัวข้อแล้ว' : 'เพิ่มหัวข้อแล้ว — รอเจ้าของตีระดับ (ยังหัก 0)');
     reload();
   }catch(e){ err.textContent = e.message; }
+}
+
+/* ── แถบสัดส่วนคะแนนของกระดาน ────────────────────────────
+   สองทีมคนละโครง จึงสลับตามคนที่เลือก ไม่ได้ฝังตัวเลขไว้ในหน้า
+   ตัวเลขทั้งหมดมาจากค่าตั้งจริงในฐานข้อมูล แก้ที่นั่นแล้วแถบนี้เปลี่ยนตาม */
+function paintWeights(){
+  const box = document.getElementById('wBox');
+  if(!box) return;
+  const pname = document.getElementById('cPerson').value;
+  const person = (CASEDATA.people||[]).find(p=>p.name===pname);
+  const team = person && person.team;
+  const parts = team ? ((CASEDATA.weights||{})[team] || []) : null;
+
+  if(!parts || !parts.length){
+    box.innerHTML = person
+      ? '<div class="box warn" style="margin:12px 0 4px">' + esc(pname) +
+        ' ยังไม่ได้อยู่ในกระดานไหน — บันทึกเคสไว้ได้ แต่จะยังไม่มีคะแนนรวมจนกว่าจะจัดเข้ากระดาน</div>'
+      : '';
+    return;
+  }
+
+  const total = parts.reduce((a,p)=>a + Number(p.points||0), 0);
+  const picked = (CASEDATA.case_types||[]).find(t=>t.code===PICKED);
+  /* ทีมบริการเอาเคสกลุ่มวุฒิภาวะไปลงช่องวินัย ซึ่งใช้คีย์ mat เหมือนกัน จึงไฮไลต์ได้ตรงเลย */
+  const hit = picked ? picked.field : null;
+
+  box.innerHTML =
+    '<div class="wbox">'+
+      '<div class="whead"><b>เกณฑ์คะแนนของ' + esc(team) + '</b>'+
+        '<span class="mini">รวม ' + total + ' คะแนน' +
+        (picked ? ' · เคสที่เลือกอยู่ลงช่อง <b>' +
+           esc((parts.find(p=>p.key===hit)||{}).label || picked.field_label || '—') + '</b>' : '') +
+        '</span></div>'+
+      '<div class="wbar">' + parts.map(p=>
+        '<span class="w-' + p.key + (hit ? (p.key===hit ? ' hit' : ' dim') : '') + '" '+
+        'style="width:' + (Number(p.points)/total*100) + '%" title="' + esc(p.label+' '+p.points+' คะแนน') + '">'+
+        (Number(p.points)/total >= 0.12 ? esc(p.label) + ' ' + p.points : p.points) +
+        '</span>').join('') + '</div>'+
+      '<div class="wlist">' + parts.map(p=>
+        '<div class="wrow"><i class="wdot w-' + p.key + '"></i>'+
+        '<span class="wname">' + esc(p.label) + ' ' + p.points + '</span>'+
+        '<span class="wsrc">' + esc(p.src) + '</span></div>').join('') + '</div>'+
+      '<div class="wnote">ช่องที่บันทึกเคสแล้วขยับได้: <b>' +
+        parts.filter(p=>p.case).map(p=>esc(p.label)).join(' · ') + '</b>' +
+        (parts.some(p=>!p.case)
+          ? ' · ช่องที่เคสแตะไม่ได้: ' + parts.filter(p=>!p.case).map(p=>esc(p.label)).join(' · ')
+          : '') + '</div>'+
+    '</div>';
 }
 
 function setField(f){ FIELD = f; paintTypes(); }
