@@ -78,6 +78,16 @@ tr.clickable:hover td{background:#f8fafc}
 .gA{background:#dcfce7;color:#166534}.gB{background:#dbeafe;color:#1e40af}
 .gC{background:#fef3c7;color:#92400e}.gD{background:#fee2e2;color:#991b1b}
 .gE{background:#fecaca;color:#7f1d1d}.gNone{background:#f1f5f9;color:#64748b}
+/* ── กระดิ่งแจ้งเตือน (เจ้าของเท่านั้น) ── */
+.bell{position:relative;display:inline-block;vertical-align:middle;margin-left:6px}
+.bell button{padding:4px 10px;border-radius:999px;font-size:15px;line-height:1.2}
+.bell button.has{border-color:#f59e0b;background:#fffbeb}
+.bell .cnt{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;
+  border-radius:999px;background:#dc2626;color:#fff;font-size:11px;line-height:18px;text-align:center}
+.bell .dot{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:999px;background:#f59e0b}
+.bellrow{border-left:3px solid #e2e8f0;padding:8px 0 8px 10px;margin-top:8px}
+.bellrow.new{border-left-color:#dc2626;background:#fff7f7}
+.bellrow.due{border-left-color:#f59e0b;background:#fffbeb}
 .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;background:#f1f5f9;color:var(--dim)}
 .pill.warn{background:#fef3c7;color:#92400e}
 .pill.bad{background:#fee2e2;color:#991b1b}
@@ -160,10 +170,12 @@ tr.clickable:hover td{background:#f8fafc}
     <span id="roleTag" class="pill"></span>
     <span id="lockTag"></span>
     <span id="svcLink"></span>
+    <span class="bell hide" id="bellWrap"></span>
   </p>
 
   <div class="tabs" id="tabs"></div>
   <div class="shortcuts" id="shortcuts"></div>
+  <div class="card hide" id="bellPanel"></div>
 
   <!-- แท็บ 1 · กระดาน -->
   <div id="tab-board" class="tabpane hide">
@@ -268,8 +280,8 @@ tr.clickable:hover td{background:#f8fafc}
     <div class="card">
       <h2 style="margin-top:0">เลือกระดับขั้นผลงาน</h2>
       <p class="note">
-        เลือก 1 ใน 4 ระดับให้แต่ละคน แล้วระบบเอาไปลบเคสหัก บวกเคสชื่นชม ·
-        <b>แนะนำให้ 75% เป็นค่ามาตรฐาน</b>ของคนที่ทำงานครบตามหน้าที่ ปล่อยให้ 100% เป็นสิ่งที่ต้องไต่ขึ้นไปด้วยเคสชื่นชม
+        เลือก 1 ใน 4 ระดับ <b>แยกทีละงาน</b> แล้วระบบถ่วงตามสัดส่วนงานให้เอง จากนั้นเอาไปลบเคสหัก บวกเคสชื่นชม ·
+        <b>แนะนำให้ระดับ 3 เป็นค่ามาตรฐาน</b>ของคนที่ทำงานครบตามหน้าที่ ปล่อยให้ระดับ 4 เป็นสิ่งที่ต้องไต่ขึ้นไปด้วยเคสชื่นชม
       </p>
       <div id="levelList"></div>
     </div>
@@ -552,6 +564,113 @@ function showTab(name, btn){
   document.getElementById('tab-'+name).classList.remove('hide');
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('on'));
   if(btn) btn.classList.add('on');
+  document.getElementById('bellPanel').classList.add('hide');
+}
+
+/* ───────── กระดิ่งแจ้งเตือน (เจ้าของเท่านั้น) ─────────
+   เลขแดง = ของใหม่ตั้งแต่ครั้งล่าสุดที่กดดู กดแล้วหาย
+   จุดส้ม  = ไม่มีของใหม่ แต่ยังมีเรื่องค้างอยู่ ไม่ให้หลุดมือ
+   รายการข้างในโชว์ทุกอย่างที่ยังค้าง ไม่ใช่เฉพาะของใหม่ */
+let BELL = null;
+
+async function loadBell(){
+  if(ROLE !== 'owner') return;
+  try{
+    const r = await rpc('board100_bell', {p_pin: PIN});
+    if(r && r.ok){ BELL = r; paintBell(); }
+  }catch(e){ /* กระดิ่งพังไม่ควรทำให้ทั้งหน้าพัง */ }
+}
+
+function paintBell(){
+  const wrap = document.getElementById('bellWrap');
+  if(!BELL){ wrap.classList.add('hide'); return; }
+  wrap.classList.remove('hide');
+  const o    = BELL.open || {};
+  const n    = (BELL.unread || {}).total || 0;
+  const open = (o.case_types || 0) + (o.follow_ups || 0) + (o.follow_up_proposals || 0);
+  wrap.innerHTML =
+    '<button class="'+(n||open?'has':'')+'" onclick="toggleBell()" title="แจ้งเตือน">🔔</button>' +
+    (n ? '<span class="cnt">'+(n>99?'99+':n)+'</span>'
+       : (open ? '<span class="dot" title="ยังมีเรื่องค้างอยู่"></span>' : ''));
+}
+
+async function toggleBell(){
+  const panel = document.getElementById('bellPanel');
+  if(!panel.classList.contains('hide')){ panel.classList.add('hide'); return; }
+  paintBellPanel();
+  panel.classList.remove('hide');
+  if(panel.scrollIntoView) panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+  try{
+    await rpc('board100_bell_seen', {p_pin: PIN});   /* กดดูแล้ว เลขหาย */
+    await loadBell();
+    paintBellPanel();
+  }catch(e){ /* เงียบไว้ ไม่ต้องกวนตอนแค่เปิดดู */ }
+}
+
+function bellSev(s){
+  return s==='หนัก' ? '🔴' : s==='กลาง' ? '🟠' : s==='เบา' ? '🟡'
+       : s==='ใหญ่' ? '🟢' : s==='บันทึกไว้' ? '⚪' : '🟢';
+}
+
+function paintBellPanel(){
+  const b = BELL || {};
+  const cases  = b.cases || [];
+  const types  = b.case_types || [];
+  const follow = b.follow_ups || [];
+  let h = '<h2 style="margin-top:0">แจ้งเตือน</h2>';
+
+  if(types.length){
+    h += '<h3>หัวข้อเคสที่รอตีระดับ <span class="pill warn">'+types.length+'</span></h3>' +
+      '<p class="mini">เคสที่ใช้หัวข้อนี้ยังหัก 0 อยู่ และปิดงวดไม่ได้จนกว่าจะตีระดับ · ตีระดับได้ที่แท็บหลังบ้าน</p>' +
+      types.map(t=>'<div class="bellrow'+(t.new?' new':' due')+'">'+
+        '<b>'+esc(t.label)+'</b>'+(t.new?' <span class="pill bad">ใหม่</span>':'')+
+        '<div class="mini">เสนอโดย '+esc(t.proposed_by||'—')+
+        ' · มีเคสใช้หัวข้อนี้แล้ว '+(t.cases_waiting||0)+' เคส</div></div>').join('');
+  }
+
+  const props = b.follow_up_proposals || [];
+  if(props.length){
+    h += '<h3 style="margin-top:16px">ผลติดตามที่รอคุณยืนยัน <span class="pill warn">'+props.length+'</span></h3>' +
+      '<p class="mini">ยืนยันหรือตีกลับได้ที่แท็บใบเตือน · บันทึกคุย</p>' +
+      props.map(p=>'<div class="bellrow'+(p.new?' new':' due')+'">'+
+        '<b>'+esc(p.person)+'</b> · '+esc(p.topic||'')+' '+fuTag(p.outcome)+
+        (p.new?' <span class="pill bad">ใหม่</span>':'')+
+        '<div>'+esc(p.detail)+'</div>'+
+        '<div class="mini">'+esc(p.proposed_by)+' เสนอ'+
+        (p.next_date?' · ขอเลื่อนนัดไป '+esc(p.next_date):'')+
+        ((p.docs||0)>0?' · แนบหลักฐาน '+p.docs+' ไฟล์':' · ไม่มีหลักฐานแนบ')+
+        '</div></div>').join('');
+  }
+
+  if(follow.length){
+    h += '<h3 style="margin-top:16px">บันทึกคุยที่ถึงกำหนดติดตามผล <span class="pill warn">'+follow.length+'</span></h3>' +
+      '<p class="mini">บันทึกผลได้ที่แท็บใบเตือน · บันทึกคุย</p>' +
+      follow.map(f=>'<div class="bellrow'+(f.new && !f.has_proposal?' new':' due')+'">'+
+        '<b>'+esc(f.person)+'</b> · '+esc(f.kind||'')+' · '+esc(f.topic||'')+
+        (f.has_proposal?' <span class="pill warn">มีผลรอยืนยันแล้ว</span>':'')+
+        (f.new && !f.has_proposal?' <span class="pill bad">ใหม่</span>':'')+
+        '<div class="mini">นัดติดตามผล '+esc(f.follow_up_date)+
+        ((f.overdue_days||0) > 0 ? ' · <b>เลยมาแล้ว '+f.overdue_days+' วัน</b>' : ' · ถึงกำหนดวันนี้')+
+        '</div></div>').join('');
+  }
+
+  if(cases.length){
+    h += '<h3 style="margin-top:16px">เคสที่คนอื่นบันทึก <span class="mini">ย้อนหลัง 60 วัน</span></h3>' +
+      cases.map(c=>'<div class="bellrow'+(c.new?' new':'')+'">'+
+        bellSev(c.severity)+' <b>'+esc(c.person)+'</b> · '+esc(c.label||c.code||'')+
+        ' <span class="pill">'+esc(c.kind)+'</span>'+
+        (c.new?' <span class="pill bad">ใหม่</span>':'')+
+        (c.pending?' <span class="pill warn">รอตีระดับ</span>':'')+
+        '<div class="mini">งวด '+esc(c.period)+' · วันที่ '+esc(c.date)+
+        (c.bill_no?' · บิล '+esc(c.bill_no):'')+' · บันทึกโดย '+esc(c.logged_by||'—')+'</div>'+
+        (c.note?'<div class="mini">'+esc(c.note)+'</div>':'')+
+        '</div>').join('');
+  }
+
+  if(!types.length && !follow.length && !cases.length && !props.length){
+    h += '<p class="mini">ยังไม่มีอะไรต้องดู</p>';
+  }
+  document.getElementById('bellPanel').innerHTML = h;
 }
 
 /* ───────── โหลดข้อมูลใหม่ทั้งหน้า ───────── */
@@ -564,6 +683,7 @@ async function reload(){
       paintBoard(); paintLevels(); paintClose();
       ADMIN = await rpc('board100_admin_lists', {p_pin: PIN});
       paintAdmin();
+      loadBell();
     }
     CASEDATA = await rpc('board100_case_form', {p_period: per, p_pin: PIN});
     paintCaseForm();
@@ -655,9 +775,13 @@ function paintDocs(){
   /* ── รายการบันทึกการพูดคุย ── */
   const ts = d.talks||[];
   document.getElementById('tCount').textContent = ts.length + ' รายการ';
-  const due = ts.filter(t=>t.due).length;
+  const due  = ts.filter(t=>t.due && !t.has_pending_follow_up).length;
+  const wait = d.follow_up_pending || 0;
   document.getElementById('talkList').innerHTML =
-    (due ? '<div class="box warn"><b>ถึงกำหนดทบทวนผลแล้ว '+due+' รายการ</b> — ยังไม่ได้บันทึกผล</div>' : '') +
+    (due ? '<div class="box warn"><b>ถึงกำหนดติดตามผลแล้ว '+due+' รายการ</b> — ยังไม่มีใครบันทึกผล</div>' : '') +
+    (wait ? '<div class="box warn"><b>ผลติดตามรอเจ้าของยืนยัน '+wait+' รายการ</b>'+
+            (ROLE==='owner' ? ' — กดยืนยันหรือตีกลับได้ในรายการข้างล่าง' : ' — รอเจ้าของเปิดดู')+
+            '</div>' : '') +
     (ts.length ? ts.map(t=>{
       const kb = t.doc_size ? Math.round(t.doc_size/1024) : null;
       return '<div class="box">'+
@@ -678,8 +802,11 @@ function paintDocs(){
               (kb?' <span class="mini">('+kb+' KB)</span>':'')+'</button>'
             : '<span class="pill bad">ยังไม่ได้แนบไฟล์สแกน</span> '+
               '<button onclick="pickFileFor('+t.id+',\'talk\')">แนบไฟล์ตอนนี้</button>')+
-          (t.due ? ' <button onclick="noteFollowUp('+t.id+')">บันทึกผลการทบทวน</button>' : '')+
+          (t.due && !t.has_pending_follow_up
+            ? ' <button onclick="openFollowUp('+t.id+')">บันทึกผลติดตาม</button>' : '')+
         '</div>'+
+        '<div id="fuForm'+t.id+'" class="box hide" style="margin-top:8px"></div>'+
+        fuHistoryHtml(t)+
         '<span class="mini">บันทึกโดย '+esc(t.logged_by)+'</span>'+
       '</div>';
     }).join('') : '<p class="note">ยังไม่มีบันทึกการพูดคุย</p>');
@@ -870,22 +997,129 @@ async function saveTalk(){
 }
 
 /* บันทึกผลการทบทวนของรายการที่ถึงกำหนดแล้ว */
-async function noteFollowUp(id){
-  const note = prompt('ผลการทบทวนเป็นยังไง');
-  if(note === null) return;
-  if(!note.trim()){ toast('ยังไม่ได้เขียนผล'); return; }
-  const t = ((DOCS && DOCS.talks) || []).find(x => x.id === id);
-  if(!t){ toast('ไม่พบรายการ'); return; }
+/* ───────── ผลติดตามของบันทึกคุย ─────────
+   HR เขียนว่าเห็นอะไร · เจ้าของกดยืนยัน ตามหลักเดิมของร้าน
+   ⚠️ ตั้งใจไม่มีช่องให้คะแนน — เรื่องอย่างมาสายเครื่องสแกนวัดอยู่แล้ว
+      ให้คะแนนซ้ำที่นี่คือจ่ายสองรอบสำหรับพฤติกรรมเดียว
+      ถ้าจะให้คะแนนจริง ใช้เคสชื่นชม หรือขยับระดับขั้น ซึ่งใหญ่กว่าและมีอยู่แล้ว */
+const FU_OUTCOMES = ['จบแล้ว ปรับปรุงจริง','ยังไม่จบ ขอต่อเวลา','ไม่ปรับปรุง ต้องยกระดับ'];
+let FU_FILES = [];
+
+function fuTag(o){
+  return o==='จบแล้ว ปรับปรุงจริง'      ? '<span class="pill good">จบแล้ว ปรับปรุงจริง</span>'
+       : o==='ยังไม่จบ ขอต่อเวลา'       ? '<span class="pill warn">ยังไม่จบ ขอต่อเวลา</span>'
+       : o==='ไม่ปรับปรุง ต้องยกระดับ'  ? '<span class="pill bad">ไม่ปรับปรุง ต้องยกระดับ</span>' : '';
+}
+
+/* เส้นทางของเรื่อง — อ่านได้ว่านัดแล้วเกิดอะไรขึ้นตามลำดับ */
+function fuHistoryHtml(t){
+  const fs = t.follow_ups || [];
+  if(!fs.length) return '';
+  return '<div style="margin-top:8px"><span class="mini"><b>ผลติดตาม</b></span>'+
+    fs.map(f=>{
+      const wait = f.status==='รอเจ้าของยืนยัน';
+      const docs = (f.docs||[]).map((d,i)=>
+        '<button class="mini-btn" onclick="viewDoc(\''+esc(d.path)+'\')">หลักฐาน '+(i+1)+'</button>'+
+        (wait ? '<button class="mini-btn danger" onclick="fuDropDoc('+d.id+')">✕</button>' : '')).join('');
+      return '<div class="bellrow'+(wait?' due':'')+'">'+
+        fuTag(f.outcome)+
+        (f.status==='ยืนยันแล้ว' ? ' <span class="pill good">เจ้าของยืนยันแล้ว</span>' : '')+
+        (f.status==='ตีกลับ'     ? ' <span class="pill bad">เจ้าของตีกลับ</span>' : '')+
+        (wait ? ' <span class="pill warn">รอเจ้าของยืนยัน</span>' : '')+
+        '<div>'+esc(f.detail)+'</div>'+
+        (f.next_date ? '<div class="mini">นัดใหม่ '+esc(f.next_date)+'</div>' : '')+
+        (f.decide_note ? '<div class="mini">เจ้าของว่า: '+esc(f.decide_note)+'</div>' : '')+
+        '<div class="mini">'+esc(f.proposed_by)+' บันทึกไว้'+
+          (f.due_date ? ' · จากนัดวันที่ '+esc(f.due_date) : '')+'</div>'+
+        (docs ? '<div style="margin-top:5px">'+docs+'</div>' : '')+
+        (wait ? '<div style="margin-top:6px">'+
+            '<button class="mini-btn" onclick="fuAddDoc('+f.id+')">📎 แนบหลักฐาน</button>'+
+            (ROLE==='owner'
+              ? ' <button class="mini-btn" onclick="fuConfirm('+f.id+',true)">ยืนยัน</button>'+
+                ' <button class="mini-btn danger" onclick="fuConfirm('+f.id+',false)">ตีกลับ</button>'
+              : ' <span class="mini">รอเจ้าของเปิดดู</span>')+
+          '</div>' : '')+
+      '</div>';
+    }).join('')+'</div>';
+}
+
+/* ฟอร์มบันทึกผล — เปิดใต้เรื่องนั้น ไม่เด้งหน้าต่าง */
+function openFollowUp(id){
+  const box = document.getElementById('fuForm'+id);
+  if(!box) return;
+  if(!box.classList.contains('hide')){ box.classList.add('hide'); return; }
+  FU_FILES = [];
+  box.innerHTML =
+    '<label>ผลเป็นอย่างไร</label>'+
+    '<select id="fuOut'+id+'" onchange="fuToggleNext('+id+')">'+
+      FU_OUTCOMES.map(o=>'<option>'+esc(o)+'</option>').join('')+'</select>'+
+    '<label>เห็นอะไรถึงตัดสินอย่างนั้น</label>'+
+    '<textarea id="fuDetail'+id+'" rows="3" placeholder="เขียนสิ่งที่เห็น ไม่ใช่ความรู้สึก · อย่างน้อย 10 ตัวอักษร"></textarea>'+
+    '<div id="fuNextWrap'+id+'" class="hide"><label>นัดใหม่วันที่</label>'+
+      '<input id="fuNext'+id+'" type="date"></div>'+
+    '<div style="margin-top:8px"><button onclick="fuSend('+id+')">ส่งให้เจ้าของยืนยัน</button> '+
+      '<button onclick="document.getElementById(\'fuForm'+id+'\').classList.add(\'hide\')">ปิด</button></div>'+
+    '<p class="mini">ยังไม่ต้องให้คะแนนตรงนี้ · ถ้าเจ้าของยืนยันว่าปรับปรุงจริงแล้วอยากให้คะแนน '+
+      'ใช้เคสชื่นชม หรือขยับระดับขั้น ซึ่งได้มากกว่าและไม่ซ้ำกับที่เครื่องสแกนวัดไปแล้ว</p>';
+  box.classList.remove('hide');
+}
+function fuToggleNext(id){
+  const need = document.getElementById('fuOut'+id).value === 'ยังไม่จบ ขอต่อเวลา';
+  document.getElementById('fuNextWrap'+id).classList.toggle('hide', !need);
+}
+async function fuSend(id){
+  const out = document.getElementById('fuOut'+id).value;
+  const det = document.getElementById('fuDetail'+id).value;
+  const nx  = document.getElementById('fuNext'+id);
+  if(det.trim().length < 10){ toast('ต้องเขียนสิ่งที่เห็นอย่างน้อย 10 ตัวอักษร'); return; }
   try{
-    const r = await rpc('hr_talk_save', {
-      p_pin: PIN, p_id: id,
-      p_person: t.person, p_talk_date: t.talk_date, p_kind: t.kind, p_topic: t.topic,
-      p_summary: t.summary, p_agreement: t.agreement, p_employee_say: t.employee_say,
-      p_follow_up_date: t.follow_up_date, p_follow_up_note: note.trim(),
-      p_attendees: t.attendees
-    });
-    toast(r.ok ? 'บันทึกผลแล้ว' : (r.error||'ไม่สำเร็จ'));
+    const r = await rpc('hr_follow_up_propose', {
+      p_pin: PIN, p_talk_id: id, p_outcome: out, p_detail: det.trim(),
+      p_next_date: (out === 'ยังไม่จบ ขอต่อเวลา' && nx && nx.value) ? nx.value : null });
+    if(!r.ok){ toast(r.error||'บันทึกไม่สำเร็จ'); return; }
+    toast(r.note || 'บันทึกแล้ว');
+    document.getElementById('fuForm'+id).classList.add('hide');
     reload();
+  }catch(e){ toast(e.message); }
+}
+function fuAddDoc(fid){
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/jpeg,image/png,image/webp,image/heic,application/pdf';
+  inp.onchange = async () => {
+    const f = inp.files && inp.files[0]; if(!f) return;
+    try{
+      toast('กำลังอัปไฟล์…');
+      const up = await uploadScan(f, '', 'talk');
+      const a = await rpc('hr_follow_up_attach',
+        {p_pin:PIN, p_id:fid, p_doc_path:up.path, p_doc_mime:up.mime, p_doc_size:up.size});
+      toast(a.ok ? 'แนบแล้ว' : (a.error||'แนบไม่สำเร็จ'));
+      reload();
+    }catch(e){ toast(e.message); }
+  };
+  inp.click();
+}
+async function fuDropDoc(docId){
+  if(!confirm('ลบหลักฐานนี้?')) return;
+  try{
+    const r = await rpc('hr_follow_up_doc_delete', {p_pin:PIN, p_doc_id:docId});
+    toast(r.ok ? 'ลบแล้ว' : (r.error||'ลบไม่สำเร็จ'));
+    reload();
+  }catch(e){ toast(e.message); }
+}
+async function fuConfirm(fid, ok){
+  let note = null;
+  if(!ok){
+    note = prompt('ตีกลับเพราะอะไร (อย่างน้อย 10 ตัวอักษร)');
+    if(note === null) return;
+    if(note.trim().length < 10){ toast('ต้องเขียนเหตุผลอย่างน้อย 10 ตัวอักษร'); return; }
+  }
+  try{
+    const r = await rpc('hr_follow_up_confirm',
+      {p_pin:PIN, p_id:fid, p_ok:!!ok, p_note: note ? note.trim() : null});
+    if(!r.ok){ toast(r.error||'ไม่สำเร็จ'); return; }
+    toast(r.next_action || (ok ? 'ยืนยันแล้ว' : 'ตีกลับแล้ว'));
+    reload(); loadBell();
   }catch(e){ toast(e.message); }
 }
 
@@ -904,9 +1138,9 @@ function paintBoard(){
       esc(es.submitted)+'/'+esc(es.total_raters)+' คน · ยังไม่ส่ง: '+
       es.pending_names.map(esc).join(' · ')+'</div>';
   }
-  const noLevel = (d.rows||[]).filter(r=>r.perf_level==null).map(r=>r.person);
+  const noLevel = (d.rows||[]).filter(r=>r.perf==null).map(r=>r.person);
   if(noLevel.length){
-    warn += '<div class="box warn"><b>ยังไม่ได้เลือกระดับขั้นผลงาน '+noLevel.length+' คน</b> — '+
+    warn += '<div class="box warn"><b>ยังเลือกระดับขั้นผลงานไม่ครบ '+noLevel.length+' คน</b> — '+
       noLevel.map(esc).join(' · ')+'<br><span class="mini">คนที่ยังไม่เลือก จะยังไม่มีคะแนนรวมและเกรด</span></div>';
   }
   document.getElementById('boardWarn').innerHTML = warn;
@@ -977,8 +1211,7 @@ function paintCaseForm(){
       (x.bill_no?' · บิล '+esc(x.bill_no):'')+
       '<br>'+(x.kind==='เพิ่ม'?'🟢 ':'🔴 ')+esc(x.label||x.code)+
       ' <span class="sv '+svClass(x)+'">'+esc(x.pending?'รอตีระดับ':(x.severity||'—'))+'</span>'+
-      (ROLE==='owner' && x.points!=null ? ' <span class="pill '+(x.points<0?'bad':'good')+'">'+
-         (x.points>0?'+':'')+num(x.points,2)+'</span>' : '')+
+      (ROLE==='owner' ? casePointsHtml(x) : '')+
       '<br><span class="mini">'+esc(x.note||'')+' · บันทึกโดย '+esc(x.logged_by||'—')+'</span>'+
       caseDocsHtml(x, c.locked)+
       '</div></div>'+
@@ -1231,6 +1464,26 @@ function paintCasePhotos(){
     '<button type="button" title="เอาออก" onclick="dropCasePhoto('+i+')">✕</button></figure>').join('');
 }
 
+/* ป้ายคะแนนของเคส (เจ้าของเห็นคนเดียว)
+   ⚠️ ในฐานข้อมูล points เก็บเป็นจำนวนบวกเสมอ ทิศทางอยู่ที่ช่อง kind
+   ถ้าอ่าน points ตรง ๆ เคสหักจะขึ้นเป็น "+14" สีเขียว ซึ่งอ่านกลับความหมาย
+   และช่องผลงานเก็บเป็นเปอร์เซ็นต์ของช่อง ไม่ใช่คะแนน จึงต้องแปลงให้เห็นด้วย */
+function casePointsHtml(x){
+  if(x.points == null) return '';
+  const cut = (x.kind !== 'เพิ่ม');
+  const p   = Math.abs(Number(x.points) || 0);
+  if(p === 0) return ' <span class="pill">ไม่คิดคะแนน</span>';
+  const sign = cut ? '−' : '+';
+  const cls  = cut ? 'bad' : 'good';
+  if(x.field === 'perf'){
+    const cfg = (DATA && DATA.config) || {};
+    const wPerf = Number((cfg.w_perf || {}).value);
+    const real = wPerf ? ' · '+sign+num(p / 100 * wPerf, 2)+' คะแนน' : '';
+    return ' <span class="pill '+cls+'">'+sign+num(p,2)+'% ของช่องผลงาน'+real+'</span>';
+  }
+  return ' <span class="pill '+cls+'">'+sign+num(p,2)+' คะแนน</span>';
+}
+
 /* ปุ่มดูรูป/ลบรูป ในรายการเคสที่บันทึกไปแล้ว */
 function caseDocsHtml(x, locked){
   const docs = x.docs || [];
@@ -1331,45 +1584,65 @@ async function delCase(id){
 }
 
 /* ───────── แท็บเลือกระดับขั้น ───────── */
+/* ตัวเลข 100/75/50/25 คือค่าที่ระบบใช้คิดเป็นเปอร์เซ็นต์จริง ห้ามเปลี่ยน
+   เลข 4/3/2/1 เป็นแค่ป้ายที่คนอ่าน */
 const LEVELS = [
-  [100,'ทำครบ และมีของที่ทำเกินให้เห็น'],
-  [75,'ทำครบตามที่ตกลง ไม่ต้องตาม'],
-  [50,'ทำครบเมื่อมีคนตาม'],
-  [25,'ต้องมีคนตามเก็บเป็นประจำ']
+  [100, 4, 'ทำครบ และมีของที่ทำเกินให้เห็น'],
+  [75,  3, 'ทำครบตามที่ตกลง ไม่ต้องตาม'],
+  [50,  2, 'ทำครบเมื่อมีคนตาม'],
+  [25,  1, 'ต้องมีคนตามเก็บเป็นประจำ']
 ];
+function levelName(v){ const l = LEVELS.find(x=>x[0]==v); return l ? ('ระดับ '+l[1]) : '—'; }
 function paintLevels(){
   const rubric = DATA.rubric || [];
   document.getElementById('levelList').innerHTML = (DATA.rows||[]).map(r=>{
-    const job = (r.jobs||[])[0] ? r.jobs[0].job : '';
-    const btns = LEVELS.map(l=>{
-      const desc = (rubric.find(x=>x.job===job && x.level===l[0]) || {}).detail || l[1];
-      return '<button class="'+(r.perf_level==l[0]?'on':'')+'" title="'+esc(desc)+'" '+
-        'onclick="setLevel(\''+esc(r.person)+'\','+l[0]+')">'+l[0]+'%</button>';
+    const jobs = r.jobs || [];
+    const by   = r.perf_by_job || {};
+    const blocks = jobs.map(j=>{
+      const cur  = by[j.job];
+      const btns = LEVELS.map(l=>{
+        const desc = (rubric.find(x=>x.job===j.job && x.level==l[0]) || {}).detail || l[2];
+        return '<button class="'+(cur==l[0]?'on':'')+'" title="'+esc(desc)+'" '+
+          'onclick="setLevel(\''+esc(r.person)+'\',\''+esc(j.job)+'\','+l[0]+')">ระดับ '+l[1]+'</button>';
+      }).join('');
+      const desc = (rubric.find(x=>x.job===j.job && x.level==cur) || {}).detail;
+      const share = Math.round((Number(j.share)||0)*100);
+      return '<div style="margin-top:10px">'+
+        '<span class="mini"><b>'+esc(j.job)+'</b> '+share+'%</span> '+
+        (cur==null ? '<span class="pill warn">ยังไม่เลือก</span>' : '') +
+        '<div class="lv" style="margin-top:6px">'+btns+'</div>'+
+        (desc ? '<div class="mini" style="margin-top:6px">'+esc(desc)+'</div>' : '')+
+        '</div>';
     }).join('');
-    const cur = r.perf_level==null ? '<span class="pill warn">ยังไม่เลือก</span>'
-      : '<span class="pill good">'+r.perf_level+'%</span>';
-    const desc = (rubric.find(x=>x.job===job && x.level==r.perf_level) || {}).detail;
-    return '<div class="box"><b>'+esc(r.person)+'</b> <span class="mini">'+esc(job)+'</span> '+cur+
-      '<div class="lv" style="margin-top:8px">'+btns+'</div>'+
-      (desc ? '<div class="mini" style="margin-top:6px">'+esc(desc)+'</div>' : '')+
-      '</div>';
+    const done = jobs.length>0 && jobs.every(j=>by[j.job]!=null);
+    const head = !jobs.length
+      ? '<span class="pill warn">ยังไม่ได้ตั้งสัดส่วนงาน</span>'
+      : (done
+          ? '<span class="pill good">ถ่วงแล้วได้ '+(r.perf_pct==null?'—':r.perf_pct)+'% · '+(r.perf==null?'—':r.perf)+' คะแนน</span>'
+          : '<span class="pill warn">ยังเลือกไม่ครบทุกงาน</span>');
+    return '<div class="box"><b>'+esc(r.person)+'</b> '+head+blocks+'</div>';
   }).join('');
 }
-async function setLevel(person, level){
+async function setLevel(person, job, level){
   try{
-    /* ฟังก์ชันนี้ไม่มีค่าตั้งต้นให้ 4 ตัวกลาง ต้องส่งครบทุกช่องเสมอ ไม่งั้นหาฟังก์ชันไม่เจอ */
+    /* ฟังก์ชันนี้ไม่มีค่าตั้งต้นให้ตัวกลาง ต้องส่งครบทุกช่องเสมอ ไม่งั้นหาฟังก์ชันไม่เจอ */
+    const row = (DATA.rows||[]).find(x=>x.person===person) || {};
+    const by  = Object.assign({}, row.perf_by_job || {});
+    by[job] = level;
     const r = await rpc('board100_save_manual', {
       p_period: document.getElementById('period').value,
       p_person: person,
+      /* ส่งค่าเดิมของช่องอื่นกลับไปด้วย ไม่งั้นการกดปุ่มระดับจะลบค่าที่กรอกมือไว้ทิ้ง */
       p_perf_pct: null,
-      p_transparency: null,
-      p_discipline_override: null,
-      p_note: null,
+      p_transparency: (row.transparency_override==null ? null : Number(row.transparency_override)),
+      p_discipline_override: (row.discipline_override==null ? null : Number(row.discipline_override)),
+      p_note: (row.note==null || row.note==='' ? null : row.note),
       p_pin: PIN,
-      p_perf_level: level
+      p_perf_level: null,
+      p_perf_by_job: by
     });
     if(!r.ok){ toast(r.error||'บันทึกไม่สำเร็จ'); return; }
-    toast(person + ' → ' + level + '%');
+    toast(person + ' · ' + job + ' → ' + levelName(level));
     reload();
   }catch(e){ toast(e.message); }
 }

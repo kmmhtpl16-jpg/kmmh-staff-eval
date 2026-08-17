@@ -179,8 +179,9 @@ tr.clickable:hover td{background:#f8fafc}
       <h2 style="margin-top:0">เลือกระดับขั้นผลงาน</h2>
       <p class="note">
         เลือกแล้วระบบเอาไปลบเคสหัก บวกเคสชื่นชมให้เอง ·
-        <b>แนะนำให้ใช้ 75% เป็นค่ามาตรฐาน</b>ของคนที่ทำงานครบตามหน้าที่
-        แล้วปล่อยให้ 100% เป็นสิ่งที่ต้องไต่ขึ้นไปด้วยเคสชื่นชม
+        <b>แนะนำให้ระดับ 3 เป็นค่ามาตรฐาน</b>ของคนที่ทำงานครบตามหน้าที่
+        แล้วปล่อยให้ระดับ 4 เป็นสิ่งที่ต้องไต่ขึ้นไปด้วยเคสชื่นชม ·
+        คนที่ทำหลายงาน เลือกทีละงานได้ ระบบถ่วงตามสัดส่วนงานให้เอง
       </p>
       <div id="levelList"></div>
     </div>
@@ -329,10 +330,10 @@ function paintBoard(){
       : '<span class="pill good">งวดเปิดอยู่</span>';
 
   let warn = '';
-  const noLevel = (d.rows||[]).filter(r=>r.perf_level==null).map(r=>r.person);
+  const noLevel = (d.rows||[]).filter(r=>r.perf==null).map(r=>r.person);
   if(noLevel.length){
-    warn += '<div class="box warn"><b>ยังไม่ได้เลือกระดับขั้นผลงาน '+noLevel.length+' คน</b> — '+
-      noLevel.map(esc).join(' · ')+'<br><span class="mini">คนที่ยังไม่เลือก จะยังไม่มีคะแนนรวมและเกรด</span></div>';
+    warn += '<div class="box warn"><b>ยังเลือกระดับขั้นผลงานไม่ครบ '+noLevel.length+' คน</b> — '+
+      noLevel.map(esc).join(' · ')+'<br><span class="mini">ต้องเลือกครบทุกงานของคนนั้น จึงจะมีคะแนนรวมและเกรด</span></div>';
   }
   const waiting = (d.rows||[]).filter(r=>r.waiting>0);
   if(waiting.length){
@@ -353,21 +354,48 @@ function paintBoard(){
     '</tr>').join('');
 }
 
+/* ป้ายคะแนนของเคส
+   ⚠️ points เก็บเป็นจำนวนบวกเสมอ ทิศทางอยู่ที่ช่อง kind
+   อ่าน points ตรง ๆ เคสหักจะขึ้นเป็น "+15" สีเขียว ซึ่งอ่านกลับความหมาย
+   และช่องผลงานเก็บเป็นเปอร์เซ็นต์ของช่อง ไม่ใช่คะแนน จึงต้องแปลงให้เห็นด้วย */
+function casePointsHtml(c){
+  if(c.points == null) return '';
+  const cut = (c.kind !== 'เพิ่ม');
+  const p   = Math.abs(Number(c.points) || 0);
+  if(p === 0) return ' <span class="pill">ไม่คิดคะแนน</span>';
+  const sign = cut ? '−' : '+';
+  const cls  = cut ? 'bad' : 'good';
+  if(c.field === 'perf'){
+    const cfg = (DATA && DATA.config) || {};
+    const wPerf = Number((cfg.w_perf || {}).value);
+    const real = wPerf ? ' · '+sign+num(p / 100 * wPerf, 2)+' คะแนน' : '';
+    return ' <span class="pill '+cls+'">'+sign+num(p,2)+'% ของช่องผลงาน'+real+'</span>';
+  }
+  return ' <span class="pill '+cls+'">'+sign+num(p,2)+' คะแนน</span>';
+}
+
 function showDetail(i){
   const r = (DATA.rows||[])[i]; if(!r) return;
   const plus = v => (v>0?'+':'')+num(v,2);
   const cases = (r.cases||[]).map(c =>
     '<li>'+esc(c.date||'')+' · '+esc(c.label||c.code||'')+
-    ' <span class="pill '+((c.points||0)<0?'bad':'good')+'">'+plus(c.points)+'</span>'+
+    casePointsHtml(c)+
     (c.note?'<br><span class="mini">'+esc(c.note)+'</span>':'')+'</li>').join('');
+  /* ระดับขั้นที่เลือก แยกรายงาน พร้อมผลถ่วงที่ระบบคิดให้ */
+  const byJob = r.perf_by_job || {};
+  const lvTxt = (r.jobs||[]).length
+    ? (r.jobs||[]).map(j=>esc(j.job)+' '+Math.round((Number(j.share)||0)*100)+'% → '+
+        (byJob[j.job]==null ? 'ยังไม่เลือก' : levelName(byJob[j.job]))).join('<br>')
+      + (r.perf_pct==null ? '' : '<br><b>ถ่วงแล้วได้ '+r.perf_pct+'%</b>')
+    : 'ยังไม่ได้ตั้งสัดส่วนงาน';
 
   document.getElementById('detail').innerHTML =
     '<div class="card"><h2 style="margin-top:0">'+esc(r.person)+
       ' <span class="pill">'+esc((r.jobs||[]).map(j=>j.job+' '+Math.round(j.share*100)+'%').join(' · '))+'</span></h2>'+
     '<div class="row3">'+
       '<div class="box"><b>ผลงาน '+num(r.perf)+'/50</b><br><span class="mini">'+
-        'ระดับขั้นที่เลือก: '+(r.perf_level==null?'ยังไม่เลือก':r.perf_level+'%')+
-        ' · หักเคส '+num(r.perf_deduct,2)+' · ชื่นชม '+plus(r.perf_bonus)+'</span></div>'+
+        lvTxt+
+        '<br>หักเคส '+num(r.perf_deduct,2)+'% · ชื่นชม '+plus(r.perf_bonus)+'%</span></div>'+
       '<div class="box"><b>โปร่งใส '+num(r.transparency)+'/25</b><br><span class="mini">'+
         'เริ่มที่ '+num(r.trans_base,0)+' · หักเคส '+num(r.trans_deduct,2)+' · ชื่นชม '+plus(r.trans_bonus)+'</span></div>'+
       '<div class="box"><b>วินัย '+num(r.discipline)+'/25</b><br><span class="mini">'+
@@ -384,46 +412,66 @@ function showDetail(i){
   if(dv.scrollIntoView) dv.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
-/* ───────── แท็บเลือกระดับขั้น ───────── */
+/* ───────── แท็บเลือกระดับขั้น ─────────
+   ตัวเลข 100/75/50/25 คือค่าที่ระบบใช้คิดเป็นเปอร์เซ็นต์จริง ห้ามเปลี่ยน
+   เลข 4/3/2/1 เป็นแค่ป้ายที่คนอ่าน
+   คนที่ทำหลายงาน เลือกทีละงาน ระบบถ่วงตามสัดส่วนงานให้เอง */
 const LEVELS = [
-  [100,'ทำครบ และมีของที่ทำเกินให้เห็น'],
-  [75,'ทำครบตามที่ตกลง ไม่ต้องตาม'],
-  [50,'ทำครบเมื่อมีคนตาม'],
-  [25,'ต้องมีคนตามเก็บเป็นประจำ']
+  [100, 4, 'ทำครบ และมีของที่ทำเกินให้เห็น'],
+  [75,  3, 'ทำครบตามที่ตกลง ไม่ต้องตาม'],
+  [50,  2, 'ทำครบเมื่อมีคนตาม'],
+  [25,  1, 'ต้องมีคนตามเก็บเป็นประจำ']
 ];
+function levelName(v){ const l = LEVELS.find(x=>x[0]==v); return l ? ('ระดับ '+l[1]) : '—'; }
+
 function paintLevels(){
   const rubric = DATA.rubric || [];
   document.getElementById('levelList').innerHTML = (DATA.rows||[]).map(r=>{
-    const job = (r.jobs||[])[0] ? r.jobs[0].job : '';
-    const btns = LEVELS.map(l=>{
-      const desc = (rubric.find(x=>x.job===job && x.level===l[0]) || {}).detail || l[1];
-      return '<button class="'+(r.perf_level==l[0]?'on':'')+'" title="'+esc(desc)+'" '+
-        'onclick="setLevel(\''+esc(r.person)+'\','+l[0]+')">'+l[0]+'%</button>';
+    const jobs = r.jobs || [];
+    const by   = r.perf_by_job || {};
+    const blocks = jobs.map(j=>{
+      const cur  = by[j.job];
+      const btns = LEVELS.map(l=>{
+        const desc = (rubric.find(x=>x.job===j.job && x.level==l[0]) || {}).detail || l[2];
+        return '<button class="'+(cur==l[0]?'on':'')+'" title="'+esc(desc)+'" '+
+          'onclick="setLevel(\''+esc(r.person)+'\',\''+esc(j.job)+'\','+l[0]+')">ระดับ '+l[1]+'</button>';
+      }).join('');
+      const desc = (rubric.find(x=>x.job===j.job && x.level==cur) || {}).detail;
+      const share = Math.round((Number(j.share)||0)*100);
+      return '<div style="margin-top:10px">'+
+        '<span class="mini"><b>'+esc(j.job)+'</b> '+share+'%</span> '+
+        (cur==null ? '<span class="pill warn">ยังไม่เลือก</span>' : '') +
+        '<div class="lv" style="margin-top:6px">'+btns+'</div>'+
+        (desc ? '<div class="mini" style="margin-top:6px">'+esc(desc)+'</div>' : '')+
+        '</div>';
     }).join('');
-    const cur = r.perf_level==null ? '<span class="pill warn">ยังไม่เลือก</span>'
-      : '<span class="pill good">'+r.perf_level+'%</span>';
-    const desc = (rubric.find(x=>x.job===job && x.level==r.perf_level) || {}).detail;
-    return '<div class="box"><b>'+esc(r.person)+'</b> <span class="mini">'+
-      esc((r.jobs||[]).map(j=>j.job+' '+Math.round(j.share*100)+'%').join(' · '))+'</span> '+cur+
-      '<div class="lv" style="margin-top:8px">'+btns+'</div>'+
-      (desc ? '<div class="mini" style="margin-top:6px">'+esc(desc)+'</div>' : '')+
-      '</div>';
+    const done = jobs.length>0 && jobs.every(j=>by[j.job]!=null);
+    const head = !jobs.length
+      ? '<span class="pill warn">ยังไม่ได้ตั้งสัดส่วนงาน</span>'
+      : (done
+          ? '<span class="pill good">ถ่วงแล้วได้ '+(r.perf_pct==null?'—':r.perf_pct)+'% · '+(r.perf==null?'—':r.perf)+' คะแนน</span>'
+          : '<span class="pill warn">ยังเลือกไม่ครบทุกงาน</span>');
+    return '<div class="box"><b>'+esc(r.person)+'</b> '+head+blocks+'</div>';
   }).join('');
 }
-async function setLevel(person, level){
+async function setLevel(person, job, level){
   try{
-    /* ฟังก์ชันนี้ไม่มีค่าตั้งต้นให้สักช่อง ต้องส่งครบทั้ง 7 ช่องเสมอ ไม่งั้นหาฟังก์ชันไม่เจอ */
+    /* ส่งค่าเดิมของช่องอื่นกลับไปด้วย ไม่งั้นการกดปุ่มระดับจะลบค่าที่กรอกมือไว้ทิ้ง */
+    const row = (DATA.rows||[]).find(x=>x.person===person) || {};
+    const by  = Object.assign({}, row.perf_by_job || {});
+    by[job] = level;
     const r = await rpc('svc100_save_manual', {
       p_period: document.getElementById('period').value,
       p_person: person,
-      p_perf_level: level,
-      p_transparency: null,
-      p_discipline_override: null,
-      p_note: null,
-      p_pin: PIN
+      p_perf_level: null,
+      p_transparency: (row.transparency_override==null ? null : Number(row.transparency_override)),
+      p_discipline_override: (row.discipline_override==null ? null : Number(row.discipline_override)),
+      p_note: (row.note==null || row.note==='' ? null : row.note),
+      p_pin: PIN,
+      p_perf_by_job: by
     });
     if(!r.ok){ toast(r.error||'บันทึกไม่สำเร็จ'); return; }
-    toast(person + ' → ' + level + '%');
+    toast(person + ' · ' + job + ' → ' + levelName(level));
     reload();
   }catch(e){ toast(e.message); }
 }
