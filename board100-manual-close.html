@@ -802,8 +802,15 @@ function paintDocs(){
               (kb?' <span class="mini">('+kb+' KB)</span>':'')+'</button>'
             : '<span class="pill bad">ยังไม่ได้แนบไฟล์สแกน</span> '+
               '<button onclick="pickFileFor('+t.id+',\'talk\')">แนบไฟล์ตอนนี้</button>')+
-          (t.due && !t.has_pending_follow_up
-            ? ' <button onclick="openFollowUp('+t.id+')">บันทึกผลติดตาม</button>' : '')+
+          /* ปุ่มบันทึกผลโผล่ตั้งแต่วันที่บันทึกเรื่อง จะได้รู้ว่ามีปุ่มนี้อยู่
+             แต่กดได้เมื่อเหลือถึงวันนัด <= 3 วัน (fu_open มาจาก hr_docs_form) */
+          (t.fu_waiting && !t.has_pending_follow_up
+            ? (t.fu_open
+                ? ' <button onclick="openFollowUp('+t.id+')">บันทึกผลติดตาม</button>'
+                : ' <button disabled title="กดได้ตั้งแต่ '+esc(t.fu_opens_on)+'">บันทึกผลติดตาม</button>'+
+                  ' <span class="mini">เปิดให้กดได้ '+esc(t.fu_opens_on)+
+                  ' · อีก '+esc(t.fu_days_to_open)+' วัน</span>')
+            : '')+
         '</div>'+
         '<div id="fuForm'+t.id+'" class="box hide" style="margin-top:8px"></div>'+
         fuHistoryHtml(t)+
