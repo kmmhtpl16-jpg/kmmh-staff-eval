@@ -92,6 +92,16 @@ tr.clickable:hover td{background:#f8fafc}
 .pill.warn{background:#fef3c7;color:#92400e}
 .pill.bad{background:#fee2e2;color:#991b1b}
 .pill.good{background:#dcfce7;color:#166534}
+/* ไฟสถานะเคส — เขียว = ปิดแล้ว · ส้ม = รอติดตามผล · แดง = ถึงหรือเลยวันนัด */
+.st{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.st.done{background:#f1f5f9;color:#475569}
+.st.open{background:#fef3c7;color:#92400e}
+.st.due{background:#fee2e2;color:#991b1b}
+.case.open{border-color:#fcd34d;background:#fffdf5}
+.case.due{border-color:#fca5a5;background:#fff7f7}
+.fu{border-left:3px solid #e2e8f0;padding:6px 0 6px 10px;margin-top:6px;font-size:13.5px}
+.fu.close{border-left-color:#16a34a}
+.fu.again{border-left-color:#f59e0b}
 .note{font-size:13px;color:var(--dim)}
 .box{border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0;background:#fbfdfe}
 .box.warn{background:#fffbeb;border-color:#fde68a}
@@ -117,6 +127,7 @@ tr.clickable:hover td{background:#f8fafc}
 .side button{flex:1;padding:11px;font-weight:600;font-size:15px}
 .side button.on.cut{background:#fef2f2;border-color:var(--bad);color:var(--bad)}
 .side button.on.praise{background:#f0fdf4;border-color:var(--good);color:var(--good)}
+.side button.on.wait{background:#fffbeb;border-color:#f59e0b;color:#92400e}
 .fields{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .fields button{padding:6px 12px;border-radius:999px;font-size:14px}
 .fields button.on{background:#0f172a;color:#fff;border-color:#0f172a}
@@ -265,12 +276,36 @@ tr.clickable:hover td{background:#f8fafc}
       </div>
       <div id="cPhotoPrev" class="photoprev"></div>
 
+      <label>เรื่องนี้จบแล้วหรือยัง</label>
+      <div class="side">
+        <button type="button" id="stDone" class="on praise" onclick="setCaseStatus('ปิดแล้ว')">✅ ปิดเคส — จบในตัว</button>
+        <button type="button" id="stOpen" onclick="setCaseStatus('รอติดตามผล')">⏳ รอติดตามผล</button>
+      </div>
+      <div id="cFollowWrap" class="hide">
+        <label>วันนัดติดตาม <span class="mini">(ไม่บังคับ · ถ้าใส่ พอถึงวันนั้นกระดิ่งเจ้าของจะดัง)</span></label>
+        <input id="cFollowDate" type="date">
+      </div>
+
       <div style="margin-top:12px"><button class="primary" id="cSaveBtn" onclick="saveCase()">บันทึกเคส</button></div>
       <div id="cErr" class="err"></div>
     </div>
 
     <div class="card">
-      <h2 style="margin-top:0">เคสของงวดนี้ <span id="caseCount" class="pill"></span></h2>
+      <h2 style="margin-top:0">เคสของงวดนี้ <span id="caseCount" class="pill"></span>
+        <span id="caseOpenCount" class="pill warn hide"></span></h2>
+      <div class="row2">
+        <div>
+          <label>ค้นหา <span class="mini">(ชื่อคนที่ถูกลงเคส · เรื่อง · ข้อความ · คนบันทึก)</span></label>
+          <input id="caseSearch" placeholder="พิมพ์ชื่อหรือคำในเรื่อง" oninput="paintCaseList()">
+        </div>
+        <div>
+          <label>กรอง</label>
+          <label style="margin-top:0;display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="caseOpenOnly" style="width:auto" onchange="paintCaseList()">
+            <span>แสดงเฉพาะเคสที่ยังไม่ปิด</span>
+          </label>
+        </div>
+      </div>
       <div id="caseList"></div>
     </div>
   </div>
@@ -587,7 +622,8 @@ function paintBell(){
   wrap.classList.remove('hide');
   const o    = BELL.open || {};
   const n    = (BELL.unread || {}).total || 0;
-  const open = (o.case_types || 0) + (o.follow_ups || 0) + (o.follow_up_proposals || 0);
+  const open = (o.case_types || 0) + (o.follow_ups || 0) + (o.follow_up_proposals || 0)
+             + (o.case_follow_ups || 0);
   wrap.innerHTML =
     '<button class="'+(n||open?'has':'')+'" onclick="toggleBell()" title="แจ้งเตือน">🔔</button>' +
     (n ? '<span class="cnt">'+(n>99?'99+':n)+'</span>'
@@ -654,6 +690,21 @@ function paintBellPanel(){
         '</div></div>').join('');
   }
 
+  const cfu = b.case_follow_ups || [];
+  if(cfu.length){
+    h += '<h3 style="margin-top:16px">เคสที่ถึงวันนัดติดตามผล <span class="pill warn">'+cfu.length+'</span></h3>' +
+      '<p class="mini">บันทึกผลได้ที่แท็บบันทึกเคส — กดปุ่ม "บันทึกผลติดตาม" ในเคสนั้น</p>' +
+      cfu.map(f=>'<div class="bellrow'+(f.new?' new':' due')+'">'+
+        bellSev(f.severity)+' <b>'+esc(f.person)+'</b> · '+esc(f.label||'')+
+        (f.new?' <span class="pill bad">ใหม่</span>':'')+
+        '<div class="mini">งวด '+esc(f.period)+' · เรื่องเกิด '+esc(f.date)+
+        ' · นัดติดตาม '+esc(f.follow_up_date)+
+        ((f.overdue_days||0) > 0 ? ' · <b>เลยมาแล้ว '+f.overdue_days+' วัน</b>' : ' · ถึงกำหนดวันนี้')+
+        ((f.rounds||0) > 0 ? ' · ติดตามมาแล้ว '+f.rounds+' รอบ' : '')+'</div>'+
+        (f.note?'<div class="mini">'+esc(f.note)+'</div>':'')+
+        '</div>').join('');
+  }
+
   if(cases.length){
     h += '<h3 style="margin-top:16px">เคสที่คนอื่นบันทึก <span class="mini">ย้อนหลัง 60 วัน</span></h3>' +
       cases.map(c=>'<div class="bellrow'+(c.new?' new':'')+'">'+
@@ -667,7 +718,7 @@ function paintBellPanel(){
         '</div>').join('');
   }
 
-  if(!types.length && !follow.length && !cases.length && !props.length){
+  if(!types.length && !follow.length && !cases.length && !props.length && !cfu.length){
     h += '<p class="mini">ยังไม่มีอะไรต้องดู</p>';
   }
   document.getElementById('bellPanel').innerHTML = h;
@@ -1207,23 +1258,154 @@ function paintCaseForm(){
   const dt = document.getElementById('cDate');
   if(!dt.value) dt.value = bkkToday();
 
-  const list = c.cases || [];
-  document.getElementById('caseCount').textContent = list.length + ' เคส';
+  paintCaseList();
+}
+
+/* ── สถานะเคส ────────────────────────────────────────────────
+   เคสบันทึกได้ทันทีโดยไม่ต้องรู้ตอนจบ — เลือก "รอติดตามผล" ไว้ก่อนได้
+   แล้วค่อยกลับมาบันทึกผลติดตามกี่รอบก็ได้ จนกว่าจะปิด */
+let CASE_STATUS = 'ปิดแล้ว';
+
+function setCaseStatus(s){
+  CASE_STATUS = s;
+  document.getElementById('stDone').classList.toggle('on', s==='ปิดแล้ว');
+  document.getElementById('stDone').classList.toggle('praise', s==='ปิดแล้ว');
+  document.getElementById('stOpen').classList.toggle('on', s==='รอติดตามผล');
+  document.getElementById('stOpen').classList.toggle('wait', s==='รอติดตามผล');
+  document.getElementById('cFollowWrap').classList.toggle('hide', s!=='รอติดตามผล');
+  if(s!=='รอติดตามผล') document.getElementById('cFollowDate').value = '';
+}
+
+/* ไฟสถานะ: เขียว/เทา = ปิดแล้ว · ส้ม = รอติดตามผล · แดง = ถึงหรือเลยวันนัด */
+function caseStatusTag(x){
+  if(x.status !== 'รอติดตามผล')
+    return '<span class="st done">🟢 ปิดแล้ว'+(x.closed_by?' · '+esc(x.closed_by):'')+'</span>';
+  const d = x.overdue_days;
+  if(d == null) return '<span class="st open">🟠 รอติดตามผล · ยังไม่ได้นัดวัน</span>';
+  if(d > 0)  return '<span class="st due">🔴 เลยวันนัดมา '+d+' วัน ('+esc(x.follow_up_date)+')</span>';
+  if(d === 0) return '<span class="st due">🔴 ถึงวันนัดวันนี้</span>';
+  return '<span class="st open">🟠 รอติดตามผล · นัด '+esc(x.follow_up_date)+'</span>';
+}
+function caseStatusCls(x){
+  if(x.status !== 'รอติดตามผล') return '';
+  return (x.overdue_days != null && x.overdue_days >= 0) ? ' due' : ' open';
+}
+
+/* รอบติดตามที่บันทึกไปแล้ว — อ่านเป็นเส้นทางได้ว่าเรื่องเดินมายังไง */
+function caseFollowHtml(x){
+  const fu = x.follow_ups || [];
+  if(!fu.length) return '';
+  return '<div style="margin-top:8px"><span class="mini">ผลติดตาม '+fu.length+' รอบ</span>'+
+    fu.map((f,i)=>'<div class="fu '+(f.result==='ปิดเคส'?'close':'again')+'">'+
+      '<b>รอบ '+(i+1)+' · '+esc(f.result)+'</b>'+
+      (f.next_date?' <span class="pill warn">นัดใหม่ '+esc(f.next_date)+'</span>':'')+
+      '<div>'+esc(f.note)+'</div>'+
+      '<div class="mini">'+esc(f.by||'—')+' · '+esc(String(f.at||'').slice(0,10))+'</div>'+
+    '</div>').join('')+'</div>';
+}
+
+/* กล่องบันทึกผลติดตาม — เปิดจากในเคสนั้นโดยตรง */
+const FU_PICK = {};
+function toggleFU(id){
+  const box = document.getElementById('fu'+id);
+  if(!box) return;
+  box.classList.toggle('hide');
+  if(box.classList.contains('hide')) return;
+  delete FU_PICK[id];              /* เปิดกล่องใหม่ ต้องเลือกใหม่ทุกครั้ง ไม่ให้ค้างจากรอบก่อน */
+  document.getElementById('fuClose'+id).classList.remove('on','praise');
+  document.getElementById('fuAgain'+id).classList.remove('on','wait');
+  document.getElementById('fuDateWrap'+id).classList.add('hide');
+  document.getElementById('fuErr'+id).textContent = '';
+  if(box.scrollIntoView) box.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function setFUResult(id, res){
+  FU_PICK[id] = res;
+  document.getElementById('fuClose'+id).classList.toggle('on', res==='ปิดเคส');
+  document.getElementById('fuClose'+id).classList.toggle('praise', res==='ปิดเคส');
+  document.getElementById('fuAgain'+id).classList.toggle('on', res==='ติดตามผลอีกครั้ง');
+  document.getElementById('fuAgain'+id).classList.toggle('wait', res==='ติดตามผลอีกครั้ง');
+  document.getElementById('fuDateWrap'+id).classList.toggle('hide', res!=='ติดตามผลอีกครั้ง');
+}
+function caseFUFormHtml(x){
+  const id = x.id;
+  return '<div id="fu'+id+'" class="box hide" style="margin-top:8px">'+
+    '<label style="margin-top:0">ติดตามแล้วเจออะไร <span class="mini">(อย่างน้อย 10 ตัวอักษร)</span></label>'+
+    '<textarea id="fuNote'+id+'" placeholder="เล่าสั้น ๆ ว่าคุยแล้วเป็นยังไง ทำตามที่ตกลงไหม"></textarea>'+
+    '<label>แล้วยังไงต่อ</label>'+
+    '<div class="side">'+
+      '<button type="button" id="fuClose'+id+'" onclick="setFUResult('+id+',\'ปิดเคส\')">✅ ปิดเคส</button>'+
+      '<button type="button" id="fuAgain'+id+'" onclick="setFUResult('+id+',\'ติดตามผลอีกครั้ง\')">⏳ ติดตามผลอีกครั้ง</button>'+
+    '</div>'+
+    '<div id="fuDateWrap'+id+'" class="hide">'+
+      '<label>วันนัดครั้งถัดไป <span class="mini">(ไม่บังคับ)</span></label>'+
+      '<input id="fuDate'+id+'" type="date">'+
+    '</div>'+
+    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+
+      '<button class="primary" onclick="saveFU('+id+')">บันทึกผลติดตาม</button>'+
+      '<button onclick="toggleFU('+id+')">ยกเลิก</button>'+
+    '</div>'+
+    '<div id="fuErr'+id+'" class="err"></div></div>';
+}
+
+async function saveFU(id){
+  const err = document.getElementById('fuErr'+id); err.textContent = '';
+  const note = document.getElementById('fuNote'+id).value.trim();
+  const res  = FU_PICK[id];
+  if(!res){ err.textContent = 'ยังไม่ได้เลือกว่าจะปิดเคส หรือติดตามผลอีกครั้ง'; return; }
+  if(note.length < 10){ err.textContent = 'เขียนว่าติดตามแล้วเจออะไร อย่างน้อย 10 ตัวอักษร'; return; }
+  const dEl = document.getElementById('fuDate'+id);
+  try{
+    const r = await rpc('board100_case_follow_up_add', {
+      p_pin: PIN, p_case_id: id, p_note: note, p_result: res,
+      p_next_date: (res==='ติดตามผลอีกครั้ง' && dEl && dEl.value) ? dEl.value : null
+    });
+    if(!r.ok){ err.textContent = r.error || 'บันทึกไม่สำเร็จ'; return; }
+    delete FU_PICK[id];
+    toast(res==='ปิดเคส' ? 'ปิดเคสแล้ว' : 'บันทึกผลติดตามแล้ว · นัดติดตามอีกครั้ง');
+    reload();
+  }catch(e){ err.textContent = e.message; }
+}
+
+/* รายการเคส — ค้นหาจากชื่อ/เรื่อง/ข้อความ/คนบันทึก และกรองเฉพาะที่ยังไม่ปิดได้ */
+function paintCaseList(){
+  const c = CASEDATA; if(!c || !c.ok) return;
+  const all = c.cases || [];
+  const q = (document.getElementById('caseSearch').value || '').trim().toLowerCase();
+  const openOnly = document.getElementById('caseOpenOnly').checked;
+  const list = all.filter(x=>{
+    if(openOnly && x.status !== 'รอติดตามผล') return false;
+    if(!q) return true;
+    return [x.person, x.label, x.note, x.logged_by, x.bill_no, x.field_label]
+      .some(v => String(v||'').toLowerCase().includes(q));
+  });
+
+  const nOpen = all.filter(x=>x.status==='รอติดตามผล').length;
+  document.getElementById('caseCount').textContent =
+    (q || openOnly ? list.length + ' จาก ' + all.length : all.length) + ' เคส';
+  const oc = document.getElementById('caseOpenCount');
+  oc.classList.toggle('hide', nOpen === 0);
+  oc.textContent = 'ยังไม่ปิด ' + nOpen + ' เคส';
+
   document.getElementById('caseList').innerHTML = list.length ? list.map(x=>
-    '<div class="box" style="border-left:5px solid transparent" '+
-      'data-sv="'+esc(svClass(x))+'">'+
+    '<div class="box case'+caseStatusCls(x)+'" data-sv="'+esc(svClass(x))+'">'+
     '<div style="display:flex;gap:8px;align-items:flex-start">'+
       '<div class="bar sv-'+svClass(x)+'"></div><div style="flex:1;min-width:0">'+
       '<b>'+esc(x.person)+'</b> · '+esc(x.date||'')+
       (x.bill_no?' · บิล '+esc(x.bill_no):'')+
+      ' '+caseStatusTag(x)+
       '<br>'+(x.kind==='เพิ่ม'?'🟢 ':'🔴 ')+esc(x.label||x.code)+
       ' <span class="sv '+svClass(x)+'">'+esc(x.pending?'รอตีระดับ':(x.severity||'—'))+'</span>'+
       (ROLE==='owner' ? casePointsHtml(x) : '')+
       '<br><span class="mini">'+esc(x.note||'')+' · บันทึกโดย '+esc(x.logged_by||'—')+'</span>'+
       caseDocsHtml(x, c.locked)+
+      caseFollowHtml(x)+
       '</div></div>'+
+    (!c.locked ? '<div style="margin-top:8px"><button class="mini-btn" onclick="toggleFU('+x.id+')">'+
+        (x.status==='รอติดตามผล'?'📌 บันทึกผลติดตาม':'↩ เปิดเรื่องนี้ขึ้นมาติดตามอีก')+'</button></div>'+
+      caseFUFormHtml(x) : '')+
     (ROLE==='owner' && !c.locked ? '<br><button class="danger" style="margin-top:8px" onclick="delCase('+x.id+')">ลบเคสนี้</button>':'')+
-    '</div>').join('') : '<p class="note">ยังไม่มีเคสในงวดนี้</p>';
+    '</div>').join('')
+    : '<p class="note">'+(all.length ? 'ไม่มีเคสที่ตรงกับที่ค้นหา' : 'ยังไม่มีเคสในงวดนี้')+'</p>';
 }
 
 /* ── เลือกหัวข้อเคส ─────────────────────────────────────────
@@ -1548,7 +1730,10 @@ async function saveCase(){
       p_case_date: document.getElementById('cDate').value,
       p_bill_no: document.getElementById('cBill').value.trim() || null,
       p_note: note,
-      p_pin: PIN
+      p_pin: PIN,
+      p_status: CASE_STATUS,
+      p_follow_up_date: (CASE_STATUS==='รอติดตามผล' && document.getElementById('cFollowDate').value)
+                        ? document.getElementById('cFollowDate').value : null
     });
     if(!r.ok){ err.textContent = r.error || 'บันทึกไม่สำเร็จ'; return; }
 
@@ -1574,9 +1759,10 @@ async function saveCase(){
     document.getElementById('cNote').value=''; document.getElementById('cBill').value='';
     CASE_PHOTOS = []; paintCasePhotos();
     PICKED = null;
-    toast(files.length
-      ? 'บันทึกเคสแล้ว · แนบรูป '+okPhotos+'/'+files.length+' รูป'+(failPhotos?' (พลาด '+failPhotos+')':'')
-      : 'บันทึกเคสแล้ว');
+    const wasOpen = (CASE_STATUS === 'รอติดตามผล');
+    setCaseStatus('ปิดแล้ว');   /* ครั้งถัดไปเริ่มที่ "ปิดเคส" เสมอ ไม่ให้ค้างสถานะเดิม */
+    toast((wasOpen ? 'บันทึกเคสแล้ว · รอติดตามผล' : 'บันทึกเคสแล้ว')+
+      (files.length ? ' · แนบรูป '+okPhotos+'/'+files.length+' รูป'+(failPhotos?' (พลาด '+failPhotos+')':'') : ''));
     reload();
   }catch(e){ err.textContent = e.message; }
 }
@@ -1675,6 +1861,10 @@ async function closePeriod(force){
   const err = document.getElementById('closeErr'); err.textContent='';
   const note = document.getElementById('closeNote').value.trim();
   if(force && !confirm('ปิดงวดทั้งที่ข้อมูลยังไม่ครบ?\nตัวเลขจะถูกตรึงตามที่เห็นตอนนี้')) return;
+  /* เคสที่ยังไม่ปิดไม่ได้กั้นการปิดงวด แต่ต้องเห็นก่อน ไม่งั้นจะลืมค้างข้ามงวด */
+  const nOpen = (CASEDATA && CASEDATA.open_count) || 0;
+  if(nOpen && !confirm('งวดนี้ยังมีเคสที่รอติดตามผลอยู่ '+nOpen+' เคส\n'+
+      'ปิดงวดได้ แต่เคสจะค้างไว้แบบนั้น (คะแนนไม่เกี่ยวกัน)\nปิดงวดเลยไหม')) return;
   try{
     const r = await rpc('board100_close_period', {
       p_period: document.getElementById('period').value,
