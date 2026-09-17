@@ -75,6 +75,12 @@ label{display:block;font-size:14px;color:var(--dim);margin:10px 0 4px}
 @media(max-width:600px){ .cal{gap:3px} .cell{padding:3px;min-height:74px} .nm{font-size:12px;padding:1px 3px} .st{font-size:10px} }
 
 /* คิว */
+.step{display:flex;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.step .sn{flex:none;width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+.step .sb{flex:1;min-width:0}
+.addchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.addchips button{border-radius:999px;padding:8px 16px;font-size:16px;font-weight:700;border:2px dashed #94a3b8;background:#fff}
+.addchips button:hover{border-color:var(--brand);background:#eff6ff}
 .q{display:flex;flex-direction:column;gap:6px}
 .qi{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 8px;background:#fff;flex-wrap:wrap}
 .qi.dragging{opacity:.4}
@@ -191,21 +197,30 @@ tr.clickable:hover td{background:#f8fafc}
   <!-- คิวเวร -->
   <div id="tab-queue" class="hide">
     <div class="card">
-      <h2>ลำดับคิว</h2>
-      <p class="note" style="margin:0 0 8px"><b>เข้าคิวได้เฉพาะพนักงานตำแหน่งบริการ</b> (ตามรายชื่อกระดานทีมบริการ) · ระบบให้เข้าเวรวันละ 2 คนตามลำดับนี้ วนไปเรื่อย ๆ ข้ามวันอาทิตย์และวันร้านปิดเอง · ขึ้นเดือนใหม่ต่อคิวเดิม · ลากชื่อ หรือกด ↑ ↓ เพื่อสลับลำดับ</p>
-      <div class="q" id="qList"></div>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <select id="qAdd" style="width:auto;min-width:160px"></select>
-        <button onclick="qAddPerson()">+ เพิ่มเข้าคิว</button>
-      </div>
-      <label>เริ่มใช้คิวนี้ตั้งแต่วันที่</label>
-      <input type="date" id="qStart" style="max-width:220px">
-      <div class="box warn" id="qNote"></div>
-      <div class="err" id="qErr"></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-        <button onclick="renderQueue(true)">ยกเลิกที่แก้</button>
-        <button class="primary" id="qSaveBtn" onclick="saveQueue()">บันทึกคิว</button>
-      </div>
+      <h2>ตั้งคิวเวร · ทำครั้งเดียว</h2>
+      <p class="note" style="margin:0 0 4px">ระบบให้เข้าเวรวันละ 2 คนตามลำดับคิว วนไปเรื่อย ๆ ข้ามวันอาทิตย์และวันร้านปิดเอง · เข้าคิวได้เฉพาะพนักงานตำแหน่งบริการ</p>
+
+      <div class="step"><span class="sn">1</span><div class="sb">
+        <b>แตะชื่อ ตามลำดับที่อยากให้เข้าเวร</b> <span class="note">(แตะคนที่จะเข้าเวรก่อน ก่อน)</span>
+        <div class="addchips" id="qChips"></div>
+      </div></div>
+
+      <div class="step"><span class="sn">2</span><div class="sb">
+        <b>ตรวจลำดับ</b> <span class="note">เลขน้อยได้เข้าเวรก่อน · กด ↑ ↓ ย้ายลำดับ · ✕ เอาออก</span>
+        <div class="q" id="qList" style="margin-top:6px"></div>
+        <p class="note" style="margin:6px 0 0">"พักคิว" = ลายาว ข้ามไปก่อน · "อยู่ถึง" = คนที่กำลังจะออก หลังวันนั้นระบบข้ามให้เอง (ไม่ต้องใส่ถ้าไม่มี)</p>
+      </div></div>
+
+      <div class="step"><span class="sn">3</span><div class="sb">
+        <b>เลือกวันที่เริ่มใช้ แล้วกดบันทึกคิว</b>
+        <input type="date" id="qStart" style="max-width:220px;margin-top:6px;display:block" onchange="renderQueue(false)">
+        <div class="box warn" id="qNote"></div>
+        <div class="err" id="qErr"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <button class="primary" id="qSaveBtn" onclick="saveQueue()">💾 บันทึกคิว</button>
+          <button onclick="renderQueue(true)">ยกเลิกที่แก้</button>
+        </div>
+      </div></div>
     </div>
   </div>
 
@@ -561,30 +576,36 @@ function renderQueue(reset){
     '<div class="qi'+(q.paused?' paused':'')+'" draggable="true" data-i="'+i+'">'+
       '<span class="g">⋮⋮</span><span class="no">'+(i+1)+'</span>'+
       '<span class="dot" style="background:'+PALETTE[i%PALETTE.length]+'"></span>'+
-      '<span class="nmq">'+esc(q.nick)+'</span><span class="note">'+monthLabel(MONTH).split(' ')[0]+' '+(QCOUNT[q.nick]||0)+' วัน</span><span class="sp"></span>'+
+      '<span class="nmq">'+esc(q.nick)+'</span>'+(QCOUNT[q.nick] ? '<span class="note">'+monthLabel(MONTH).split(' ')[0]+' '+QCOUNT[q.nick]+' วัน</span>' : '')+'<span class="sp"></span>'+
       '<label class="inl"><input type="checkbox" '+(q.paused?'checked':'')+' onchange="qSet('+i+',\'paused\',this.checked)"> พักคิว</label>'+
       '<label class="inl">อยู่ถึง <input type="date" value="'+esc(q.until)+'" onchange="qSet('+i+',\'until\',this.value)"></label>'+
       '<button class="mini" onclick="qMove('+i+',-1)" '+(i===0?'disabled':'')+'>↑</button>'+
       '<button class="mini" onclick="qMove('+i+',1)" '+(i===QDRAFT.length-1?'disabled':'')+'>↓</button>'+
       '<button class="mini" onclick="qRemove('+i+')" title="เอาออกจากคิว">✕</button>'+
-    '</div>').join('') : '<div class="box">ยังไม่มีชื่อในคิว</div>';
+    '</div>').join('') : '<div class="box">ยังไม่มีชื่อในคิว — แตะชื่อในข้อ 1</div>';
   const inQ = QDRAFT.map(q=>q.emp_id);
-  document.getElementById('qAdd').innerHTML = '<option value="">— เลือกคน —</option>' +
-    (DATA.employees||[]).filter(e=>e.svc && !inQ.includes(e.id)).sort((a,b)=>a.nick.localeCompare(b.nick,'th'))
-      .map(e=>'<option value="'+e.id+'">'+esc(e.nick)+'</option>').join('');
+  const rest = (DATA.employees||[]).filter(e=>e.svc && !inQ.includes(e.id)).sort((a,b)=>a.nick.localeCompare(b.nick,'th'));
+  document.getElementById('qChips').innerHTML = rest.length
+    ? rest.map(e=>'<button onclick="qAddPerson(\''+e.id+'\')">+ '+esc(e.nick)+'</button>').join('')
+    : '<span class="note">✓ ใส่ครบทุกคนในทีมบริการแล้ว</span>';
   const active = QDRAFT.filter(q=>!q.paused).length;
   document.getElementById('qNote').innerHTML =
     'มีคนเข้าเวร <b>'+active+' คน</b> · วันละ 2 คน = ครบรอบทุก '+(active>=2 ? (active/2).toFixed(active%2?1:0) : '—')+' วันทำงาน<br>'+
-    'กดบันทึกแล้ว ระบบจัดเวรใหม่ตั้งแต่ <b>'+esc(thDate(maxDate(addDays(DATA.today,1), st.value||tomorrow), true))+'</b> ตามลำดับนี้ · วันที่สลับเวรไว้ไม่เปลี่ยน · แจ้ง Telegram<br>'+
-    '"อยู่ถึง" ใช้กับคนที่กำลังจะออก — หลังวันนั้นระบบข้ามให้เอง';
+    'กดบันทึกแล้ว ระบบจัดเวรตั้งแต่ <b>'+esc(thDate(maxDate(addDays(DATA.today,1), st.value||tomorrow), true))+'</b> ตามลำดับนี้ · วันที่สลับเวรไว้ไม่เปลี่ยน · แจ้ง Telegram'+
+    (qDirty() ? '<br><b style="color:var(--bad)">● ยังไม่ได้บันทึก</b>' : '');
   bindDrag();
 }
 function maxDate(a,b){ return a>b?a:b; }
+function qDirty(){
+  const saved = (DATA.queue||[]).map(q=>q.emp_id+'|'+!!q.paused+'|'+(q.until||'')).join(',');
+  const draft = (QDRAFT||[]).map(q=>q.emp_id+'|'+!!q.paused+'|'+(q.until||'')).join(',');
+  return saved !== draft;
+}
 function qSet(i,k,v){ QDRAFT[i][k]=v; renderQueue(false); }
 function qMove(i,dir){ const j=i+dir; if(j<0||j>=QDRAFT.length) return; [QDRAFT[i],QDRAFT[j]]=[QDRAFT[j],QDRAFT[i]]; renderQueue(false); }
 function qRemove(i){ QDRAFT.splice(i,1); renderQueue(false); }
-function qAddPerson(){
-  const id = document.getElementById('qAdd').value; if(!id) return;
+function qAddPerson(id){
+  if(!id || QDRAFT.some(q=>q.emp_id===id)) return;
   const e = empById(id); QDRAFT.push({emp_id:id, nick:e.nick, paused:false, until:''}); renderQueue(false);
 }
 let DRAG_I = null;
