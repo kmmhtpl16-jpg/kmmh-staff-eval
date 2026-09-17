@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตารางเวรเปิดประตู KMMH</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#1d4ed8">
+<style>
+:root{
+  --bg:#f4f6f8; --card:#fff; --line:#e2e8f0; --ink:#0f172a; --dim:#64748b;
+  --brand:#1d4ed8; --brand2:#1e40af; --warn:#b45309; --bad:#b91c1c; --good:#15803d;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Thai","Sarabun",sans-serif;
+  font-size:16px;line-height:1.55}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}
+h2{font-size:17px;margin:2px 0 8px}
+.sub{color:var(--dim);font-size:14px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--line);background:#fff;padding:8px 13px;color:var(--ink)}
+button:hover{background:#f8fafc}
+button.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+button.primary:hover{background:var(--brand2)}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,select,textarea{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:9px;width:100%;background:#fff;color:var(--ink)}
+textarea{min-height:70px;resize:vertical}
+label{display:block;font-size:14px;color:var(--dim);margin:10px 0 4px}
+.hide{display:none!important}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border-radius:999px}
+.tabs button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.shortcuts{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.shortcuts a{text-decoration:none;font-size:14px;color:var(--brand);background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 13px}
+.gate{max-width:340px;margin:12vh auto}
+.gate input{text-align:center;font-size:26px;letter-spacing:.35em;padding:14px}
+.err{color:var(--bad);font-size:14px;margin-top:8px}
+.note{font-size:13px;color:var(--dim)}
+.box{border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin:8px 0;background:#fbfdfe;font-size:14px}
+.box.warn{background:#fffbeb;border-color:#fde68a}
+.box.bad{background:#fef2f2;border-color:#fecaca}
+.box.good{background:#f0fdf4;border-color:#bbf7d0}
+.box.blue{background:#eff6ff;border-color:#bfdbfe}
+.pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12.5px;background:#f1f5f9;color:#475569;white-space:nowrap}
+.pill.good{background:#dcfce7;color:#166534}.pill.warn{background:#fef3c7;color:#92400e}
+.pill.bad{background:#fee2e2;color:#991b1b}.pill.blue{background:#dbeafe;color:#1e40af}
+.monthbar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.monthbar .m{flex:1;text-align:center;font-weight:700;font-size:18px}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.legend span{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:2px 10px 2px 4px;font-size:14px;background:#fff;cursor:pointer}
+.legend i{width:14px;height:14px;border-radius:50%;display:inline-block}
+.legend small{color:var(--dim);font-size:12.5px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:8px}
+
+/* ปฏิทิน */
+.cal{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.cal .h{text-align:center;font-size:13px;color:var(--dim);font-weight:700;padding:2px 0}
+.cell{border:1px solid var(--line);border-radius:9px;min-height:84px;padding:5px 6px;background:#fff;cursor:pointer;min-width:0}
+.cell:hover{box-shadow:0 0 0 2px #cbd5e1}
+.cell .n{font-size:12.5px;color:var(--dim);font-weight:700;display:flex;justify-content:space-between;gap:4px}
+.cell.today{border:2px solid var(--brand);padding:4px 5px}
+.cell.off{background:#f1f5f9;color:var(--dim);font-size:12px;cursor:default}
+.cell.off:hover{box-shadow:none}
+.cell.blank{border:none;background:transparent;cursor:default}
+.nm{display:block;border-radius:6px;padding:1px 6px;margin-top:3px;font-size:14px;font-weight:700;color:#0f172a;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm.sw{outline:2px dashed #0f172a;outline-offset:-2px}
+.st{display:block;font-size:11.5px;line-height:1.25;margin:1px 0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st.ontime{color:var(--good)}.st.after{color:var(--warn);font-weight:700}.st.noscan{color:var(--bad);font-weight:700}
+.st.leave,.st.wait{color:var(--dim)}
+@media(max-width:600px){ .cal{gap:3px} .cell{padding:3px;min-height:74px} .nm{font-size:12px;padding:1px 3px} .st{font-size:10px} }
+
+/* คิว */
+.q{display:flex;flex-direction:column;gap:6px}
+.qi{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 8px;background:#fff;flex-wrap:wrap}
+.qi.dragging{opacity:.4}
+.qi.over{border-color:var(--brand);box-shadow:0 0 0 2px #bfdbfe}
+.qi .g{color:#94a3b8;cursor:grab;user-select:none;padding:0 2px;letter-spacing:-2px}
+.qi .no{width:26px;height:26px;border-radius:50%;background:#e2e8f0;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.qi .dot{width:14px;height:14px;border-radius:50%;flex:none}
+.qi .nmq{font-weight:700;min-width:70px}
+.qi .sp{flex:1}
+.qi .mini{padding:3px 9px;font-size:13px;border-radius:7px}
+.qi input[type=date]{width:auto;padding:3px 6px;font-size:13px}
+.qi label.inl{display:flex;align-items:center;gap:4px;margin:0;font-size:13px;color:var(--ink)}
+.qi label.inl input{width:auto}
+.qi.paused{background:#f8fafc}.qi.paused .nmq{color:#94a3b8;text-decoration:line-through}
+
+/* ค้นชื่อ */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chips button{border-radius:999px;padding:4px 12px;font-size:14px}
+.chips button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;margin:10px 0}
+.stat div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fbfdfe}
+.stat b{display:block;font-size:22px;line-height:1.2}
+.stat span{font-size:12.5px;color:var(--dim)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--dim);font-weight:600;font-size:13px}
+.tscroll{overflow-x:auto}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:#f8fafc}
+.drow{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px;align-items:center;flex-wrap:wrap}
+.drow b.d{width:84px;flex:none}
+
+/* หน้าต่าง */
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal .card{width:100%;max-width:460px;margin:0;max-height:90vh;overflow:auto}
+.slotbox{border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin:8px 0}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 18px;border-radius:10px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:92vw;z-index:99;font-size:14px}
+#toast.on{opacity:1}
+
+/* ───────── พิมพ์ A4 ───────── */
+#printArea{display:none}
+@media print{
+  @page{size:A4 landscape;margin:9mm}
+  html,body{background:#fff}
+  body > *:not(#printArea){display:none!important}
+  #printArea{display:block!important;width:100%}
+}
+#printArea{font-family:"Sarabun","Noto Sans Thai",sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#printArea .ph{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:6px}
+#printArea .ph h1{font-size:22pt;margin:0;line-height:1.1}
+#printArea .ph .r{font-size:12pt;text-align:right}
+#printArea .pcal{display:grid;grid-template-columns:repeat(6,1fr);border-left:1px solid #555;border-top:1px solid #555}
+#printArea .pcal > div{border-right:1px solid #555;border-bottom:1px solid #555;padding:2px 5px;min-height:26mm}
+#printArea .pcal .ph2{min-height:0;text-align:center;font-weight:700;font-size:13pt;background:#e5e7eb;padding:2px}
+#printArea .pcal .pn{font-size:11pt;font-weight:700;color:#333}
+#printArea .pcal .pnm{display:block;font-size:15pt;font-weight:700;border-radius:4px;padding:0 5px;margin-top:2px;line-height:1.3}
+#printArea .pcal .psw{font-size:9pt;color:#333}
+#printArea .pcal .poff{background:#f3f4f6;color:#555;font-size:11pt}
+#printArea .pcal .pblank{background:#fff}
+#printArea .pf{display:flex;justify-content:space-between;gap:12px;margin-top:6px;font-size:11pt}
+#printArea .pf .qline b{margin-right:2px}
+</style>
+</head>
+<body>
+
+<div id="gate" class="wrap">
+  <div class="card gate">
+    <h1>ตารางเวรเปิดประตู</h1>
+    <p class="sub">ร้านกิจมั่งมีโฮม · เวร 07:40 น. วันละ 2 คน</p>
+    <label>ใส่รหัส (HR หรือเจ้าของ)</label>
+    <input id="pin" type="password" inputmode="numeric" placeholder="••••" autocomplete="off">
+    <div style="margin-top:12px"><button class="primary" id="btnLogin" onclick="doLogin()">เข้าใช้งาน</button></div>
+    <div id="gateErr" class="err"></div>
+  </div>
+</div>
+
+<div id="app" class="wrap hide">
+  <h1>🔑 ตารางเวรเปิดประตู <span class="pill blue" id="roleTag"></span></h1>
+  <p class="sub">เวร 07:40 น. · จันทร์–เสาร์ · วันละ 2 คนตามคิว · แจ้งห้อง Telegram payroll 07:00 น. และผลเทียบสแกนนิ้ว 08:05 น.</p>
+  <div class="shortcuts">
+    <a href="board100-manual-close.html">📋 กระดาน · บันทึกเคส →</a>
+    <a href="index.html">📊 ประเมินขยัน หน้าร้าน →</a>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button data-t="roster" class="on" onclick="setTab('roster')">📅 ตารางเวร</button>
+    <button data-t="queue" onclick="setTab('queue')">🔢 คิวเวร</button>
+    <button data-t="person" onclick="setTab('person')">🔍 ค้นชื่อ · สรุปรายคน</button>
+    <button data-t="help" onclick="setTab('help')">❓ อ่านผลยังไง</button>
+  </div>
+
+  <div id="topBox"></div>
+
+  <!-- ตารางเวร -->
+  <div id="tab-roster">
+    <div class="card">
+      <div class="monthbar">
+        <button onclick="shiftMonth(-1)">‹</button>
+        <div class="m" id="monthLabel"></div>
+        <button onclick="shiftMonth(1)">›</button>
+      </div>
+      <div class="toolbar">
+        <div class="note" id="scanInfo"></div>
+        <button onclick="doPrint()">🖨️ พิมพ์ A4</button>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="cal" id="cal"></div>
+      <div class="box blue" id="nextBox" style="margin-top:10px"></div>
+      <p class="note" style="margin:6px 0 0">แตะที่วันเพื่อดูรายละเอียด สลับเวร หรือตั้งวันร้านปิด · กรอบเส้นประ = มีการสลับเวร</p>
+    </div>
+  </div>
+
+  <!-- คิวเวร -->
+  <div id="tab-queue" class="hide">
+    <div class="card">
+      <h2>ลำดับคิว</h2>
+      <p class="note" style="margin:0 0 8px"><b>เข้าคิวได้เฉพาะพนักงานตำแหน่งบริการ</b> (ตามรายชื่อกระดานทีมบริการ) · ระบบให้เข้าเวรวันละ 2 คนตามลำดับนี้ วนไปเรื่อย ๆ ข้ามวันอาทิตย์และวันร้านปิดเอง · ขึ้นเดือนใหม่ต่อคิวเดิม · ลากชื่อ หรือกด ↑ ↓ เพื่อสลับลำดับ</p>
+      <div class="q" id="qList"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <select id="qAdd" style="width:auto;min-width:160px"></select>
+        <button onclick="qAddPerson()">+ เพิ่มเข้าคิว</button>
+      </div>
+      <label>เริ่มใช้คิวนี้ตั้งแต่วันที่</label>
+      <input type="date" id="qStart" style="max-width:220px">
+      <div class="box warn" id="qNote"></div>
+      <div class="err" id="qErr"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button onclick="renderQueue(true)">ยกเลิกที่แก้</button>
+        <button class="primary" id="qSaveBtn" onclick="saveQueue()">บันทึกคิว</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ค้นชื่อ -->
+  <div id="tab-person" class="hide">
+    <div class="card">
+      <label style="margin-top:0">พิมพ์ชื่อเล่น</label>
+      <input id="q" placeholder="เช่น แซ้งค์" oninput="renderPerson()" autocomplete="off">
+      <div class="chips" id="chips"></div>
+      <div id="personOut"></div>
+    </div>
+    <div class="card">
+      <h2>ทุกคนในเดือน <span id="personMonth"></span></h2>
+      <p class="note" style="margin:0 0 6px">กดที่ชื่อเพื่อดูรายวัน · เปลี่ยนเดือนได้ที่แท็บตารางเวร</p>
+      <div class="tscroll" id="allTable"></div>
+    </div>
+  </div>
+
+  <!-- อธิบาย -->
+  <div id="tab-help" class="hide">
+    <div class="card" style="font-size:15px">
+      <h2>ผลเทียบกับสแกนนิ้ว บอกอะไรได้ และบอกอะไรไม่ได้</h2>
+      <p>เวลาสแกนมาจากเครื่องสแกนโดยตรง เข้าระบบทุก 5 นาทีตอนเครื่องแม่เปิด · ระบบดู <b>สแกนแรกของวัน</b> ของคนเวร</p>
+      <p><span class="st ontime" style="display:inline">✓ 07:38</span> สแกนตอน 07:40 หรือก่อนหน้า = <b>อยู่ในร้านทันเวลาเวร</b><br>
+      <span class="note">⚠️ ยังไม่ใช่หลักฐานว่าเป็นคนเปิดประตู เพราะแต่ละวันมีคนอื่นมาถึงก่อน 07:40 ด้วยหลายคน</span></p>
+      <p><span class="st after" style="display:inline">+3 นาที</span> สแกนหลัง 07:40 = <b>มาไม่ทันเวลาเวรแน่นอน</b></p>
+      <p><span class="st noscan" style="display:inline">ไม่มีสแกน</span> มีข้อมูลเข้าระบบแล้ว แต่คนนี้ยังไม่มีสแกนเช้า</p>
+      <p><span class="st leave" style="display:inline">ลา</span> มีใบลาในระบบวันนั้น · <span class="st wait" style="display:inline">รอข้อมูล</span> ยังไม่มีข้อมูลสแกนเข้าระบบ (เช่น เครื่องแม่ยังไม่เปิด)</p>
+      <div class="box warn">
+        <b>ระบบไม่หักคะแนนให้เอง</b> — ถ้าตรวจแล้วว่าไม่มาเวรจริง ให้ไปลงเคสที่หน้ากระดาน หัวข้อ
+        <i>"ไม่มาทำเวรที่รับไว้ จนคนอื่นต้องรับแทน"</i> · ไม่นับถ้าสลับเวรไว้ก่อน หรือแจ้งทันจนมีคนรับแทน
+      </div>
+      <div class="box">
+        <b>สลับเวรต้องบันทึกในระบบทุกครั้ง</b> — ถ้าสลับกันปากเปล่า ตารางยังเป็นชื่อคนเดิม แล้วคนที่สลับถูกต้องจะขึ้นว่า "ไม่มีสแกน" แทน<br>
+        แตะที่วัน → สลับเวร → ใส่เหตุผล · ระบบจดว่าเดิมเป็นเวรใคร และแจ้ง Telegram ทันที · คิวของวันอื่นไม่เปลี่ยน
+      </div>
+      <div class="box">
+        <b>วันหยุด</b> — วันที่ตั้งไว้ในโปรแกรม payroll (เมนู ⚙️ วันหยุด) ระบบถือเป็นวันร้านปิดเองและเลื่อนคิวให้ · ร้านปิดเฉพาะกิจ ตั้งได้ในหน้านี้
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- รายละเอียดวัน -->
+<div id="dayModal" class="modal hide" onclick="if(event.target===this)closeModal('dayModal')">
+  <div class="card">
+    <h2 id="dayTitle"></h2>
+    <div id="dayBody"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button onclick="closeModal('dayModal')">ปิด</button></div>
+  </div>
+</div>
+
+<!-- สลับเวร -->
+<div id="swapModal" class="modal hide" onclick="if(event.target===this)closeModal('swapModal')">
+  <div class="card">
+    <h2>🔁 สลับเวร</h2>
+    <div class="note" id="swapInfo"></div>
+    <label>คนที่มาทำเวรแทน (เฉพาะพนักงานตำแหน่งบริการ)</label>
+    <select id="swapEmp"></select>
+    <label>เหตุผล / ใครขอ / แจ้งทางไหน</label>
+    <textarea id="swapNote" placeholder="เช่น แซ้งค์ขอสลับกับไนท์ แจ้งไลน์ 16 ก.ย. 17:10 น."></textarea>
+    <div class="box warn" style="font-size:13px">กดบันทึกแล้ว ระบบแจ้งเข้าห้อง Telegram payroll ทันที · คิวของวันอื่นไม่เปลี่ยน</div>
+    <div class="err" id="swapErr"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button onclick="closeModal('swapModal')">ยกเลิก</button>
+      <button class="primary" id="swapBtn" onclick="doSwap()">บันทึกการสลับ</button>
+    </div>
+  </div>
+</div>
+
+<!-- วันร้านปิด -->
+<div id="closeModal" class="modal hide" onclick="if(event.target===this)closeModal('closeModal')">
+  <div class="card">
+    <h2>ตั้งเป็นวันร้านปิด</h2>
+    <div class="note" id="closeInfo"></div>
+    <label>เหตุผล</label>
+    <input id="closeNote" placeholder="เช่น ปิดร้านทำบุญ">
+    <div class="note" style="margin-top:6px">คิวของวันนั้นจะเลื่อนไปวันทำงานถัดไป · เช้าวันนั้นไม่แจ้งเวร<br>วันหยุดประจำปีให้ตั้งในโปรแกรม payroll แทน ระบบนี้อ่านจากที่นั่นเอง</div>
+    <div class="err" id="closeErr"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button onclick="closeModal('closeModal')">ยกเลิก</button>
+      <button class="primary" onclick="doClose()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div id="printArea"></div>
+<div id="toast"></div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────
+   ตารางเวรเปิดประตู 07:40 · แบบคิววน (เจ้าของเลือก 17 ก.ย. 69)
+   ระบบจัดเวรในฐานข้อมูล (duty_door_regen) · หน้านี้แสดงผล ตั้งคิว สลับเวร และพิมพ์
+   ───────────────────────────────────────────────────────────── */
+const SB_URL = 'https://hfystbdqjhftrlelmkjm.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmeXN0YmRxamhmdHJsZWxta2ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNTc3MDUsImV4cCI6MjA5NDczMzcwNX0.cyRCwh0G6ArSevhsKa6kmPnYhLRRJYrxhlH0ED_JJaE';
+
+let PIN = '', DATA = null, MONTH = '', TAB = 'roster', PICK = '', QDRAFT = null;
+const TH_M = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const TH_MS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const TH_D = ['','จ.','อ.','พ.','พฤ.','ศ.','ส.','อา.'];
+const LEAVE = {sick:'ลาป่วย', personal:'ลากิจ', absent:'ขาดงาน'};
+const PALETTE = ['#bbf7d0','#ddd6fe','#bfdbfe','#a5f3fc','#d9f99d','#e9d5ff','#fecaca','#fde68a','#fbcfe8','#fed7aa','#99f6e4','#c7d2fe','#f5d0fe','#bae6fd'];
+
+async function rpc(fn, args){
+  const res = await fetch(SB_URL + '/rest/v1/rpc/' + fn, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},
+    body: JSON.stringify(args || {})
+  });
+  if(!res.ok) throw new Error('เชื่อมต่อฐานข้อมูลไม่ได้ (' + res.status + ')');
+  return await res.json();
+}
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2800); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function bkkToday(){ return new Date(Date.now() + 7*3600000).toISOString().slice(0,10); }
+function addDays(iso, n){ return new Date(Date.parse(iso+'T00:00:00Z') + n*86400000).toISOString().slice(0,10); }
+function thDate(iso, year){ const d=new Date(iso+'T00:00:00Z'); const dow=d.getUTCDay()||7;
+  return TH_D[dow]+' '+d.getUTCDate()+' '+TH_MS[d.getUTCMonth()] + (year ? ' '+((d.getUTCFullYear()+543)%100) : ''); }
+function monthLabel(m){ const [y,mm]=m.split('-').map(Number); return TH_M[mm-1]+' '+(y+543); }
+function closeModal(id){ document.getElementById(id).classList.add('hide'); }
+function empById(id){ return (DATA.employees||[]).find(e=>e.id===id); }
+function colorOf(nick){
+  const q = (DATA && DATA.queue) || [];
+  const i = q.findIndex(x=>x.nick===nick);
+  if(i>=0) return PALETTE[i % PALETTE.length];
+  let h=0; for(const c of String(nick)) h=(h*31+c.charCodeAt(0))>>>0;
+  return PALETTE[h % PALETTE.length];
+}
+
+document.getElementById('pin').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+async function doLogin(){
+  const p = document.getElementById('pin').value.trim();
+  const err = document.getElementById('gateErr'); err.textContent='';
+  if(!p){ err.textContent='กรุณาใส่รหัส'; return; }
+  try{
+    MONTH = bkkToday().slice(0,7);
+    const r = await rpc('duty_door_month', {p_pin:p, p_month:MONTH});
+    if(r && r.ok){ PIN=p; DATA=r; enterApp(); return; }
+    err.textContent = (r && r.error) || 'รหัสไม่ถูกต้อง';
+  }catch(e){ err.textContent = e.message; }
+}
+function enterApp(){
+  document.getElementById('gate').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+  document.getElementById('roleTag').textContent = DATA.role==='owner' ? 'เจ้าของ' : 'HR';
+  if(!DATA.queue_start) setTab('queue');
+  renderAll(true);
+}
+async function reload(){
+  try{
+    const r = await rpc('duty_door_month', {p_pin:PIN, p_month:MONTH});
+    if(!r.ok){ toast(r.error||'โหลดไม่สำเร็จ'); return; }
+    DATA = r; renderAll(false);
+  }catch(e){ toast(e.message); }
+}
+function shiftMonth(n){
+  const [y,m] = MONTH.split('-').map(Number);
+  MONTH = new Date(Date.UTC(y, m-1+n, 1)).toISOString().slice(0,7);
+  reload();
+}
+function setTab(t){
+  TAB = t;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on', b.dataset.t===t));
+  ['roster','queue','person','help'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('hide', x!==t));
+}
+function renderAll(resetQueue){
+  document.getElementById('monthLabel').textContent = monthLabel(MONTH);
+  document.getElementById('personMonth').textContent = monthLabel(MONTH);
+  renderTop(); renderCal(); renderPerson();
+  if(resetQueue || !QDRAFT) renderQueue(true);
+}
+
+/* ───────── แถบบนสุด ───────── */
+function renderTop(){
+  const box = document.getElementById('topBox'); const out = [];
+  if(!DATA.queue_start){
+    out.push('<div class="box warn">ยังไม่ได้ตั้งคิวเวร — เรียงชื่อในแท็บ <b>🔢 คิวเวร</b> แล้วกดบันทึก ระบบจะจัดตารางให้เอง</div>');
+  }
+  const n = DATA.notify || {}, today = DATA.today;
+  const td = (DATA.days||[]).find(d=>d.date===today);
+  if(td && !td.closed && (td.slots||[]).length && n.sent_date===today){
+    if(n.http===200 || n.status==='ส่งถึงห้องแล้ว') out.push('<div class="box good">✅ แจ้งเวรเช้านี้ส่งถึงห้อง Telegram payroll แล้ว</div>');
+    else if(!/กำลังส่ง/.test(n.status||'')) out.push('<div class="box bad">⚠️ แจ้งเวรเช้านี้ยังส่งไม่สำเร็จ — '+esc(n.status||'')+'</div>');
+  }
+  if(DATA.scanner_error) out.push('<div class="box bad">⚠️ เครื่องแม่ต่อเครื่องสแกนไม่ได้: '+esc(DATA.scanner_error)+'</div>');
+  box.innerHTML = out.join('');
+}
+
+/* ───────── ปฏิทิน ───────── */
+function stLine(s){
+  switch(s.status){
+    case 'ontime': return '<span class="st ontime">✓ '+esc(s.scan)+'</span>';
+    case 'after':  return '<span class="st after">+'+s.after_min+' นาที</span>';
+    case 'noscan': return '<span class="st noscan">ไม่มีสแกน</span>';
+    case 'leave':  return '<span class="st leave">'+esc(LEAVE[s.leave]||'ลา')+'</span>';
+    case 'wait':   return '<span class="st wait">รอข้อมูล</span>';
+    default: return '';
+  }
+}
+function monthCounts(){
+  const c = {};
+  for(const d of (DATA.days||[])) for(const s of (d.slots||[])) c[s.nick] = (c[s.nick]||0) + 1;
+  return c;
+}
+function renderLegend(){
+  const c = monthCounts();
+  const q = (DATA.queue||[]).filter(x=>!x.until || x.until >= MONTH+'-01').map(x=>x.nick);
+  const names = q.concat(Object.keys(c).filter(n=>!q.includes(n)));
+  document.getElementById('legend').innerHTML = names.length ? '<span style="border:none;padding-left:0;cursor:default"><small>เวรเดือนนี้:</small></span>' + names.map(n=>
+    '<span onclick="pickPerson(\''+esc(n)+'\')" title="ดูรายวันของ '+esc(n)+'"><i style="background:'+colorOf(n)+'"></i><b>'+esc(n)+'</b><small>'+(c[n]||0)+' วัน</small></span>').join('') : '';
+}
+function calLead(){ const first = new Date(MONTH+'-01T00:00:00Z'); const dow = first.getUTCDay()||7; return dow===7 ? 0 : dow-1; }
+function renderCal(){
+  const today = DATA.today;
+  const sync = DATA.scanner_sync;
+  document.getElementById('scanInfo').innerHTML = sync
+    ? 'เวลาสแกนเข้าระบบล่าสุด '+esc(thDate(sync.slice(0,10)))+' '+esc(sync.slice(11,16))+' น.' : 'ยังไม่มีข้อมูลจากเครื่องสแกน';
+  let h = TH_D.slice(1,7).map(x=>'<div class="h">'+x+'</div>').join('');
+  for(let i=0;i<calLead();i++) h += '<div class="cell blank"></div>';
+  for(const d of (DATA.days||[])){
+    if(d.isodow===7) continue;
+    const num = Number(d.date.slice(8));
+    if(d.closed){
+      h += '<div class="cell off" onclick="openDay(\''+d.date+'\')" style="cursor:pointer"><div class="n"><span>'+num+'</span></div>'+esc(d.closed_note||'ร้านปิด')+'</div>';
+      continue;
+    }
+    let inner = '';
+    for(const s of (d.slots||[])){
+      inner += '<span class="nm'+(s.from_nick?' sw':'')+'" style="background:'+colorOf(s.nick)+'" title="'+esc(s.nick)+'">'+esc(s.nick)+'</span>';
+      const extra = s.from_nick ? '<span class="st wait">แทน '+esc(s.from_nick)+'</span>' : '';
+      inner += stLine(s) + extra;
+    }
+    if(!(d.slots||[]).length && DATA.queue_start && d.date >= DATA.queue_start) inner = '<span class="st noscan">ไม่มีคนในคิว</span>';
+    const flag = (d.slots||[]).some(s=>s.case_logged) ? '<span class="pill blue" style="font-size:10px;padding:0 5px">เคส</span>' : '';
+    h += '<div class="cell'+(d.date===today?' today':'')+'" onclick="openDay(\''+d.date+'\')"><div class="n"><span>'+num+'</span>'+flag+'</div>'+inner+'</div>';
+  }
+  document.getElementById('cal').innerHTML = h;
+  renderLegend();
+  const nb = document.getElementById('nextBox');
+  if(DATA.next && DATA.next.date){
+    nb.classList.remove('hide');
+    nb.innerHTML = '🔵 ต่อคิวเดือนถัดไป: '+esc(thDate(DATA.next.date))+' = <b>'+(DATA.next.names||[]).map(esc).join(' · ')+'</b>';
+  } else nb.classList.add('hide');
+}
+
+/* ───────── รายละเอียดวัน ───────── */
+function statusText(s){
+  switch(s.status){
+    case 'ontime': return '<span class="pill good">มาทันเวลาเวร · สแกน '+esc(s.scan)+'</span>';
+    case 'after':  return '<span class="pill warn">มาหลังเวลาเวร '+s.after_min+' นาที · สแกน '+esc(s.scan)+'</span>';
+    case 'noscan': return '<span class="pill bad">ยังไม่มีสแกนเช้า</span>';
+    case 'leave':  return '<span class="pill">'+esc(LEAVE[s.leave]||'ลา')+(s.leave_unit==='hour'?' รายชั่วโมง':'')+'</span>';
+    case 'wait':   return '<span class="pill">รอข้อมูลสแกน</span>';
+    default: return '<span class="pill">ยังไม่ถึงเวลาเวร</span>';
+  }
+}
+function openDay(date){
+  const d = DATA.days.find(x=>x.date===date); if(!d) return;
+  const future = date > DATA.today;
+  document.getElementById('dayTitle').textContent = thDate(date, true);
+  let b = '';
+  if(d.closed){
+    b += '<div class="box">'+esc(d.closed_note||'ร้านปิด')+'</div>';
+    if(future && d.isodow!==7) b += '<button onclick="doOpen(\''+date+'\')">ยกเลิกวันร้านปิด</button><div class="note" style="margin-top:6px">ถ้าเป็นวันหยุดที่ตั้งในโปรแกรม payroll ต้องไปลบที่นั่น</div>';
+  } else {
+    if(!(d.slots||[]).length) b += '<div class="box">วันนี้ยังไม่มีคนเข้าเวร</div>';
+    for(const s of (d.slots||[])){
+      b += '<div class="slotbox"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center">'+
+           '<b style="font-size:17px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:'+colorOf(s.nick)+';margin-right:6px"></span>'+esc(s.nick)+'</b>'+
+           '<button class="mini" style="padding:4px 10px;font-size:13px" onclick="openSwap(\''+date+'\','+s.slot+')">🔁 สลับเวร</button></div>'+
+           '<div style="margin-top:4px">'+statusText(s)+(s.case_logged?' <span class="pill blue">ลงเคสแล้ว</span>':'')+'</div>'+
+           (s.from_nick ? '<div class="note" style="margin-top:4px">สลับแทน <b>'+esc(s.from_nick)+'</b> · '+esc(s.swap_note||'')+'</div>' : '')+
+           (s.hr_note && s.status!=='ontime' ? '<div class="note">หมายเหตุ HR: '+esc(s.hr_note)+'</div>' : '')+'</div>';
+    }
+    if(future && !(d.slots||[]).some(s=>s.from_nick)) b += '<button style="margin-top:4px" onclick="openClose(\''+date+'\')">ตั้งเป็นวันร้านปิด</button>';
+  }
+  document.getElementById('dayBody').innerHTML = b;
+  document.getElementById('dayModal').classList.remove('hide');
+}
+
+/* ───────── สลับเวร ───────── */
+let SWAP = null;
+function openSwap(date, slot){
+  const d = DATA.days.find(x=>x.date===date);
+  const s = d.slots.find(x=>x.slot===slot), other = d.slots.find(x=>x.slot!==slot);
+  SWAP = {date, slot};
+  document.getElementById('swapInfo').innerHTML = thDate(date, true)+' · ตอนนี้เป็นเวรของ <b>'+esc(s.nick)+'</b>'+
+    (date < DATA.today ? '<br><span class="pill warn">วันที่ผ่านมาแล้ว — ข้อความ Telegram จะเขียนว่าแก้ย้อนหลัง</span>' : '');
+  const qIds = (DATA.queue||[]).map(q=>q.emp_id);
+  const list = (DATA.employees||[]).filter(e=>e.svc && e.id!==s.emp_id && !(other && e.id===other.emp_id))
+    .sort((a,b)=>(qIds.includes(b.id)-qIds.includes(a.id)) || a.nick.localeCompare(b.nick,'th'));
+  document.getElementById('swapEmp').innerHTML = list.map(e=>'<option value="'+e.id+'">'+esc(e.nick)+(qIds.includes(e.id)?'':' (พักคิว/ไม่อยู่ในคิว)')+'</option>').join('');
+  document.getElementById('swapNote').value = '';
+  document.getElementById('swapErr').textContent = '';
+  closeModal('dayModal');
+  document.getElementById('swapModal').classList.remove('hide');
+}
+async function doSwap(){
+  const note = document.getElementById('swapNote').value.trim();
+  const emp = document.getElementById('swapEmp').value;
+  const err = document.getElementById('swapErr'); err.textContent='';
+  if(note.length < 5){ err.textContent='ใส่เหตุผลอย่างน้อย 5 ตัวอักษร'; return; }
+  const btn = document.getElementById('swapBtn'); btn.disabled = true;
+  try{
+    const r = await rpc('duty_door_swap', {p_pin:PIN, p_date:SWAP.date, p_slot:SWAP.slot, p_emp:emp, p_note:note});
+    if(!r.ok){ err.textContent = r.error; return; }
+    closeModal('swapModal'); toast('บันทึกการสลับแล้ว · แจ้ง Telegram แล้ว'); await reload();
+  }catch(e){ err.textContent = e.message; }
+  finally{ btn.disabled = false; }
+}
+
+/* ───────── วันร้านปิด ───────── */
+let CLOSE_DATE = '';
+function openClose(date){
+  CLOSE_DATE = date;
+  document.getElementById('closeInfo').textContent = thDate(date, true);
+  document.getElementById('closeNote').value = '';
+  document.getElementById('closeErr').textContent = '';
+  closeModal('dayModal');
+  document.getElementById('closeModal').classList.remove('hide');
+}
+async function doClose(){
+  const note = document.getElementById('closeNote').value.trim();
+  try{
+    const r = await rpc('duty_door_set_closed', {p_pin:PIN, p_date:CLOSE_DATE, p_closed:true, p_note:note});
+    if(!r.ok){ document.getElementById('closeErr').textContent = r.error; return; }
+    closeModal('closeModal'); toast('ตั้งเป็นวันร้านปิดแล้ว · คิวเลื่อนให้แล้ว'); await reload();
+  }catch(e){ document.getElementById('closeErr').textContent = e.message; }
+}
+async function doOpen(date){
+  try{
+    const r = await rpc('duty_door_set_closed', {p_pin:PIN, p_date:date, p_closed:false, p_note:null});
+    if(!r.ok){ toast(r.error); return; }
+    closeModal('dayModal'); await reload();
+    const d = DATA.days.find(x=>x.date===date);
+    toast(d && d.closed ? 'วันนี้ยังปิดอยู่ เพราะตั้งเป็นวันหยุดในโปรแกรม payroll' : 'ยกเลิกวันร้านปิดแล้ว');
+  }catch(e){ toast(e.message); }
+}
+
+/* ───────── คิวเวร ───────── */
+function renderQueue(reset){
+  if(reset || !QDRAFT){
+    QDRAFT = (DATA.queue||[]).map(q=>({emp_id:q.emp_id, nick:q.nick, paused:!!q.paused, until:q.until||''}));
+  }
+  const tomorrow = addDays(DATA.today, 1);
+  const st = document.getElementById('qStart');
+  if(reset || !st.value) st.value = DATA.queue_start && DATA.queue_start > DATA.today ? DATA.queue_start : (DATA.queue_start ? DATA.queue_start : tomorrow);
+  st.min = DATA.queue_start && DATA.queue_start <= DATA.today ? '' : tomorrow;
+  const QCOUNT = monthCounts();
+  const list = document.getElementById('qList');
+  list.innerHTML = QDRAFT.length ? QDRAFT.map((q,i)=>
+    '<div class="qi'+(q.paused?' paused':'')+'" draggable="true" data-i="'+i+'">'+
+      '<span class="g">⋮⋮</span><span class="no">'+(i+1)+'</span>'+
+      '<span class="dot" style="background:'+PALETTE[i%PALETTE.length]+'"></span>'+
+      '<span class="nmq">'+esc(q.nick)+'</span><span class="note">'+monthLabel(MONTH).split(' ')[0]+' '+(QCOUNT[q.nick]||0)+' วัน</span><span class="sp"></span>'+
+      '<label class="inl"><input type="checkbox" '+(q.paused?'checked':'')+' onchange="qSet('+i+',\'paused\',this.checked)"> พักคิว</label>'+
+      '<label class="inl">อยู่ถึง <input type="date" value="'+esc(q.until)+'" onchange="qSet('+i+',\'until\',this.value)"></label>'+
+      '<button class="mini" onclick="qMove('+i+',-1)" '+(i===0?'disabled':'')+'>↑</button>'+
+      '<button class="mini" onclick="qMove('+i+',1)" '+(i===QDRAFT.length-1?'disabled':'')+'>↓</button>'+
+      '<button class="mini" onclick="qRemove('+i+')" title="เอาออกจากคิว">✕</button>'+
+    '</div>').join('') : '<div class="box">ยังไม่มีชื่อในคิว</div>';
+  const inQ = QDRAFT.map(q=>q.emp_id);
+  document.getElementById('qAdd').innerHTML = '<option value="">— เลือกคน —</option>' +
+    (DATA.employees||[]).filter(e=>e.svc && !inQ.includes(e.id)).sort((a,b)=>a.nick.localeCompare(b.nick,'th'))
+      .map(e=>'<option value="'+e.id+'">'+esc(e.nick)+'</option>').join('');
+  const active = QDRAFT.filter(q=>!q.paused).length;
+  document.getElementById('qNote').innerHTML =
+    'มีคนเข้าเวร <b>'+active+' คน</b> · วันละ 2 คน = ครบรอบทุก '+(active>=2 ? (active/2).toFixed(active%2?1:0) : '—')+' วันทำงาน<br>'+
+    'กดบันทึกแล้ว ระบบจัดเวรใหม่ตั้งแต่ <b>'+esc(thDate(maxDate(addDays(DATA.today,1), st.value||tomorrow), true))+'</b> ตามลำดับนี้ · วันที่สลับเวรไว้ไม่เปลี่ยน · แจ้ง Telegram<br>'+
+    '"อยู่ถึง" ใช้กับคนที่กำลังจะออก — หลังวันนั้นระบบข้ามให้เอง';
+  bindDrag();
+}
+function maxDate(a,b){ return a>b?a:b; }
+function qSet(i,k,v){ QDRAFT[i][k]=v; renderQueue(false); }
+function qMove(i,dir){ const j=i+dir; if(j<0||j>=QDRAFT.length) return; [QDRAFT[i],QDRAFT[j]]=[QDRAFT[j],QDRAFT[i]]; renderQueue(false); }
+function qRemove(i){ QDRAFT.splice(i,1); renderQueue(false); }
+function qAddPerson(){
+  const id = document.getElementById('qAdd').value; if(!id) return;
+  const e = empById(id); QDRAFT.push({emp_id:id, nick:e.nick, paused:false, until:''}); renderQueue(false);
+}
+let DRAG_I = null;
+function bindDrag(){
+  document.querySelectorAll('#qList .qi').forEach(el=>{
+    el.addEventListener('dragstart', ()=>{ DRAG_I = Number(el.dataset.i); el.classList.add('dragging'); });
+    el.addEventListener('dragend', ()=>{ el.classList.remove('dragging'); });
+    el.addEventListener('dragover', ev=>{ ev.preventDefault(); el.classList.add('over'); });
+    el.addEventListener('dragleave', ()=>el.classList.remove('over'));
+    el.addEventListener('drop', ev=>{
+      ev.preventDefault(); const to = Number(el.dataset.i);
+      if(DRAG_I===null || DRAG_I===to) return;
+      const [m] = QDRAFT.splice(DRAG_I,1); QDRAFT.splice(to,0,m); DRAG_I=null; renderQueue(false);
+    });
+  });
+}
+async function saveQueue(){
+  const err = document.getElementById('qErr'); err.textContent='';
+  const start = document.getElementById('qStart').value;
+  if(QDRAFT.filter(q=>!q.paused).length < 2){ err.textContent='ต้องมีคนที่ไม่ได้พักคิวอย่างน้อย 2 คน'; return; }
+  if(!start){ err.textContent='เลือกวันที่เริ่มใช้คิว'; return; }
+  const btn = document.getElementById('qSaveBtn'); btn.disabled = true;
+  try{
+    const r = await rpc('duty_door_queue_save', {p_pin:PIN, p_start:start,
+      p_items: QDRAFT.map(q=>({emp_id:q.emp_id, paused:q.paused, until:q.until||null}))});
+    if(!r.ok){ err.textContent = r.error; return; }
+    toast('บันทึกคิวแล้ว · จัดเวรใหม่ตั้งแต่ '+thDate(r.from)); QDRAFT = null;
+    await reload(); renderQueue(true); setTab('roster');
+  }catch(e){ err.textContent = e.message; }
+  finally{ btn.disabled = false; }
+}
+
+/* ───────── ค้นชื่อ ───────── */
+function personStats(nick){
+  const st = {total:0, ontime:0, after:0, noscan:0, leave:0, wait:0, future:0, swapIn:0, swapOut:0, rows:[]};
+  for(const d of (DATA.days||[])){
+    for(const s of (d.slots||[])){
+      if(s.nick===nick){ st.total++; st[s.status]=(st[s.status]||0)+1; if(s.from_nick) st.swapIn++; st.rows.push({d,s,kind:'duty'}); }
+      else if(s.from_nick===nick){ st.swapOut++; st.rows.push({d,s,kind:'out'}); }
+    }
+  }
+  return st;
+}
+function renderPerson(){
+  if(!DATA) return;
+  const q = document.getElementById('q').value.trim();
+  const inMonth = new Set(); (DATA.days||[]).forEach(d=>(d.slots||[]).forEach(x=>{inMonth.add(x.nick); if(x.from_nick) inMonth.add(x.from_nick);}));
+  const emps = (DATA.employees||[]).filter(e=>e.svc || inMonth.has(e.nick));
+  const matches = q ? emps.filter(e=>e.nick.includes(q)) : emps;
+  if(q && matches.length===1) PICK = matches[0].nick;
+  document.getElementById('chips').innerHTML = matches.map(e=>
+    '<button class="'+(e.nick===PICK?'on':'')+'" onclick="pickPerson(\''+esc(e.nick)+'\')">'+esc(e.nick)+'</button>').join('') || '<span class="note">ไม่พบชื่อนี้</span>';
+  const out = document.getElementById('personOut');
+  if(!PICK){ out.innerHTML = '<p class="note">พิมพ์หรือกดชื่อ เพื่อดูว่าเดือนนี้มีเวรกี่วัน และมาทันเวลาเวรไหม</p>'; }
+  else{
+    const st = personStats(PICK);
+    let h = '<h2 style="margin-top:10px">'+esc(PICK)+' · '+monthLabel(MONTH)+'</h2><div class="stat">'+
+      '<div><b>'+st.total+'</b><span>วันที่มีเวร</span></div>'+
+      '<div><b style="color:var(--good)">'+st.ontime+'</b><span>มาทันเวลาเวร</span></div>'+
+      '<div><b style="color:var(--warn)">'+st.after+'</b><span>มาหลังเวลาเวร</span></div>'+
+      '<div><b style="color:var(--bad)">'+st.noscan+'</b><span>ไม่มีสแกนเช้า</span></div>'+
+      '<div><b>'+st.leave+'</b><span>ลา</span></div>'+
+      '<div><b>'+(st.wait+st.future)+'</b><span>รอข้อมูล / ยังไม่ถึง</span></div>'+
+      '<div><b>'+st.swapOut+'</b><span>สลับให้คนอื่นทำ</span></div>'+
+      '<div><b>'+st.swapIn+'</b><span>รับเวรแทนคนอื่น</span></div></div>';
+    h += st.rows.length ? st.rows.map(({d,s,kind})=>{
+      if(kind==='out') return '<div class="drow"><b class="d">'+thDate(d.date)+'</b><span class="pill">สลับให้ '+esc(s.nick)+' ทำแทน</span><span class="note">'+esc(s.swap_note||'')+'</span></div>';
+      return '<div class="drow"><b class="d">'+thDate(d.date)+'</b>'+statusText(s)+(s.from_nick?'<span class="pill">รับแทน '+esc(s.from_nick)+'</span>':'')+(s.case_logged?'<span class="pill blue">ลงเคสแล้ว</span>':'')+'</div>';
+    }).join('') : '<p class="note">เดือนนี้ไม่มีเวร</p>';
+    out.innerHTML = h;
+  }
+  const rows = emps.map(e=>({e, st:personStats(e.nick)})).filter(x=>x.st.total||x.st.swapOut)
+    .sort((a,b)=>b.st.total-a.st.total || a.e.nick.localeCompare(b.e.nick,'th'));
+  document.getElementById('allTable').innerHTML = rows.length ?
+    '<table><thead><tr><th>ชื่อ</th><th>มีเวร</th><th>มาทัน</th><th>มาหลังเวลา</th><th>ไม่มีสแกน</th><th>ลา</th><th>รอ/ยังไม่ถึง</th><th>สลับออก</th><th>รับแทน</th></tr></thead><tbody>'+
+    rows.map(({e,st})=>'<tr class="clickable" onclick="pickPerson(\''+esc(e.nick)+'\')"><td><b>'+esc(e.nick)+'</b></td><td>'+st.total+'</td><td>'+st.ontime+'</td><td>'+(st.after||'')+'</td><td>'+(st.noscan||'')+'</td><td>'+(st.leave||'')+'</td><td>'+(st.wait+st.future)+'</td><td>'+(st.swapOut||'')+'</td><td>'+(st.swapIn||'')+'</td></tr>').join('')+
+    '</tbody></table>' : '<p class="note">เดือนนี้ยังไม่มีเวร</p>';
+}
+function pickPerson(nick){ PICK = nick; document.getElementById('q').value=''; setTab('person'); renderPerson(); }
+
+/* ───────── พิมพ์ A4 ───────── */
+function buildPrint(){
+  let g = TH_D.slice(1,7).map((x,i)=>'<div class="ph2">'+['จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][i]+'</div>').join('');
+  for(let i=0;i<calLead();i++) g += '<div class="pblank"></div>';
+  let cells = 0;
+  for(const d of (DATA.days||[])){
+    if(d.isodow===7) continue;
+    const num = Number(d.date.slice(8)); cells++;
+    if(d.closed){ g += '<div class="poff"><div class="pn">'+num+'</div>'+esc(d.closed_note||'ร้านปิด')+'</div>'; continue; }
+    g += '<div><div class="pn">'+num+'</div>'+(d.slots||[]).map(s=>
+      '<span class="pnm" style="background:'+colorOf(s.nick)+'">'+esc(s.nick)+(s.from_nick?' <span class="psw">(แทน '+esc(s.from_nick)+')</span>':'')+'</span>').join('')+'</div>';
+  }
+  const total = calLead() + cells; for(let i=total%6; i && i<6; i++) g += '<div class="pblank"></div>';
+  const q = (DATA.queue||[]).filter(x=>!x.paused && (!x.until || x.until >= MONTH+'-01'));
+  const PC = monthCounts();
+  const now = new Date(Date.now()+7*3600000);
+  document.getElementById('printArea').innerHTML =
+    '<div class="ph"><h1>ตารางเวรเปิดประตู · '+monthLabel(MONTH)+'</h1>'+
+    '<div class="r">ร้านกิจมั่งมีโฮม<br><b>มาถึงร้านและเปิดประตู เวลา 07:40 น.</b></div></div>'+
+    '<div class="pcal">'+g+'</div>'+
+    '<div class="pf"><div class="qline"><b>ลำดับคิว (จำนวนวันเวรเดือนนี้):</b> '+q.map((x,i)=>(i+1)+'. '+esc(x.nick)+' ('+(PC[x.nick]||0)+')').join(' → ')+
+    (DATA.next&&DATA.next.date ? ' &nbsp;·&nbsp; <b>ต่อคิวเดือนถัดไป:</b> '+esc(thDate(DATA.next.date))+' = '+(DATA.next.names||[]).map(esc).join(' · ') : '')+'</div>'+
+    '<div style="text-align:right;white-space:nowrap">ไม่สะดวก ขอสลับเวรกับ HR ก่อนถึงวัน · พิมพ์ '+now.getUTCDate()+' '+TH_MS[now.getUTCMonth()]+' '+((now.getUTCFullYear()+543)%100)+'</div></div>';
+}
+function doPrint(){ buildPrint(); window.print(); }
+window.addEventListener('beforeprint', ()=>{ if(DATA) buildPrint(); });
+</script>
+</body>
+</html>
