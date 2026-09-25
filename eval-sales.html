@@ -363,6 +363,15 @@ async function loadFormForRater(raterId){
   document.getElementById('voteBox').innerHTML='<div class="card"><div class="muted">กำลังโหลดคำถาม…</div></div>';
 
   const {data,error}=await sb.rpc('sales_eval_form',{p_period:PERIOD,p_rater_id:+raterId});
+  if(data&&data.not_open){
+    // ยังไม่ถึงวันเปิดให้ประเมิน — ห้ามถอยไปใช้ฟอร์มสำรอง
+    notice.style.display='none';
+    document.getElementById('voteBox').innerHTML=
+      '<div class="card"><div style="font-weight:700;color:#fde68a">⏳ ยังไม่เปิดให้ประเมินงวดนี้</div>'+
+      '<div class="muted" style="margin-top:6px">เปิดให้ประเมินวันที่ <b>'+esc(data.open_label||'20')+'</b> เป็นต้นไป</div></div>';
+    document.getElementById('progBox').innerHTML='';
+    return;
+  }
   if(error||!data||!data.ok||!data.subjects||!data.subjects.length){
     // ถอยไปใช้ชุดคำถามสำรอง เพื่อไม่ให้พนักงานติดค้าง
     const {data:subs,error:e2}=await sb.rpc('sales_eval_subjects');
@@ -411,6 +420,10 @@ async function submitVotes(){
   btn.disabled=false; btn.textContent='ส่งคำตอบ';
 
   if(error||!data||!data.ok){
+    if(data&&data.not_open){
+      serverAlert(data.error,'ยังไม่เปิดให้ประเมิน');
+      return;
+    }
     if(data&&(data.vote_missing||data.vote_same)){
       serverAlert(data.error,'ตรวจคำตอบอีกครั้ง');
       const k=data.kind;
