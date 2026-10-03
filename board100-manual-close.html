@@ -153,6 +153,11 @@ tr.clickable:hover td{background:#f8fafc}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:8px 0 2px}
 .legend span{display:flex;align-items:center;gap:5px}
 .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+.lvbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.lvstick{position:sticky;bottom:8px;z-index:5;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.lvsave{font-weight:700}
+.lv button.draft{outline:3px dashed #d97706;outline-offset:-3px}
 </style>
 </head>
 <body>
@@ -727,6 +732,13 @@ function paintBellPanel(){
 
 /* ───────── โหลดข้อมูลใหม่ทั้งหน้า ───────── */
 async function reload(){
+  { const per0 = document.getElementById('period').value;
+    if(draftCount() && DRAFT_PERIOD && per0 !== DRAFT_PERIOD){
+      if(!confirm('งวด '+DRAFT_PERIOD+' มีระดับขั้นที่ยังไม่บันทึก '+draftCount()+' รายการ · เปลี่ยนงวดแล้วจะหาย ทิ้งเลยไหม?')){
+        document.getElementById('period').value = DRAFT_PERIOD; return;
+      }
+      DRAFT = {};
+    } }
   const per = document.getElementById('period').value;
   try{
     if(ROLE === 'owner'){
@@ -1794,14 +1806,15 @@ const LEVELS = [
 function levelName(v){ const l = LEVELS.find(x=>x[0]==v); return l ? ('ระดับ '+l[1]) : '—'; }
 function paintLevels(){
   const rubric = DATA.rubric || [];
-  document.getElementById('levelList').innerHTML = (DATA.rows||[]).map(r=>{
+  document.getElementById('levelList').innerHTML = levelBar('top') + (DATA.rows||[]).map(r=>{
     const jobs = r.jobs || [];
-    const by   = r.perf_by_job || {};
+    const dr   = DRAFT[r.person] || {};
+    const by   = Object.assign({}, r.perf_by_job || {}, dr);
     const blocks = jobs.map(j=>{
       const cur  = by[j.job];
       const btns = LEVELS.map(l=>{
         const desc = (rubric.find(x=>x.job===j.job && x.level==l[0]) || {}).detail || l[2];
-        return '<button class="'+(cur==l[0]?'on':'')+'" title="'+esc(desc)+'" '+
+        return '<button class="'+(cur==l[0]?'on':'')+(cur==l[0]&&dr[j.job]!=null?' draft':'')+'" title="'+esc(desc)+'" '+
           'onclick="setLevel(\''+esc(r.person)+'\',\''+esc(j.job)+'\','+l[0]+')">ระดับ '+l[1]+'</button>';
       }).join('');
       const desc = (rubric.find(x=>x.job===j.job && x.level==cur) || {}).detail;
@@ -1809,6 +1822,7 @@ function paintLevels(){
       return '<div style="margin-top:10px">'+
         '<span class="mini"><b>'+esc(j.job)+'</b> '+share+'%</span> '+
         (cur==null ? '<span class="pill warn">ยังไม่เลือก</span>' : '') +
+        (dr[j.job]!=null ? '<span class="pill warn">ยังไม่บันทึก</span>' : '') +
         '<div class="lv" style="margin-top:6px">'+btns+'</div>'+
         (desc ? '<div class="mini" style="margin-top:6px">'+esc(desc)+'</div>' : '')+
         '</div>';
@@ -1816,18 +1830,19 @@ function paintLevels(){
     const done = jobs.length>0 && jobs.every(j=>by[j.job]!=null);
     const head = !jobs.length
       ? '<span class="pill warn">ยังไม่ได้ตั้งสัดส่วนงาน</span>'
-      : (done
+      : (Object.keys(dr).length
+          ? '<span class="pill warn">ยังไม่บันทึก · คะแนนจะคิดใหม่หลังกดบันทึก</span>'
+          : done
           ? '<span class="pill good">ถ่วงแล้วได้ '+(r.perf_pct==null?'—':r.perf_pct)+'% · '+(r.perf==null?'—':r.perf)+' คะแนน</span>'
           : '<span class="pill warn">ยังเลือกไม่ครบทุกงาน</span>');
     return '<div class="box"><b>'+esc(r.person)+'</b> '+head+blocks+'</div>';
-  }).join('');
+  }).join('') + levelBar('bottom');
 }
-async function setLevel(person, job, level){
-  try{
+async function saveLevelRow(person, ovr){
     /* ฟังก์ชันนี้ไม่มีค่าตั้งต้นให้ตัวกลาง ต้องส่งครบทุกช่องเสมอ ไม่งั้นหาฟังก์ชันไม่เจอ */
     const row = (DATA.rows||[]).find(x=>x.person===person) || {};
     const by  = Object.assign({}, row.perf_by_job || {});
-    by[job] = level;
+    Object.assign(by, ovr);
     const r = await rpc('board100_save_manual', {
       p_period: document.getElementById('period').value,
       p_person: person,
@@ -1840,11 +1855,53 @@ async function setLevel(person, job, level){
       p_perf_level: null,
       p_perf_by_job: by
     });
-    if(!r.ok){ toast(r.error||'บันทึกไม่สำเร็จ'); return; }
-    toast(person + ' · ' + job + ' → ' + levelName(level));
-    reload();
-  }catch(e){ toast(e.message); }
+    return r;
 }
+
+/* ระดับขั้นที่กดแล้วแต่ยังไม่บันทึก — เจ้าของขอ 3 ต.ค. 69 ให้มีปุ่มบันทึก จะได้รู้ว่าต้องกดยืนยัน
+   โครง: DRAFT[person][job] = ระดับ · กดปุ่มระดับ = แก้ใน DRAFT อย่างเดียว · กด "บันทึกผล" ถึงส่งเข้าระบบ */
+var DRAFT = {}, DRAFT_PERIOD = null, SAVING = false;
+function draftCount(){ return Object.values(DRAFT).reduce((n,o)=>n+Object.keys(o).length,0); }
+function setLevel(person, job, level){
+  if(DATA.period_status === 'closed'){ toast('งวดนี้ปิดแล้ว แก้ระดับขั้นไม่ได้'); return; }
+  const row = (DATA.rows||[]).find(x=>x.person===person) || {};
+  const saved = (row.perf_by_job||{})[job];
+  DRAFT_PERIOD = document.getElementById('period').value;
+  DRAFT[person] = DRAFT[person] || {};
+  if(saved == level) delete DRAFT[person][job]; else DRAFT[person][job] = level;
+  if(!Object.keys(DRAFT[person]).length) delete DRAFT[person];
+  paintLevels();
+}
+function cancelLevels(){
+  if(!confirm('ยกเลิกระดับขั้นที่ยังไม่บันทึกทั้งหมด '+draftCount()+' รายการ?')) return;
+  DRAFT = {}; paintLevels();
+}
+async function saveLevels(){
+  if(SAVING || !draftCount()) return;
+  SAVING = true; paintLevels();
+  let ok = 0, fail = [];
+  for(const person of Object.keys(DRAFT)){
+    try{
+      const r = await saveLevelRow(person, DRAFT[person]);
+      if(r && r.ok){ ok += Object.keys(DRAFT[person]).length; delete DRAFT[person]; }
+      else fail.push(person+' ('+((r&&r.error)||'บันทึกไม่สำเร็จ')+')');
+    }catch(e){ fail.push(person+' ('+e.message+')'); }
+  }
+  SAVING = false;
+  toast(fail.length ? 'บันทึกได้ '+ok+' รายการ · ไม่สำเร็จ: '+fail.join(' · ') : '✅ บันทึกผลแล้ว '+ok+' รายการ');
+  await reload();
+}
+function levelBar(pos){
+  const n = draftCount();
+  if(SAVING) return '<div class="box warn lvbar'+(pos==='bottom'?' lvstick':'')+'"><b>กำลังบันทึก…</b></div>';
+  if(!n) return pos==='top'
+    ? '<div class="box good lvbar">✅ ทุกระดับที่เห็นบันทึกเข้าระบบแล้ว · รีเฟรชได้ ไม่หาย</div>' : '';
+  return '<div class="box warn lvbar'+(pos==='bottom'?' lvstick':'')+'">'+
+    '<b>ยังไม่บันทึก '+n+' รายการ</b> — ถ้ารีเฟรชหรือปิดหน้านี้ตอนนี้ ที่เลือกไว้จะหาย '+
+    '<span style="white-space:nowrap"><button class="lvsave" onclick="saveLevels()">💾 บันทึกผล</button> '+
+    '<button onclick="cancelLevels()">ยกเลิก</button></span></div>';
+}
+window.addEventListener('beforeunload', e=>{ if(draftCount()){ e.preventDefault(); e.returnValue=''; } });
 
 /* ───────── แท็บปิดงวด ───────── */
 function paintClose(){
