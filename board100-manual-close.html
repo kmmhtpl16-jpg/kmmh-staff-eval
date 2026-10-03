@@ -1227,10 +1227,15 @@ function showDetail(i){
     '<div class="card"><h2 style="margin-top:0">'+esc(r.person)+
       ' <span class="pill">'+esc((r.jobs||[]).map(j=>j.job+' '+Math.round(j.share*100)+'%').join(' · '))+'</span></h2>'+
     '<div class="row3">'+
-      '<div class="box"><b>วุฒิภาวะ '+num(r.maturity)+'/30</b><br><span class="mini">'+
-        'เพื่อนให้น้ำเสียง '+num(r.avg_tone,2)+' · เหตุผล '+num(r.avg_reason,2)+' ดาวจาก 5 (จาก '+esc(r.n_raters)+' คน)</span></div>'+
-      '<div class="box"><b>ทีม '+num(r.team)+'/20</b><br><span class="mini">'+
-        'เพื่อนให้ความเป็นธรรม '+num(r.avg_fair,2)+' ดาวจาก 5</span></div>'+
+      (r.form_mode==='เลือกชื่อ'
+        ? '<div class="box"><b>วุฒิภาวะ '+num(r.maturity)+'/30</b><br><span class="mini">'+
+            'ทีมบริการ '+esc(r.n_raters)+' คนเลือกชื่อ · ถูกชม '+esc(r.pick_up)+' ครั้ง · ถูกติ '+esc(r.pick_down)+' ครั้ง</span></div>'+
+          '<div class="box"><b>ทีม '+num(r.team)+'/20</b><br><span class="mini">'+
+            'สองช่องรวม '+num(r.maturity+r.team)+'/50 = เริ่ม '+num(r.pick_base,1)+' + ชม − ติ (แบ่ง 60:40)</span></div>'
+        : '<div class="box"><b>วุฒิภาวะ '+num(r.maturity)+'/30</b><br><span class="mini">'+
+            'เพื่อนให้น้ำเสียง '+num(r.avg_tone,2)+' · เหตุผล '+num(r.avg_reason,2)+' ดาวจาก 5 (จาก '+esc(r.n_raters)+' คน)</span></div>'+
+          '<div class="box"><b>ทีม '+num(r.team)+'/20</b><br><span class="mini">'+
+            'เพื่อนให้ความเป็นธรรม '+num(r.avg_fair,2)+' ดาวจาก 5</span></div>')+
       '<div class="box"><b>วินัย '+num(r.discipline)+'/10</b><br><span class="mini">'+
         'สายรวม '+esc(r.late_minutes)+' นาที · ที่มา: '+esc(r.discipline_source||'—')+'</span></div>'+
     '</div>'+
