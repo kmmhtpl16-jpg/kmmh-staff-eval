@@ -253,7 +253,7 @@ tr.clickable:hover td{background:#f8fafc}
       <p><span class="st after" style="display:inline">+3 นาที</span> สแกน 07:41–07:50 = <b>มาเปิดประตูแล้ว</b> (ต้องเปิดประตูก่อนถึงสแกนได้)</p>
       <p><span class="st miss" style="display:inline">ไม่ได้เปิด 08:02</span> สแกนหลัง 07:50 = <b>ไม่ได้มาเปิดประตู</b> → ต้องเข้าเวรซ้ำ</p>
       <div class="box"><b>🔁 เวรซ้ำ</b> (เริ่ม 30 ต.ค. 69) — คนที่ไม่ได้ทำเวร (ไม่มีสแกน · สแกนหลัง 07:50 · หรือลาวันนั้น) ต้องเข้าเวรซ้ำ<b>วันทำงานถัดไป</b>
-      ถ้าวันเวรซ้ำยังไม่ทำอีก ระบบเลื่อนไปวันทำงานถัดไปเรื่อย ๆ จนกว่าจะทำ · ถ้าวันนั้นตรงกับเวรปกติของตัวเองอยู่แล้ว เวรซ้ำเลื่อนไปวันถัดไป (หนึ่งวันนับได้เวรเดียว)
+      ถ้าวันเวรซ้ำยังไม่ทำอีก ระบบเลื่อนไปวันทำงานถัดไปเรื่อย ๆ จนกว่าจะทำ · ถ้าเช้าไหนทั้งร้านไม่มีใครสแกนก่อน 07:50 เลย ถือว่าเครื่องสแกนมีปัญหา ไม่ตัดสินวันนั้น · ถ้าวันนั้นตรงกับเวรปกติของตัวเองอยู่แล้ว เวรซ้ำเลื่อนไปวันถัดไป (หนึ่งวันนับได้เวรเดียว)
       · แจ้งในห้อง Telegram ตอน 07:00 (รายชื่อ) และ 08:05 (ผล + ใครต้องเข้าเวรซ้ำพรุ่งนี้)</div>
       <p><span class="st noscan" style="display:inline">ไม่มีสแกน</span> มีข้อมูลเข้าระบบแล้ว แต่คนนี้ยังไม่มีสแกนเช้า</p>
       <p><span class="st leave" style="display:inline">ลา</span> มีใบลาในระบบวันนั้น · <span class="st wait" style="display:inline">รอข้อมูล</span> ยังไม่มีข้อมูลสแกนเข้าระบบ (เช่น เครื่องแม่ยังไม่เปิด)</p>
@@ -429,8 +429,9 @@ function renderTop(){
 function stLine(s){
   switch(s.status){
     case 'ontime': return '<span class="st ontime">✓ '+esc(s.scan)+'</span>';
-    case 'after':  return s.did==='late' ? '<span class="st miss">ไม่ได้เปิด '+esc(s.scan)+'</span>' : '<span class="st after">+'+s.after_min+' นาที</span>';
-    case 'noscan': return '<span class="st noscan">ไม่มีสแกน</span>';
+    case 'after':  if(s.did==='broken') return '<span class="st wait">เครื่องสแกนมีปัญหา</span>';
+                   return s.did==='late' ? '<span class="st miss">ไม่ได้เปิด '+esc(s.scan)+'</span>' : '<span class="st after">+'+s.after_min+' นาที</span>';
+    case 'noscan': return s.did==='broken' ? '<span class="st wait">เครื่องสแกนมีปัญหา</span>' : '<span class="st noscan">ไม่มีสแกน</span>';
     case 'leave':  return '<span class="st leave">'+esc(LEAVE[s.leave]||'ลา')+'</span>';
     case 'wait':   return '<span class="st wait">รอข้อมูล</span>';
     default: return '';
@@ -483,7 +484,7 @@ function renderCal(){
   } else nb.classList.add('hide');
 }
 
-const MK_MOVE = {moved:'มีเวรปกติ', one_per_day:'วันละเวรเดียว', nodata:'ไม่มีข้อมูล', closed:'ร้านปิด', leave:'ลา'};
+const MK_MOVE = {moved:'มีเวรปกติ', one_per_day:'วันละเวรเดียว', nodata:'ไม่มีข้อมูล', closed:'ร้านปิด', leave:'ลา', broken:'เครื่องสแกนมีปัญหา'};
 function mkLine(m){
   if(m.state==='done') return '<span class="st ontime">✓ '+esc(m.scan||'')+'</span>';
   if(m.state==='moved') return '<span class="st '+(MK_MOVE[m.moved_res]?'wait':'miss')+'">'+(MK_MOVE[m.moved_res]||'ไม่ได้ทำ')+' → เลื่อน</span>';
@@ -497,9 +498,10 @@ function mkWhy(m){
 function statusText(s){
   switch(s.status){
     case 'ontime': return '<span class="pill good">มาทันเวลาเวร · สแกน '+esc(s.scan)+'</span>';
-    case 'after':  return s.did==='late' ? '<span class="pill bad">ไม่ได้มาเปิดประตู · สแกน '+esc(s.scan)+' (หลัง 07:50)</span>'
+    case 'after':  if(s.did==='broken') return '<span class="pill warn">สแกน '+esc(s.scan)+' · เช้านั้นเครื่องสแกนมีปัญหา ไม่ตัดสิน</span>';
+                   return s.did==='late' ? '<span class="pill bad">ไม่ได้มาเปิดประตู · สแกน '+esc(s.scan)+' (หลัง 07:50)</span>'
                                          : '<span class="pill good">มาเปิดประตู · สแกน '+esc(s.scan)+'</span>';
-    case 'noscan': return '<span class="pill bad">ยังไม่มีสแกนเช้า</span>';
+    case 'noscan': return s.did==='broken' ? '<span class="pill warn">เช้านั้นเครื่องสแกนมีปัญหา ไม่ตัดสิน</span>' : '<span class="pill bad">ยังไม่มีสแกนเช้า</span>';
     case 'leave':  return '<span class="pill">'+esc(LEAVE[s.leave]||'ลา')+(s.leave_unit==='hour'?' รายชั่วโมง':'')+'</span>';
     case 'wait':   return '<span class="pill">รอข้อมูลสแกน</span>';
     default: return '<span class="pill">ยังไม่ถึงเวลาเวร</span>';
