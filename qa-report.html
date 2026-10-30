@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายงานตรวจสอบคุณภาพงาน KMMH</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0f766e">
+<style>
+:root{
+  --bg:#f4f6f8; --card:#fff; --line:#e2e8f0; --ink:#0f172a; --dim:#64748b;
+  --brand:#0f766e; --brand2:#115e59; --warn:#b45309; --bad:#b91c1c; --good:#15803d;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Thai","Sarabun",sans-serif;
+  font-size:16px;line-height:1.55}
+.wrap{max-width:860px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}
+h2{font-size:17px;margin:2px 0 8px}
+.sub{color:var(--dim);font-size:14px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--line);background:#fff;padding:8px 13px;color:var(--ink)}
+button:hover{background:#f8fafc}
+button.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+button.primary:hover{background:var(--brand2)}
+button.big{width:100%;padding:12px;font-size:17px;font-weight:700}
+button:disabled{opacity:.5;cursor:not-allowed}
+.top button,.nw{white-space:nowrap;flex:none}
+input,select,textarea{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:9px;width:100%;background:#fff;color:var(--ink)}
+textarea{min-height:76px;resize:vertical}
+label{display:block;font-size:14px;color:var(--ink);font-weight:600;margin:14px 0 4px}
+label small{font-weight:400;color:var(--dim)}
+.hide{display:none!important}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border-radius:999px;position:relative}
+.tabs button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.badge{display:inline-block;min-width:20px;padding:0 6px;border-radius:999px;background:var(--bad);color:#fff;font-size:12px;font-weight:700;margin-left:4px;line-height:20px;text-align:center}
+.gate{max-width:340px;margin:12vh auto}
+.gate input{text-align:center;font-size:26px;letter-spacing:.35em;padding:14px}
+.err{color:var(--bad);font-size:14px;margin-top:8px}
+.note{font-size:13px;color:var(--dim)}
+.box{border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin:8px 0;background:#fbfdfe;font-size:14px}
+.box.warn{background:#fffbeb;border-color:#fde68a}
+.box.bad{background:#fef2f2;border-color:#fecaca}
+.box.good{background:#f0fdf4;border-color:#bbf7d0}
+.box.blue{background:#eff6ff;border-color:#bfdbfe}
+.pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12.5px;background:#f1f5f9;color:#475569;white-space:nowrap}
+.pill.good{background:#dcfce7;color:#166534}.pill.warn{background:#fef3c7;color:#92400e}
+.pill.bad{background:#fee2e2;color:#991b1b}.pill.blue{background:#dbeafe;color:#1e40af}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{border-radius:999px;padding:6px 13px;font-size:15px}
+.chips button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.row2{grid-template-columns:1fr}}
+.rep{border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin:10px 0;background:#fff}
+.rep .h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;font-size:14px;color:var(--dim)}
+.rep .h b{color:var(--ink)}
+.rep dl{margin:8px 0 0;display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:14.5px}
+.rep dt{color:var(--dim);white-space:nowrap}
+.rep dd{margin:0;white-space:pre-wrap;word-break:break-word}
+.rep .act{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.rep .act button{font-size:14px;padding:6px 11px}
+.cp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cp .slot{border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;background:#fff}
+.cp .slot.done{background:#f0fdf4;border-color:#bbf7d0}
+.cp .slot b{display:block;font-size:17px}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:10px 0}
+.stat div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fbfdfe}
+.stat b{display:block;font-size:22px;line-height:1.2}
+.stat span{font-size:12.5px;color:var(--dim)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--dim);font-weight:600;font-size:13px}
+.monthbar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.monthbar .m{flex:1;text-align:center;font-weight:700;font-size:17px}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.thumbs button{font-size:13px;padding:4px 10px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal .card{width:100%;max-width:480px;margin:0;max-height:90vh;overflow:auto}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 18px;border-radius:10px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:92vw;z-index:99;font-size:14px}
+#toast.on{opacity:1}
+ol.rules{margin:0;padding-left:22px}
+ol.rules li{margin:5px 0}
+</style>
+</head>
+<body>
+
+<div id="gate" class="wrap">
+  <div class="card gate">
+    <h1>รายงานตรวจสอบคุณภาพงาน</h1>
+    <p class="sub">ร้านกิจมั่งมีโฮม</p>
+    <label>ใส่รหัส</label>
+    <input id="pin" type="password" inputmode="numeric" placeholder="••••" autocomplete="off">
+    <div style="margin-top:12px"><button class="primary big" onclick="doLogin()">เข้าใช้งาน</button></div>
+    <div id="gateErr" class="err"></div>
+    <p class="note" style="margin-top:14px">มือถือที่ใช้ร่วมกัน กด "ออกจากระบบ" ทุกครั้งหลังใช้เสร็จ</p>
+  </div>
+</div>
+
+<div id="app" class="wrap hide">
+  <div class="top">
+    <div>
+      <h1>รายงานตรวจสอบคุณภาพงาน</h1>
+      <div class="sub" id="who"></div>
+    </div>
+    <button onclick="logout()">ออกจากระบบ</button>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div id="view"></div>
+</div>
+
+<div id="modal" class="modal hide"><div class="card" id="modalBody"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────
+   โปรแกรมรายงานผลงานตรวจสอบคุณภาพการทำงาน (30 ต.ค. 69)
+   ข้อตกลง: claude/handoff-30ตค69-งานตรวจสอบคุณภาพการทำงาน-หมิว.md
+   3 รหัส: คนดูแลงานตรวจ · ฝ่ายบุคคล · เจ้าของ  (ฐานข้อมูลตัดสินสิทธิ์ ไม่เชื่อหน้าเว็บ)
+   ───────────────────────────────────────────────────────────── */
+const SB_URL = 'https://hfystbdqjhftrlelmkjm.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmeXN0YmRxamhmdHJsZWxta2ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNTc3MDUsImV4cCI6MjA5NDczMzcwNX0.cyRCwh0G6ArSevhsKa6kmPnYhLRRJYrxhlH0ED_JJaE';
+const DOC_FN = SB_URL + '/functions/v1/qa-doc';
+const AREAS = ['แชทลูกค้า','ใบเสนอราคา','บิล/เอกสาร','หน้าร้าน','จัดส่ง','คลังสินค้า','อื่น ๆ'];
+const SLOTS = ['ก่อนพักเที่ยง','ก่อนเลิกงาน'];
+const SLOT_HINT = {'ก่อนพักเที่ยง':'ลงก่อนพักเที่ยง', 'ก่อนเลิกงาน':'ลงก่อนเลิกงาน'};
+const TH_M = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const TH_MS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+/* คำที่บรรยายตัวคน มากกว่าบรรยายงาน — เตือนให้เขียนใหม่ (ไม่บล็อก) */
+const PERSON_WORDS = ['ไม่ใส่ใจ','ขี้เกียจ','มักง่าย','อีกแล้ว','บอกแล้วไม่ฟัง','ไม่สนใจ','ชอบ','นิสัย','เป็นประจำ','ไม่รับผิดชอบ'];
+const STATUS_PILL = {'รอฝ่ายบุคคล':'warn','ตีกลับ':'bad','แจ้งให้รู้แล้ว':'blue','บันทึกในประวัติแล้ว':'bad',
+  'ตั้งเป็นกติกาใหม่':'good','ไม่นับ':'', 'ฝ่ายบุคคลรับเรื่องแล้ว':'blue'};
+
+let PIN='', D=null, MONTH='', TAB='', FORM=null, SEEN_PENDING=null, SEEN_BACK=null, POLL=null;
+
+async function rpc(fn, args){
+  const res = await fetch(SB_URL + '/rest/v1/rpc/' + fn, {
+    method:'POST', headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},
+    body: JSON.stringify(args || {})
+  });
+  if(!res.ok) throw new Error('เชื่อมต่อฐานข้อมูลไม่ได้ (' + res.status + ')');
+  return await res.json();
+}
+async function docFn(payload){
+  const res = await fetch(DOC_FN, { method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},
+    body: JSON.stringify({...payload, pin: PIN}) });
+  const out = await res.json().catch(()=>({}));
+  if(!res.ok || out.error) throw new Error(out.error || ('เชื่อมต่อไม่ได้ ('+res.status+')'));
+  return out;
+}
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),3000); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function bkkNow(){ return new Date(Date.now() + 7*3600000); }
+function bkkToday(){ return bkkNow().toISOString().slice(0,10); }
+function localInputNow(){ return bkkNow().toISOString().slice(0,16); }
+function thDT(iso){ const d=new Date(new Date(iso).getTime()+7*3600000);
+  return d.getUTCDate()+' '+TH_MS[d.getUTCMonth()]+' '+String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0'); }
+function thD(iso){ const d=new Date(iso+'T00:00:00Z'); return d.getUTCDate()+' '+TH_MS[d.getUTCMonth()]; }
+function monthLabel(m){ const [y,mm]=m.split('-').map(Number); return TH_M[mm-1]+' '+(y+543); }
+function isStaff(){ return D && (D.role==='owner' || D.role==='hr'); }
+function closeModal(){ document.getElementById('modal').classList.add('hide'); }
+function openModal(html){ document.getElementById('modalBody').innerHTML=html; document.getElementById('modal').classList.remove('hide'); }
+
+/* ── เข้า/ออก ── */
+document.getElementById('pin').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+async function doLogin(){
+  const p=document.getElementById('pin').value.trim(), err=document.getElementById('gateErr'); err.textContent='';
+  if(!p){ err.textContent='กรุณาใส่รหัส'; return; }
+  try{
+    MONTH = bkkToday().slice(0,7);
+    const r = await rpc('qa_home', {p_pin:p, p_month:MONTH});
+    if(r && r.ok){ PIN=p; D=r; document.getElementById('pin').value=''; enterApp(); return; }
+    err.textContent = (r && r.error) || 'รหัสไม่ถูกต้อง';
+  }catch(e){ err.textContent=e.message; }
+}
+function logout(){
+  PIN=''; D=null; FORM=null; SEEN_PENDING=null; SEEN_BACK=null; if(POLL) clearInterval(POLL);
+  document.getElementById('app').classList.add('hide'); document.getElementById('gate').classList.remove('hide');
+}
+function enterApp(){
+  document.getElementById('gate').classList.add('hide'); document.getElementById('app').classList.remove('hide');
+  const roleName = D.role==='owner' ? 'เจ้าของ' : D.role==='hr' ? 'ฝ่ายบุคคล' : (D.checker || 'คนดูแลงานตรวจ');
+  document.getElementById('who').textContent = 'เข้าใช้ในชื่อ ' + roleName;
+  TAB = isStaff() ? (D.pending>0 ? 'pending' : 'all') : 'report';
+  markSeen(); render();
+  if('Notification' in window && Notification.permission==='default'){ try{ Notification.requestPermission(); }catch(e){} }
+  POLL = setInterval(poll, 60000);
+}
+async function reload(){
+  try{ const r = await rpc('qa_home', {p_pin:PIN, p_month:MONTH}); if(!r.ok){ toast(r.error||'โหลดไม่สำเร็จ'); return; } D=r; render(); }
+  catch(e){ toast(e.message); }
+}
+
+/* ── แจ้งเตือนจากโปรแกรม ──
+   ฝ่ายบุคคล/เจ้าของ: มีรายงานใหม่รอดู · คนตรวจ: รายงานถูกตีกลับ และเตือนเมื่อถึงเวลาจุดเช็กแล้วยังไม่ลง */
+function backIds(){ return (D.reports||[]).filter(r=>r.status==='ตีกลับ').map(r=>r.id); }
+function markSeen(){ SEEN_PENDING = D.pending; SEEN_BACK = backIds(); }
+function notify(title, body){
+  toast(title + ' · ' + body);
+  try{ if('Notification' in window && Notification.permission==='granted') new Notification(title, {body, icon:'icon-192.png'}); }catch(e){}
+}
+let CP_WARNED = {};
+async function poll(){
+  if(!PIN) return;
+  const keep = TAB; const cur = MONTH; MONTH = bkkToday().slice(0,7);
+  try{
+    const r = await rpc('qa_home', {p_pin:PIN, p_month:MONTH}); if(!r.ok) return;
+    const oldPending = SEEN_PENDING, oldBack = SEEN_BACK || [];
+    D = r;
+    if(isStaff() && D.pending > (oldPending||0)) notify('มีรายงานใหม่รอดู', 'รอฝ่ายบุคคล ' + D.pending + ' เรื่อง');
+    if(!isStaff()){
+      const nb = backIds().filter(id=>!oldBack.includes(id));
+      if(nb.length) notify('ฝ่ายบุคคลตีกลับรายงาน', 'เปิดดูเหตุผลแล้วแก้ไขส่งใหม่');
+      checkpointNag();
+    }
+    markSeen();
+    if(cur===MONTH && !FORM_DIRTY()) render();
+    TAB = keep;
+  }catch(e){}
+}
+function checkpointNag(){
+  const now = bkkNow(), hm = now.getUTCHours()*60 + now.getUTCMinutes(), dow = now.getUTCDay();
+  if(dow===0) return;
+  const done = D.today_cps || [];
+  [['ก่อนพักเที่ยง', 11*60+45], ['ก่อนเลิกงาน', 16*60+45]].forEach(([s,t])=>{
+    const k = bkkToday()+s;
+    if(hm>=t && !done.includes(s) && !CP_WARNED[k]){ CP_WARNED[k]=1; notify('ถึงเวลาจุดเช็ก ' + s, 'กดลงจุดเช็กในโปรแกรม แม้ไม่พบอะไร'); }
+  });
+}
+
+/* ── แท็บ ── */
+function tabsFor(){
+  if(isStaff()) return [['pending','รอดู', D.pending],['all','รายงานทั้งหมด'],['summary','สรุปเดือน'],['spot','สุ่มตรวจ'],['report','ส่งรายงาน'],['rules','กติกา']];
+  const back = backIds().length;
+  return [['report','ส่งรายงาน'],['cp','จุดเช็กวันนี้', 2-(D.today_cps||[]).length],['mine','รายงานของฉัน', back],['rules','กติกา']];
+}
+function setTab(t){ TAB=t; render(); window.scrollTo(0,0); }
+function render(){
+  document.getElementById('tabs').innerHTML = tabsFor().map(([k,l,n])=>
+    `<button class="${TAB===k?'on':''}" onclick="setTab('${k}')">${l}${n>0?`<span class="badge">${n}</span>`:''}</button>`).join('');
+  const v = document.getElementById('view');
+  if(TAB==='report') v.innerHTML = viewForm();
+  else if(TAB==='cp') v.innerHTML = viewCheckpoint();
+  else if(TAB==='mine') v.innerHTML = viewList(D.reports, 'รายงานของฉัน');
+  else if(TAB==='pending') v.innerHTML = viewList(D.reports.filter(r=>r.status==='รอฝ่ายบุคคล'), 'รอฝ่ายบุคคลดู', true);
+  else if(TAB==='all') v.innerHTML = monthBar() + viewList(D.reports.filter(r=>(r.happened_at||'').slice(0,7)===MONTH || toBkkMonth(r.happened_at)===MONTH), 'รายงานเดือน '+monthLabel(MONTH));
+  else if(TAB==='summary') v.innerHTML = monthBar() + viewSummary();
+  else if(TAB==='spot') v.innerHTML = monthBar() + viewSpot();
+  else if(TAB==='rules') v.innerHTML = viewRules();
+  if(TAB==='report') bindForm();
+}
+function toBkkMonth(iso){ return new Date(new Date(iso).getTime()+7*3600000).toISOString().slice(0,7); }
+function monthBar(){
+  return `<div class="monthbar"><button onclick="shiftMonth(-1)">‹ เดือนก่อน</button><div class="m">${monthLabel(MONTH)}</div>
+    <button onclick="shiftMonth(1)" ${MONTH>=bkkToday().slice(0,7)?'disabled':''}>เดือนถัดไป ›</button></div>`;
+}
+function shiftMonth(n){ const [y,m]=MONTH.split('-').map(Number); MONTH=new Date(Date.UTC(y,m-1+n,1)).toISOString().slice(0,7); reload(); }
+
+/* ── ฟอร์มส่งรายงาน ── */
+function blankForm(){ return {id:null, happened_at:localInputNow(), area:'', where_ref:'', what_wrong:'', rule_id:'', fixed:'',
+  prevention:'', person_text:'', about_checker:false, files:[]}; }
+function FORM_DIRTY(){ return TAB==='report' && FORM && (FORM.what_wrong||FORM.fixed||FORM.where_ref); }
+function viewForm(){
+  if(!FORM) FORM = blankForm();
+  const f = FORM;
+  const ruleOpts = `<option value="">ยังไม่มีกติกาเรื่องนี้ (เรื่องใหม่)</option>` +
+    (D.rules||[]).map(r=>`<option value="${r.id}" ${String(f.rule_id)===String(r.id)?'selected':''}>ข้อ ${r.no} · ${esc(r.text)}</option>`).join('');
+  return `<div class="card">
+    <h2>${f.id ? 'แก้รายงาน #'+f.id : 'ส่งรายงานใหม่'}</h2>
+    <div class="box blue">แก้ให้ลูกค้าก่อนทุกครั้ง แล้วค่อยส่งรายงาน · เขียนสิ่งที่เห็น ไม่ต้องบรรยายตัวคน</div>
+    <label>เกิดเรื่องที่งานไหน</label>
+    <div class="chips" id="areaChips">${AREAS.map(a=>`<button type="button" class="${f.area===a?'on':''}" data-a="${esc(a)}">${esc(a)}</button>`).join('')}</div>
+    <div class="row2">
+      <div><label>เกิดเมื่อไหร่</label><input id="fAt" type="datetime-local" value="${esc(f.happened_at)}"></div>
+      <div><label>ที่ไหน / อ้างอิง <small>(ชื่อลูกค้าในแชท · เลขบิล)</small></label><input id="fWhere" value="${esc(f.where_ref)}" placeholder="เช่น ลูกค้าไม้พารา / KM6910-0123"></div>
+    </div>
+    <label>เกิดอะไรขึ้น</label>
+    <textarea id="fWhat" placeholder="เช่น ลูกค้าถามไม้พาราแบบไม่มีตา ได้ใบเสนอราคาไปก่อน ยังไม่ได้เห็นรูปให้เลือกรุ่น">${esc(f.what_wrong)}</textarea>
+    <div id="wordWarn" class="box warn hide"></div>
+    <label>ไม่ตรงกับกติกาข้อไหน</label>
+    <select id="fRule">${ruleOpts}</select>
+    <label>แก้ให้ลูกค้าไปแล้วอย่างไร <small>(ต้องมี)</small></label>
+    <textarea id="fFixed" placeholder="เช่น ส่งรูปไม้ 4 รุ่นให้ลูกค้าเลือกแล้ว">${esc(f.fixed)}</textarea>
+    <label>น่าจะป้องกันยังไงไม่ให้เกิดอีก <small>(ถ้ามี)</small></label>
+    <textarea id="fPrev" placeholder="เช่น ทำชุดรูปไม้แต่ละรุ่นไว้ในมือถือทุกเครื่อง">${esc(f.prevention)}</textarea>
+    <label>ใครเป็นคนทำงานนั้น <small>(ดูจากชื่อที่ลงท้ายข้อความหรือเอกสาร · ไม่รู้ให้กด "ไม่ทราบ" ห้ามเดา)</small></label>
+    <div style="display:flex;gap:8px"><input id="fPerson" value="${esc(f.person_text)}" placeholder="เช่น แอดมินเบียร์"><button type="button" class="nw" onclick="setUnknown()">ไม่ทราบ</button></div>
+    ${isStaff() ? `<label style="display:flex;gap:8px;align-items:center;font-weight:400"><input id="fAbout" type="checkbox" style="width:auto" ${f.about_checker?'checked':''}> เป็นงานของ${esc(D.checker)}เอง (คนดูแลงานตรวจ)</label>` : ''}
+    <label>แนบรูปหลักฐาน <small>(ไม่บังคับ · สูงสุด 5 รูป เช่นภาพหน้าจอแชท)</small></label>
+    <input id="fFiles" type="file" accept="image/*" multiple>
+    <div class="note" id="fileNote">${f.files.length? 'เลือกไว้ '+f.files.length+' รูป' : ''}</div>
+    <div class="err" id="formErr"></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="primary big" id="btnSave" onclick="saveReport()">${f.id?'บันทึกการแก้ไข':'ส่งรายงาน'}</button>
+      ${f.id?'<button onclick="FORM=null;render()">ยกเลิก</button>':''}
+    </div>
+  </div>`;
+}
+function bindForm(){
+  const f=FORM;
+  document.querySelectorAll('#areaChips button').forEach(b=>b.onclick=()=>{ readForm(); f.area=b.dataset.a; render(); });
+  const w=document.getElementById('fWhat'); w.addEventListener('input', checkWords); checkWords();
+  document.getElementById('fFiles').onchange = e=>{
+    const fs=[...e.target.files].slice(0,5); f.files=fs;
+    document.getElementById('fileNote').textContent = fs.length? 'เลือกไว้ '+fs.length+' รูป' : '';
+  };
+}
+function checkWords(){
+  const t=(document.getElementById('fWhat')||{}).value||''; const hit=PERSON_WORDS.filter(w=>t.includes(w));
+  const box=document.getElementById('wordWarn'); if(!box) return;
+  if(hit.length){ box.classList.remove('hide'); box.textContent='มีคำที่บรรยายตัวคน ('+hit.join(', ')+') ลองเขียนเฉพาะสิ่งที่เกิดขึ้นกับงาน ฝ่ายบุคคลอาจตีกลับรายงานที่บรรยายตัวคน'; }
+  else box.classList.add('hide');
+}
+function setUnknown(){ document.getElementById('fPerson').value='ไม่ทราบ'; }
+function readForm(){
+  const f=FORM, g=id=>document.getElementById(id);
+  if(!g('fWhat')) return;
+  f.happened_at=g('fAt').value; f.where_ref=g('fWhere').value; f.what_wrong=g('fWhat').value; f.rule_id=g('fRule').value;
+  f.fixed=g('fFixed').value; f.prevention=g('fPrev').value; f.person_text=g('fPerson').value;
+  f.about_checker = g('fAbout') ? g('fAbout').checked : false;
+}
+async function saveReport(){
+  readForm(); const f=FORM, err=document.getElementById('formErr'); err.textContent='';
+  if(!f.area){ err.textContent='เลือกงานที่เกิดเรื่องก่อน'; return; }
+  if(f.fixed.trim().length<5){ err.textContent='ต้องแก้ให้ลูกค้าก่อน แล้วเขียนว่าแก้อะไรไปแล้ว'; return; }
+  const btn=document.getElementById('btnSave'); btn.disabled=true; btn.textContent='กำลังส่ง…';
+  try{
+    const at = f.happened_at ? new Date(f.happened_at+':00+07:00').toISOString() : null;
+    const r = await rpc('qa_report_save', {p_pin:PIN, p_data:{id:f.id, happened_at:at, area:f.area, where_ref:f.where_ref,
+      what_wrong:f.what_wrong, rule_id:f.rule_id, fixed:f.fixed, prevention:f.prevention, person_text:f.person_text, about_checker:f.about_checker}});
+    if(!r.ok){ err.textContent=r.error; return; }
+    let failed=0;
+    for(const file of f.files){
+      try{
+        if(file.size>15*1024*1024) throw new Error('ใหญ่เกิน');
+        const got = await docFn({action:'upload', report_id:r.id, filename:file.name, contentType:file.type, size:file.size});
+        const put = await fetch(got.signedUrl, {method:'PUT', headers:{'Content-Type':file.type||'application/octet-stream'}, body:file});
+        if(!put.ok) throw new Error('อัปไม่สำเร็จ');
+        const a = await rpc('qa_report_attach', {p_pin:PIN, p_report_id:r.id, p_path:got.path});
+        if(!a.ok) throw new Error(a.error);
+      }catch(e){ failed++; }
+    }
+    FORM=null;
+    toast(failed ? 'ส่งรายงานแล้ว แต่แนบรูปไม่สำเร็จ '+failed+' รูป' : 'ส่งรายงานแล้ว ขอบคุณที่ช่วยดูแลลูกค้า');
+    await reload(); setTab(isStaff()?'all':'mine');
+  }catch(e){ err.textContent=e.message; }
+  finally{ const b=document.getElementById('btnSave'); if(b){ b.disabled=false; } }
+}
+function editReport(id){
+  const r = D.reports.find(x=>x.id===id); if(!r) return;
+  const d=new Date(new Date(r.happened_at).getTime()+7*3600000).toISOString().slice(0,16);
+  FORM={id:r.id, happened_at:d, area:r.area, where_ref:r.where_ref||'', what_wrong:r.what_wrong, rule_id:r.rule_id||'',
+    fixed:r.fixed, prevention:r.prevention||'', person_text:r.person_text, about_checker:r.about_checker, files:[]};
+  setTab('report');
+}
+
+/* ── รายการรายงาน ── */
+function viewList(list, title, decide){
+  if(!list.length) return `<div class="card"><h2>${title}</h2><p class="note">${decide?'ไม่มีเรื่องค้าง':'ยังไม่มีรายงาน'}</p></div>`;
+  return `<div class="card"><h2>${title} <span class="note">(${list.length})</span></h2>${list.map(r=>repCard(r, decide)).join('')}</div>`;
+}
+function repCard(r, decide){
+  const mineEditable = !isStaff() && r.reporter_role==='checker' && (r.status==='รอฝ่ายบุคคล' || r.status==='ตีกลับ');
+  const staffEditable = isStaff() && r.reporter_role===D.role && r.status==='รอฝ่ายบุคคล';
+  return `<div class="rep">
+    <div class="h"><span><b>#${r.id}</b> · ${esc(r.area)} · ${thDT(r.happened_at)}</span>
+      <span class="pill ${STATUS_PILL[r.status]||''}">${esc(r.status)}</span></div>
+    <dl>
+      ${r.where_ref?`<dt>อ้างอิง</dt><dd>${esc(r.where_ref)}</dd>`:''}
+      <dt>เกิดอะไร</dt><dd>${esc(r.what_wrong)}</dd>
+      <dt>กติกา</dt><dd>${r.rule_no?'ข้อ '+r.rule_no+' · '+esc(r.rule_text):'<span class="pill">เรื่องใหม่ ยังไม่มีกติกา</span>'}</dd>
+      <dt>แก้แล้ว</dt><dd>${esc(r.fixed)}</dd>
+      ${r.prevention?`<dt>กันซ้ำ</dt><dd>${esc(r.prevention)}</dd>`:''}
+      <dt>คนทำงานนั้น</dt><dd>${esc(r.person_text)}${r.about_checker?' <span class="pill warn">งานของคนดูแลงานตรวจ</span>':''}</dd>
+      <dt>ส่งโดย</dt><dd>${esc(r.reporter_name||r.reporter_role)} · ${thDT(r.created_at)}</dd>
+      ${r.hr_note?`<dt>ฝ่ายบุคคล</dt><dd>${esc(r.hr_note)}</dd>`:''}
+    </dl>
+    ${(r.docs||[]).length?`<div class="thumbs">${r.docs.map((p,i)=>`<button onclick="viewDoc('${esc(p)}')">ดูรูป ${i+1}</button>`).join('')}</div>`:''}
+    ${isStaff() && r.told_before>0 ? `<div class="box warn">เคยแจ้ง${esc(r.person_text)}เรื่องกติกาข้อนี้แล้ว ${r.told_before} ครั้ง</div>`:''}
+    ${decide && isStaff() ? decideButtons(r) : ''}
+    ${mineEditable||staffEditable ? `<div class="act"><button onclick="editReport(${r.id})">แก้รายงานนี้</button></div>`:''}
+  </div>`;
+}
+function decideButtons(r){
+  const isNew = !r.rule_id;
+  return `<div class="act">
+    ${isNew?`<button onclick="decide(${r.id},'ตั้งเป็นกติกาใหม่')">ตั้งเป็นกติกาใหม่</button>`:''}
+    <button onclick="decide(${r.id},'แจ้งให้รู้แล้ว')">${isNew?'แจ้งให้รู้ ไม่ตั้งกติกา':'ครั้งแรก · แจ้งให้รู้'}</button>
+    ${isNew?'':`<button onclick="decide(${r.id},'บันทึกในประวัติแล้ว')">ซ้ำ · บันทึกในประวัติ</button>`}
+    <button onclick="decide(${r.id},'ไม่นับ')">ไม่นับ</button>
+    <button onclick="decide(${r.id},'ตีกลับ')">ตีกลับให้แก้</button>
+  </div>`;
+}
+const DECIDE_HELP = {
+  'แจ้งให้รู้แล้ว':'บอกคนที่ทำงานนั้นให้รู้ ไม่มีผลกับประวัติ',
+  'บันทึกในประวัติแล้ว':'เรื่องเดิมซ้ำหลังเคยแจ้งแล้ว · อย่าลืมลงเคสในกระดานคะแนนด้วย',
+  'ตั้งเป็นกติกาใหม่':'เรื่องใหม่ครั้งแรกไม่นับใคร · พิมพ์กติกาที่จะประกาศ แล้วบอกทุกคนก่อนเริ่มใช้',
+  'ไม่นับ':'เช่น หลายคนพลาดเรื่องเดียวกัน หรือไม่ใช่ปัญหาจริง · ต้องเขียนเหตุผล',
+  'ตีกลับ':'ให้คนส่งแก้รายงาน เช่น มีคำบรรยายตัวคน หรือข้อมูลไม่พอ · ต้องเขียนเหตุผล (คนส่งจะเห็น)'
+};
+function decide(id, st){
+  openModal(`<h2>${esc(st)} · #${id}</h2><p class="note">${DECIDE_HELP[st]}</p>
+    ${st==='ตั้งเป็นกติกาใหม่'?`<label>กติกาใหม่</label><textarea id="dRule" placeholder="เช่น ตอบลูกค้าในแชทภายในวันเดียวกัน"></textarea>`:''}
+    <label>หมายเหตุ ${st==='ไม่นับ'||st==='ตีกลับ'?'<small>(ต้องมี)</small>':'<small>(ถ้ามี)</small>'}</label>
+    <textarea id="dNote"></textarea><div class="err" id="dErr"></div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="primary" onclick="doDecide(${id},'${st}')">ยืนยัน</button><button onclick="closeModal()">ยกเลิก</button></div>`);
+}
+async function doDecide(id, st){
+  const note=document.getElementById('dNote').value, rule=(document.getElementById('dRule')||{}).value||null;
+  try{
+    const r = await rpc('qa_report_decide', {p_pin:PIN, p_id:id, p_status:st, p_note:note, p_rule_text:rule});
+    if(!r.ok){ document.getElementById('dErr').textContent=r.error; return; }
+    closeModal(); toast('บันทึกแล้ว'); await reload(); markSeen();
+  }catch(e){ document.getElementById('dErr').textContent=e.message; }
+}
+async function viewDoc(path){
+  try{ toast('กำลังเปิดรูป…'); const r=await docFn({action:'view', path}); window.open(r.url,'_blank','noopener'); }
+  catch(e){ toast(e.message); }
+}
+
+/* ── จุดเช็ก (คนตรวจ) ── */
+function viewCheckpoint(){
+  const done = D.today_cps || [], sun = bkkNow().getUTCDay()===0;
+  const todays = (D.checkpoints||[]).filter(c=>c.day===D.today);
+  return `<div class="card"><h2>จุดเช็กวันนี้ · ${thD(D.today)}</h2>
+    <p class="note">กดทุกช่วง แม้ไม่พบอะไร เป็นการยืนยันว่าครึ่งวันที่ผ่านมาดูแลแล้ว ลงได้เฉพาะวันนี้</p>
+    ${sun?'<div class="box">วันอาทิตย์ร้านปิด</div>':''}
+    <div class="cp">${SLOTS.map(s=>{ const c=todays.find(x=>x.slot===s);
+      return `<div class="slot ${c?'done':''}"><b>${s}</b>
+        ${c?`<div class="note">ลงแล้ว ${thDT(c.at).split(' ').pop()} น. · พบ ${c.found} เรื่อง</div>`
+           :`<div class="note">${SLOT_HINT[s]}</div><button class="primary" style="margin-top:8px" onclick="cpSave('${s}')" ${sun?'disabled':''}>ลงจุดเช็ก</button>`}</div>`; }).join('')}
+    </div></div>`;
+}
+function cpSave(s){
+  const n = (D.reports||[]).filter(r=>r.reporter_role==='checker' && toBkkDate(r.created_at)===D.today).length;
+  openModal(`<h2>ลงจุดเช็ก ${esc(s)}</h2>
+    <div class="box ${n?'blue':'good'}">${n?'วันนี้ส่งรายงานไปแล้ว '+n+' เรื่อง':'วันนี้ยังไม่พบเรื่องที่ต้องรายงาน'}</div>
+    <p class="note">ถ้ามีเรื่องที่ยังไม่ได้ส่ง ให้ส่งรายงานก่อนแล้วค่อยลงจุดเช็ก</p>
+    <label>หมายเหตุ <small>(ถ้ามี)</small></label><textarea id="cpNote"></textarea><div class="err" id="cpErr"></div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="primary" onclick="doCp('${s}')">ยืนยัน ดูแลแล้ว</button><button onclick="closeModal()">ยกเลิก</button></div>`);
+}
+function toBkkDate(iso){ return new Date(new Date(iso).getTime()+7*3600000).toISOString().slice(0,10); }
+async function doCp(s){
+  try{
+    const r = await rpc('qa_checkpoint_save', {p_pin:PIN, p_slot:s, p_note:document.getElementById('cpNote').value});
+    if(!r.ok){ document.getElementById('cpErr').textContent=r.error; return; }
+    closeModal(); toast('ลงจุดเช็ก'+s+'แล้ว'); await reload();
+  }catch(e){ document.getElementById('cpErr').textContent=e.message; }
+}
+
+/* ── สรุปเดือน (ฝ่ายบุคคล/เจ้าของ) ── */
+function viewSummary(){
+  const s = D.summary||{}, miss = s.cp_missing||[];
+  const reps = (D.reports||[]).filter(r=>toBkkMonth(r.happened_at)===MONTH);
+  const by = {}; reps.forEach(r=>by[r.status]=(by[r.status]||0)+1);
+  return `<div class="card"><h2>สรุปงานตรวจของ${esc(D.checker)} · ${monthLabel(MONTH)}</h2>
+    ${!D.start?'<div class="box warn">ยังไม่ได้ตั้งวันเริ่มนับจุดเช็ก (3 วันหลังประกาศ) ระบบจึงยังไม่นับจุดเช็กที่ขาด</div>'
+      :`<p class="note">เริ่มนับจุดเช็กตั้งแต่ ${thD(D.start)} · นับเฉพาะวันที่${esc(D.checker)}มาทำงาน (มีสแกนนิ้ว) ถึงเมื่อวาน</p>`}
+    <div class="stat">
+      <div><b>${s.cp_done||0}/${s.cp_expected||0}</b><span>จุดเช็กที่ลง / ที่ควรมี</span></div>
+      <div><b>${miss.length}</b><span>จุดเช็กที่ขาด</span></div>
+      <div><b>${s.spot_rounds||0}</b><span>รอบที่ฝ่ายบุคคลสุ่มตรวจ</span></div>
+      <div><b style="color:${(s.spot_missed||0)>0?'var(--bad)':'inherit'}">${s.spot_missed||0}</b><span>เรื่องที่สุ่มเจอว่าหลุด</span></div>
+      <div><b>${s.reports||0}</b><span>รายงานที่ส่ง</span></div>
+      <div><b>${s.about_checker||0}</b><span>เรื่องที่เป็นงานของ${esc(D.checker)}เอง</span></div>
+    </div>
+    ${miss.length?`<div class="box warn"><b>จุดเช็กที่ขาด</b><br>${miss.map(m=>thD(m.day)+' '+m.slot).join(' · ')}</div>`:''}
+    ${Object.keys(by).length?`<p class="note">สถานะรายงานเดือนนี้: ${Object.entries(by).map(([k,v])=>k+' '+v).join(' · ')}</p>`:''}
+  </div>
+  <div class="card"><h2>ใช้เลือกระดับขั้นงานตรวจสอบคุณภาพ</h2>
+    <p class="note">ตัวเลขด้านบนเป็นหลักฐาน เจ้าของเป็นคนเลือกระดับในกระดานคะแนน</p>
+    <table><tr><th>ระดับ</th><th>ได้เมื่อ</th><th>ค่าเหนื่อย</th></tr>
+      <tr><td><b>4</b></td><td>ครบทุกข้อของระดับ 3 และมีของเกิน เช่น เสนอวิธีกันซ้ำแล้วใช้ได้จริง</td><td>500</td></tr>
+      <tr><td><b>3</b></td><td>ลงจุดเช็กครบ · ฝ่ายบุคคลสุ่มไม่เจอที่หลุด · งานตัวเองผ่าน · ไม่มีเรื่องกระทบกระทั่ง</td><td>300</td></tr>
+      <tr><td><b>2</b></td><td>ขาดจุดเช็กเกินที่กำหนด หรือสุ่มเจอที่หลุด หรืองานตัวเองไม่ผ่านซ้ำ</td><td>0</td></tr>
+      <tr><td><b>1</b></td><td>เขียนว่าตรวจแล้วแต่ไม่ได้ตรวจจริง · ปิดความผิดตัวเอง · ไปทักเพื่อนเอง</td><td>0 และพักหน้าที่</td></tr>
+    </table>
+    <p class="note">เดือนที่ไม่มีรายงานเลย แต่ลงจุดเช็กครบและสุ่มไม่เจอที่หลุด = ระดับ 3 ตามปกติ</p>
+  </div>`;
+}
+
+/* ── สุ่มตรวจ (ฝ่ายบุคคล/เจ้าของ) ── */
+function viewSpot(){
+  const list = D.spotchecks||[];
+  return `<div class="card"><h2>บันทึกการสุ่มตรวจ</h2>
+    <p class="note">สัปดาห์ละครั้ง สุ่มเปิดแชทหรือเอกสารดูเอง ถ้าเจอเรื่องที่หลุดในช่วงที่${esc(D.checker)}ลงจุดเช็กว่าไม่พบ ให้นับเป็น "หลุด"</p>
+    <div class="row2">
+      <div><label>วันที่สุ่ม</label><input id="sDay" type="date" value="${D.today}" max="${D.today}"></div>
+      <div><label>สุ่มดูกี่รายการ</label><input id="sN" type="number" min="1" max="100" value="5"></div>
+    </div>
+    <label>เจอที่หลุดกี่เรื่อง</label><input id="sMiss" type="number" min="0" value="0">
+    <label>เจออะไร <small>(ต้องมีถ้าเจอที่หลุด)</small></label><textarea id="sNote"></textarea>
+    <div class="err" id="sErr"></div>
+    <div style="margin-top:12px"><button class="primary" onclick="saveSpot()">บันทึก</button></div>
+  </div>
+  <div class="card"><h2>${monthLabel(MONTH)}</h2>
+    ${list.length?`<table><tr><th>วันที่</th><th>สุ่ม</th><th>หลุด</th><th>หมายเหตุ</th></tr>
+      ${list.map(x=>`<tr><td>${thD(x.day)}</td><td>${x.checked}</td><td>${x.missed?`<b style="color:var(--bad)">${x.missed}</b>`:'0'}</td><td>${esc(x.note||'')}</td></tr>`).join('')}</table>`
+      :'<p class="note">ยังไม่มีการสุ่มตรวจเดือนนี้</p>'}
+  </div>`;
+}
+async function saveSpot(){
+  const g=id=>document.getElementById(id);
+  try{
+    const r = await rpc('qa_spotcheck_save', {p_pin:PIN, p_day:g('sDay').value, p_checked:+g('sN').value, p_missed:+g('sMiss').value, p_note:g('sNote').value});
+    if(!r.ok){ g('sErr').textContent=r.error; return; }
+    toast('บันทึกการสุ่มตรวจแล้ว'); await reload();
+  }catch(e){ g('sErr').textContent=e.message; }
+}
+
+/* ── กติกา ── */
+function viewRules(){
+  return `<div class="card"><h2>กติกาที่ประกาศแล้ว</h2>
+    <ol class="rules">${(D.rules||[]).map(r=>`<li>${esc(r.text)}</li>`).join('')}</ol>
+    <p class="note" style="margin-top:12px">เรื่องที่ยังไม่มีในรายการ ส่งรายงานได้ตามปกติ ครั้งแรกไม่ถือว่าใครผิด ร้านจะพิจารณาตั้งเป็นกติกาใหม่</p>
+  </div>`;
+}
+</script>
+</body>
+</html>
