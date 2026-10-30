@@ -274,7 +274,7 @@ function FORM_DIRTY(){ return TAB==='report' && FORM && (FORM.what_wrong||FORM.f
 function viewForm(){
   if(!FORM) FORM = blankForm();
   const f = FORM;
-  const ruleOpts = `<option value="">ยังไม่มีกติกาเรื่องนี้ (เรื่องใหม่)</option>` +
+  const ruleOpts = `<option value="">ไม่ตรงหัวข้อไหน (เรื่องใหม่)</option>` +
     (D.rules||[]).map(r=>`<option value="${r.id}" ${String(f.rule_id)===String(r.id)?'selected':''}>ข้อ ${r.no} · ${esc(r.text)}</option>`).join('');
   return `<div class="card">
     <h2>${f.id ? 'แก้รายงาน #'+f.id : 'ส่งรายงานใหม่'}</h2>
@@ -288,7 +288,7 @@ function viewForm(){
     <label>เกิดอะไรขึ้น</label>
     <textarea id="fWhat" placeholder="เช่น ลูกค้าถามไม้พาราแบบไม่มีตา ได้ใบเสนอราคาไปก่อน ยังไม่ได้เห็นรูปให้เลือกรุ่น">${esc(f.what_wrong)}</textarea>
     <div id="wordWarn" class="box warn hide"></div>
-    <label>ไม่ตรงกับกติกาข้อไหน</label>
+    <label>เรื่องที่เจอ ตรงกับหัวข้อไหน</label>
     <select id="fRule">${ruleOpts}</select>
     <label>แก้ให้ลูกค้าไปแล้วอย่างไร <small>(ต้องมี)</small></label>
     <textarea id="fFixed" placeholder="เช่น ส่งรูปไม้ 4 รุ่นให้ลูกค้าเลือกแล้ว">${esc(f.fixed)}</textarea>
