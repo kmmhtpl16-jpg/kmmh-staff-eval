@@ -72,6 +72,10 @@ label{display:block;font-size:14px;color:var(--dim);margin:10px 0 4px}
 .st{display:block;font-size:11.5px;line-height:1.25;margin:1px 0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .st.ontime{color:var(--good)}.st.after{color:var(--warn);font-weight:700}.st.noscan{color:var(--bad);font-weight:700}
 .st.leave,.st.wait{color:var(--dim)}
+.st.miss{color:var(--bad);font-weight:700}
+.mk{display:block;border-radius:6px;padding:1px 6px;margin-top:3px;font-size:13px;font-weight:700;color:#7c2d12;background:#ffedd5;border:1px dashed #ea580c;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:600px){ .mk{font-size:11px;padding:1px 3px} }
 @media(max-width:600px){ .cal{gap:3px} .cell{padding:3px;min-height:74px} .nm{font-size:12px;padding:1px 3px} .st{font-size:10px} }
 
 /* คิว */
@@ -246,7 +250,11 @@ tr.clickable:hover td{background:#f8fafc}
       <p>เวลาสแกนมาจากเครื่องสแกนโดยตรง เข้าระบบทุก 5 นาทีตอนเครื่องแม่เปิด · ระบบดู <b>สแกนแรกของวัน</b> ของคนเวร</p>
       <p><span class="st ontime" style="display:inline">✓ 07:38</span> สแกนตอน 07:40 หรือก่อนหน้า = <b>อยู่ในร้านทันเวลาเวร</b><br>
       <span class="note">⚠️ ยังไม่ใช่หลักฐานว่าเป็นคนเปิดประตู เพราะแต่ละวันมีคนอื่นมาถึงก่อน 07:40 ด้วยหลายคน</span></p>
-      <p><span class="st after" style="display:inline">+3 นาที</span> สแกนหลัง 07:40 = <b>มาไม่ทันเวลาเวรแน่นอน</b></p>
+      <p><span class="st after" style="display:inline">+3 นาที</span> สแกน 07:41–07:50 = <b>มาเปิดประตูแล้ว</b> (ต้องเปิดประตูก่อนถึงสแกนได้)</p>
+      <p><span class="st miss" style="display:inline">ไม่ได้เปิด 08:02</span> สแกนหลัง 07:50 = <b>ไม่ได้มาเปิดประตู</b> → ต้องเข้าเวรซ้ำ</p>
+      <div class="box"><b>🔁 เวรซ้ำ</b> (เริ่ม 30 ต.ค. 69) — คนที่ไม่ได้ทำเวร (ไม่มีสแกน · สแกนหลัง 07:50 · หรือลาวันนั้น) ต้องเข้าเวรซ้ำ<b>วันทำงานถัดไป</b>
+      ถ้าวันเวรซ้ำยังไม่ทำอีก ระบบเลื่อนไปวันทำงานถัดไปเรื่อย ๆ จนกว่าจะทำ · ถ้าวันนั้นตรงกับเวรปกติของตัวเองอยู่แล้ว เวรซ้ำเลื่อนไปวันถัดไป (หนึ่งวันนับได้เวรเดียว)
+      · แจ้งในห้อง Telegram ตอน 07:00 (รายชื่อ) และ 08:05 (ผล + ใครต้องเข้าเวรซ้ำพรุ่งนี้)</div>
       <p><span class="st noscan" style="display:inline">ไม่มีสแกน</span> มีข้อมูลเข้าระบบแล้ว แต่คนนี้ยังไม่มีสแกนเช้า</p>
       <p><span class="st leave" style="display:inline">ลา</span> มีใบลาในระบบวันนั้น · <span class="st wait" style="display:inline">รอข้อมูล</span> ยังไม่มีข้อมูลสแกนเข้าระบบ (เช่น เครื่องแม่ยังไม่เปิด)</p>
       <div class="box warn">
@@ -406,6 +414,13 @@ function renderTop(){
     if(n.http===200 || n.status==='ส่งถึงห้องแล้ว') out.push('<div class="box good">✅ แจ้งเวรเช้านี้ส่งถึงห้อง Telegram payroll แล้ว</div>');
     else if(!/กำลังส่ง/.test(n.status||'')) out.push('<div class="box bad">⚠️ แจ้งเวรเช้านี้ยังส่งไม่สำเร็จ — '+esc(n.status||'')+'</div>');
   }
+  const pend = DATA.makeup_pending||[];
+  if(pend.length){
+    const by = {}; for(const m of pend){ (by[m.due]=by[m.due]||[]).push(m); }
+    out.push('<div class="box warn">🔁 <b>ค้างเข้าเวรซ้ำ</b> — '+Object.keys(by).sort().map(dd=>esc(thDate(dd,true))+': '+
+      by[dd].map(m=>'<b>'+esc(m.nick)+'</b> <small>(ค้างจาก '+esc(thDate(m.miss_date))+(m.tries?' · เลื่อน '+m.tries+' ครั้ง':'')+')</small>').join(' · ')).join('<br>')+
+      '<div class="note" style="margin-top:4px">นับว่าทำเวร = สแกนไม่เกิน 07:50 น.</div></div>');
+  }
   if(DATA.scanner_error) out.push('<div class="box bad">⚠️ เครื่องแม่ต่อเครื่องสแกนไม่ได้: '+esc(DATA.scanner_error)+'</div>');
   box.innerHTML = out.join('');
 }
@@ -414,7 +429,7 @@ function renderTop(){
 function stLine(s){
   switch(s.status){
     case 'ontime': return '<span class="st ontime">✓ '+esc(s.scan)+'</span>';
-    case 'after':  return '<span class="st after">+'+s.after_min+' นาที</span>';
+    case 'after':  return s.did==='late' ? '<span class="st miss">ไม่ได้เปิด '+esc(s.scan)+'</span>' : '<span class="st after">+'+s.after_min+' นาที</span>';
     case 'noscan': return '<span class="st noscan">ไม่มีสแกน</span>';
     case 'leave':  return '<span class="st leave">'+esc(LEAVE[s.leave]||'ลา')+'</span>';
     case 'wait':   return '<span class="st wait">รอข้อมูล</span>';
@@ -455,6 +470,7 @@ function renderCal(){
       inner += stLine(s) + extra;
     }
     if(!(d.slots||[]).length && DATA.queue_start && d.date >= DATA.queue_start) inner = '<span class="st noscan">ไม่มีคนในคิว</span>';
+    for(const m of (d.makeup||[])) inner += '<span class="mk" title="เวรซ้ำ ค้างจาก '+esc(thDate(m.miss_date))+'">🔁 '+esc(m.nick)+'</span>' + mkLine(m);
     const flag = (d.slots||[]).some(s=>s.case_logged) ? '<span class="pill blue" style="font-size:10px;padding:0 5px">เคส</span>' : '';
     h += '<div class="cell'+(d.date===today?' today':'')+'" onclick="openDay(\''+d.date+'\')"><div class="n"><span>'+num+'</span>'+flag+'</div>'+inner+'</div>';
   }
@@ -467,11 +483,23 @@ function renderCal(){
   } else nb.classList.add('hide');
 }
 
+function mkLine(m){
+  if(m.state==='done') return '<span class="st ontime">✓ '+esc(m.scan||'')+'</span>';
+  if(m.state==='moved') return m.moved_res==='moved' ? '<span class="st wait">เลื่อน (มีเวรปกติ)</span>'
+    : m.moved_res==='nodata' ? '<span class="st wait">เลื่อน (ไม่มีข้อมูล)</span>'
+    : '<span class="st miss">ไม่ได้ทำ → เลื่อน</span>';
+  return '<span class="st wait">เวรซ้ำ</span>';
+}
+function mkWhy(m){
+  return m.miss_reason==='late' ? 'สแกน '+esc(m.miss_scan||'')+' หลัง 07:50' : m.miss_reason==='leave' ? 'ลา' : 'ไม่มีสแกนเข้า';
+}
+
 /* ───────── รายละเอียดวัน ───────── */
 function statusText(s){
   switch(s.status){
     case 'ontime': return '<span class="pill good">มาทันเวลาเวร · สแกน '+esc(s.scan)+'</span>';
-    case 'after':  return '<span class="pill warn">มาหลังเวลาเวร '+s.after_min+' นาที · สแกน '+esc(s.scan)+'</span>';
+    case 'after':  return s.did==='late' ? '<span class="pill bad">ไม่ได้มาเปิดประตู · สแกน '+esc(s.scan)+' (หลัง 07:50)</span>'
+                                         : '<span class="pill good">มาเปิดประตู · สแกน '+esc(s.scan)+'</span>';
     case 'noscan': return '<span class="pill bad">ยังไม่มีสแกนเช้า</span>';
     case 'leave':  return '<span class="pill">'+esc(LEAVE[s.leave]||'ลา')+(s.leave_unit==='hour'?' รายชั่วโมง':'')+'</span>';
     case 'wait':   return '<span class="pill">รอข้อมูลสแกน</span>';
@@ -494,7 +522,23 @@ function openDay(date){
            '<button class="mini" style="padding:4px 10px;font-size:13px" onclick="openSwap(\''+date+'\','+s.slot+')">🔁 สลับเวร</button></div>'+
            '<div style="margin-top:4px">'+statusText(s)+(s.case_logged?' <span class="pill blue">ลงเคสแล้ว</span>':'')+'</div>'+
            (s.from_nick ? '<div class="note" style="margin-top:4px">สลับแทน <b>'+esc(s.from_nick)+'</b> · '+esc(s.swap_note||'')+'</div>' : '')+
-           (s.hr_note && s.status!=='ontime' ? '<div class="note">หมายเหตุ HR: '+esc(s.hr_note)+'</div>' : '')+'</div>';
+           (s.hr_note && s.status!=='ontime' ? '<div class="note">หมายเหตุ HR: '+esc(s.hr_note)+'</div>' : '')+
+           (d.missed||[]).filter(x=>x.nick===s.nick).map(x=>'<div class="note" style="margin-top:4px">🔁 '+
+              (x.status==='done' ? 'เข้าเวรซ้ำแล้ว '+esc(thDate(x.done_date,true)) : x.status==='cancelled' ? 'ยกเลิกเวรซ้ำ (ไม่ได้ทำงานแล้ว)' : '<b style="color:var(--bad)">ต้องเข้าเวรซ้ำ '+esc(thDate(x.due,true))+'</b>')+'</div>').join('')+'</div>';
+    }
+    if((d.makeup||[]).length){
+      b += '<h3 style="margin:10px 0 4px">🔁 เวรซ้ำ</h3>';
+      for(const m of d.makeup){
+        const st = m.state==='done' ? '<span class="pill good">มาเปิดประตู · สแกน '+esc(m.scan||'')+'</span>'
+          : m.state==='moved' ? (m.moved_res==='moved' ? '<span class="pill">วันนี้มีเวรปกติอยู่แล้ว → เลื่อน</span>'
+              : m.moved_res==='nodata' ? '<span class="pill">ไม่มีข้อมูลสแกนวันนี้ → เลื่อน</span>'
+              : '<span class="pill bad">ไม่ได้ทำ'+(m.scan?' · สแกน '+esc(m.scan):'')+' → เลื่อน</span>')
+          : (date < DATA.today || (date===DATA.today && DATA.now_th.slice(11) >= '07:51') ? '<span class="pill">รอผล</span>' : '<span class="pill">ยังไม่ถึงเวลาเวร</span>');
+        b += '<div class="slotbox" style="border-style:dashed"><b style="font-size:16px">'+esc(m.nick)+'</b>'+
+             '<div class="note">ค้างจาก '+esc(thDate(m.miss_date,true))+' ('+mkWhy(m)+')'+(m.tries?' · เลื่อนมาแล้ว '+m.tries+' ครั้ง':'')+'</div>'+
+             '<div style="margin-top:4px">'+st+'</div>'+
+             (m.status==='pending' && m.state!=='due' ? '<div class="note">ตอนนี้กำหนดเป็น '+esc(thDate(m.now_due,true))+'</div>' : '')+'</div>';
+      }
     }
     if(future && !(d.slots||[]).some(s=>s.from_nick)) b += '<button style="margin-top:4px" onclick="openClose(\''+date+'\')">ตั้งเป็นวันร้านปิด</button>';
   }
@@ -640,13 +684,16 @@ async function saveQueue(){
 
 /* ───────── ค้นชื่อ ───────── */
 function personStats(nick){
-  const st = {total:0, ontime:0, after:0, noscan:0, leave:0, wait:0, future:0, swapIn:0, swapOut:0, rows:[]};
+  const st = {total:0, ontime:0, after:0, late:0, noscan:0, leave:0, wait:0, future:0, swapIn:0, swapOut:0, mkDone:0, mkPend:0, rows:[]};
   for(const d of (DATA.days||[])){
     for(const s of (d.slots||[])){
-      if(s.nick===nick){ st.total++; st[s.status]=(st[s.status]||0)+1; if(s.from_nick) st.swapIn++; st.rows.push({d,s,kind:'duty'}); }
+      if(s.nick===nick){ st.total++; const k = (s.status==='after' && s.did==='late') ? 'late' : s.status==='after' ? 'ontime' : s.status;
+        st[k]=(st[k]||0)+1; if(s.from_nick) st.swapIn++; st.rows.push({d,s,kind:'duty'}); }
       else if(s.from_nick===nick){ st.swapOut++; st.rows.push({d,s,kind:'out'}); }
     }
+    for(const m of (d.makeup||[])) if(m.nick===nick){ if(m.state==='done') st.mkDone++; st.rows.push({d,s:m,kind:'mk'}); }
   }
+  st.mkPend = (DATA.makeup_pending||[]).filter(m=>m.nick===nick).length;
   return st;
 }
 function renderPerson(){
@@ -664,14 +711,17 @@ function renderPerson(){
     const st = personStats(PICK);
     let h = '<h2 style="margin-top:10px">'+esc(PICK)+' · '+monthLabel(MONTH)+'</h2><div class="stat">'+
       '<div><b>'+st.total+'</b><span>วันที่มีเวร</span></div>'+
-      '<div><b style="color:var(--good)">'+st.ontime+'</b><span>มาทันเวลาเวร</span></div>'+
-      '<div><b style="color:var(--warn)">'+st.after+'</b><span>มาหลังเวลาเวร</span></div>'+
+      '<div><b style="color:var(--good)">'+st.ontime+'</b><span>มาเปิดประตู</span></div>'+
+      '<div><b style="color:var(--bad)">'+st.late+'</b><span>สแกนหลัง 07:50</span></div>'+
       '<div><b style="color:var(--bad)">'+st.noscan+'</b><span>ไม่มีสแกนเช้า</span></div>'+
       '<div><b>'+st.leave+'</b><span>ลา</span></div>'+
       '<div><b>'+(st.wait+st.future)+'</b><span>รอข้อมูล / ยังไม่ถึง</span></div>'+
       '<div><b>'+st.swapOut+'</b><span>สลับให้คนอื่นทำ</span></div>'+
-      '<div><b>'+st.swapIn+'</b><span>รับเวรแทนคนอื่น</span></div></div>';
+      '<div><b>'+st.swapIn+'</b><span>รับเวรแทนคนอื่น</span></div>'+
+      '<div><b style="color:var(--good)">'+st.mkDone+'</b><span>เข้าเวรซ้ำแล้ว</span></div>'+
+      '<div><b style="color:var(--bad)">'+st.mkPend+'</b><span>ค้างเวรซ้ำ (ทั้งหมด)</span></div></div>';
     h += st.rows.length ? st.rows.map(({d,s,kind})=>{
+      if(kind==='mk') return '<div class="drow"><b class="d">'+thDate(d.date)+'</b><span class="pill">🔁 เวรซ้ำ (ค้างจาก '+esc(thDate(s.miss_date))+')</span>'+mkLine(s).replace('class="st','class="pill')+'</div>';
       if(kind==='out') return '<div class="drow"><b class="d">'+thDate(d.date)+'</b><span class="pill">สลับให้ '+esc(s.nick)+' ทำแทน</span><span class="note">'+esc(s.swap_note||'')+'</span></div>';
       return '<div class="drow"><b class="d">'+thDate(d.date)+'</b>'+statusText(s)+(s.from_nick?'<span class="pill">รับแทน '+esc(s.from_nick)+'</span>':'')+(s.case_logged?'<span class="pill blue">ลงเคสแล้ว</span>':'')+'</div>';
     }).join('') : '<p class="note">เดือนนี้ไม่มีเวร</p>';
@@ -680,8 +730,8 @@ function renderPerson(){
   const rows = emps.map(e=>({e, st:personStats(e.nick)})).filter(x=>x.st.total||x.st.swapOut)
     .sort((a,b)=>b.st.total-a.st.total || a.e.nick.localeCompare(b.e.nick,'th'));
   document.getElementById('allTable').innerHTML = rows.length ?
-    '<table><thead><tr><th>ชื่อ</th><th>มีเวร</th><th>มาทัน</th><th>มาหลังเวลา</th><th>ไม่มีสแกน</th><th>ลา</th><th>รอ/ยังไม่ถึง</th><th>สลับออก</th><th>รับแทน</th></tr></thead><tbody>'+
-    rows.map(({e,st})=>'<tr class="clickable" onclick="pickPerson(\''+esc(e.nick)+'\')"><td><b>'+esc(e.nick)+'</b></td><td>'+st.total+'</td><td>'+st.ontime+'</td><td>'+(st.after||'')+'</td><td>'+(st.noscan||'')+'</td><td>'+(st.leave||'')+'</td><td>'+(st.wait+st.future)+'</td><td>'+(st.swapOut||'')+'</td><td>'+(st.swapIn||'')+'</td></tr>').join('')+
+    '<table><thead><tr><th>ชื่อ</th><th>มีเวร</th><th>มาเปิด</th><th>หลัง 07:50</th><th>ไม่มีสแกน</th><th>ลา</th><th>รอ/ยังไม่ถึง</th><th>สลับออก</th><th>รับแทน</th></tr></thead><tbody>'+
+    rows.map(({e,st})=>'<tr class="clickable" onclick="pickPerson(\''+esc(e.nick)+'\')"><td><b>'+esc(e.nick)+'</b></td><td>'+st.total+'</td><td>'+st.ontime+'</td><td>'+(st.late||'')+'</td><td>'+(st.noscan||'')+'</td><td>'+(st.leave||'')+'</td><td>'+(st.wait+st.future)+'</td><td>'+(st.swapOut||'')+'</td><td>'+(st.swapIn||'')+'</td></tr>').join('')+
     '</tbody></table>' : '<p class="note">เดือนนี้ยังไม่มีเวร</p>';
 }
 function pickPerson(nick){ PICK = nick; document.getElementById('q').value=''; setTab('person'); renderPerson(); }
