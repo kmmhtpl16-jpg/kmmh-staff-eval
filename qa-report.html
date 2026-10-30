@@ -127,7 +127,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 const DOC_FN = SB_URL + '/functions/v1/qa-doc';
 const AREAS = ['แชทลูกค้า','ใบเสนอราคา','บิล/เอกสาร','หน้าร้าน','จัดส่ง','คลังสินค้า','อื่น ๆ'];
 const SLOTS = ['ก่อนพักเที่ยง','ก่อนเลิกงาน'];
-const SLOT_HINT = {'ก่อนพักเที่ยง':'ลงก่อนพักเที่ยง', 'ก่อนเลิกงาน':'ลงก่อนเลิกงาน'};
+const SLOT_HINT = {'ก่อนพักเที่ยง':'ลงก่อนพักเที่ยง', 'ก่อนเลิกงาน':'ลงได้ตั้งแต่ 12:00 น.'};
 const TH_M = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const TH_MS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 /* คำที่บรรยายตัวคน มากกว่าบรรยายงาน — เตือนให้เขียนใหม่ (ไม่บล็อก) */
@@ -207,7 +207,6 @@ function notify(title, body){
 let CP_WARNED = {};
 async function poll(){
   if(!PIN) return;
-  const keep = TAB; const cur = MONTH; MONTH = bkkToday().slice(0,7);
   try{
     const r = await rpc('qa_home', {p_pin:PIN, p_month:MONTH}); if(!r.ok) return;
     const oldPending = SEEN_PENDING, oldBack = SEEN_BACK || [];
@@ -219,8 +218,11 @@ async function poll(){
       checkpointNag();
     }
     markSeen();
-    if(cur===MONTH && !FORM_DIRTY()) render();
-    TAB = keep;
+    renderTabs();
+    /* วาดเนื้อหาใหม่เฉพาะตอนที่ไม่มีใครกำลังกรอกอะไรอยู่ — กันข้อความที่พิมพ์หาย */
+    const busy = TAB==='report' || TAB==='spot' || !document.getElementById('modal').classList.contains('hide')
+      || ['INPUT','TEXTAREA','SELECT'].includes((document.activeElement||{}).tagName);
+    if(!busy) renderView();
   }catch(e){}
 }
 function checkpointNag(){
@@ -237,18 +239,22 @@ function checkpointNag(){
 function tabsFor(){
   if(isStaff()) return [['pending','รอดู', D.pending],['all','รายงานทั้งหมด'],['summary','สรุปเดือน'],['spot','สุ่มตรวจ'],['report','ส่งรายงาน'],['rules','กติกา']];
   const back = backIds().length;
-  return [['report','ส่งรายงาน'],['cp','จุดเช็กวันนี้', 2-(D.today_cps||[]).length],['mine','รายงานของฉัน', back],['rules','กติกา']];
+  const sun = bkkNow().getUTCDay()===0;
+  return [['report','ส่งรายงาน'],['cp','จุดเช็กวันนี้', sun?0:2-(D.today_cps||[]).length],['mine','รายงานของฉัน', back],['rules','กติกา']];
 }
 function setTab(t){ TAB=t; render(); window.scrollTo(0,0); }
-function render(){
+function render(){ renderTabs(); renderView(); }
+function renderTabs(){
   document.getElementById('tabs').innerHTML = tabsFor().map(([k,l,n])=>
     `<button class="${TAB===k?'on':''}" onclick="setTab('${k}')">${l}${n>0?`<span class="badge">${n}</span>`:''}</button>`).join('');
+}
+function renderView(){
   const v = document.getElementById('view');
   if(TAB==='report') v.innerHTML = viewForm();
   else if(TAB==='cp') v.innerHTML = viewCheckpoint();
   else if(TAB==='mine') v.innerHTML = viewList(D.reports, 'รายงานของฉัน');
   else if(TAB==='pending') v.innerHTML = viewList(D.reports.filter(r=>r.status==='รอฝ่ายบุคคล'), 'รอฝ่ายบุคคลดู', true);
-  else if(TAB==='all') v.innerHTML = monthBar() + viewList(D.reports.filter(r=>(r.happened_at||'').slice(0,7)===MONTH || toBkkMonth(r.happened_at)===MONTH), 'รายงานเดือน '+monthLabel(MONTH));
+  else if(TAB==='all') v.innerHTML = monthBar() + viewList(D.reports.filter(r=>toBkkMonth(r.happened_at)===MONTH), 'รายงานเดือน '+monthLabel(MONTH));
   else if(TAB==='summary') v.innerHTML = monthBar() + viewSummary();
   else if(TAB==='spot') v.innerHTML = monthBar() + viewSpot();
   else if(TAB==='rules') v.innerHTML = viewRules();
@@ -349,7 +355,7 @@ async function saveReport(){
     toast(failed ? 'ส่งรายงานแล้ว แต่แนบรูปไม่สำเร็จ '+failed+' รูป' : 'ส่งรายงานแล้ว ขอบคุณที่ช่วยดูแลลูกค้า');
     await reload(); setTab(isStaff()?'all':'mine');
   }catch(e){ err.textContent=e.message; }
-  finally{ const b=document.getElementById('btnSave'); if(b){ b.disabled=false; } }
+  finally{ const b=document.getElementById('btnSave'); if(b){ b.disabled=false; b.textContent = FORM&&FORM.id ? 'บันทึกการแก้ไข' : 'ส่งรายงาน'; } }
 }
 function editReport(id){
   const r = D.reports.find(x=>x.id===id); if(!r) return;
@@ -380,7 +386,7 @@ function repCard(r, decide){
       <dt>ส่งโดย</dt><dd>${esc(r.reporter_name||r.reporter_role)} · ${thDT(r.created_at)}</dd>
       ${r.hr_note?`<dt>ฝ่ายบุคคล</dt><dd>${esc(r.hr_note)}</dd>`:''}
     </dl>
-    ${(r.docs||[]).length?`<div class="thumbs">${r.docs.map((p,i)=>`<button onclick="viewDoc('${esc(p)}')">ดูรูป ${i+1}</button>`).join('')}</div>`:''}
+    ${(r.docs||[]).length?`<div class="thumbs">${r.docs.map((p,i)=>`<button data-path="${esc(p)}" onclick="viewDoc(this.dataset.path)">ดูรูป ${i+1}</button>`).join('')}</div>`:''}
     ${isStaff() && r.told_before>0 ? `<div class="box warn">เคยแจ้ง${esc(r.person_text)}เรื่องกติกาข้อนี้แล้ว ${r.told_before} ครั้ง</div>`:''}
     ${decide && isStaff() ? decideButtons(r) : ''}
     ${mineEditable||staffEditable ? `<div class="act"><button onclick="editReport(${r.id})">แก้รายงานนี้</button></div>`:''}
@@ -408,19 +414,23 @@ function decide(id, st){
     ${st==='ตั้งเป็นกติกาใหม่'?`<label>กติกาใหม่</label><textarea id="dRule" placeholder="เช่น ตอบลูกค้าในแชทภายในวันเดียวกัน"></textarea>`:''}
     <label>หมายเหตุ ${st==='ไม่นับ'||st==='ตีกลับ'?'<small>(ต้องมี)</small>':'<small>(ถ้ามี)</small>'}</label>
     <textarea id="dNote"></textarea><div class="err" id="dErr"></div>
-    <div style="display:flex;gap:8px;margin-top:12px"><button class="primary" onclick="doDecide(${id},'${st}')">ยืนยัน</button><button onclick="closeModal()">ยกเลิก</button></div>`);
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="primary" id="dOk" onclick="doDecide(${id},'${st}')">ยืนยัน</button><button onclick="closeModal()">ยกเลิก</button></div>`);
 }
 async function doDecide(id, st){
   const note=document.getElementById('dNote').value, rule=(document.getElementById('dRule')||{}).value||null;
+  const ok=document.getElementById('dOk'); if(ok.disabled) return; ok.disabled=true;
   try{
     const r = await rpc('qa_report_decide', {p_pin:PIN, p_id:id, p_status:st, p_note:note, p_rule_text:rule});
     if(!r.ok){ document.getElementById('dErr').textContent=r.error; return; }
     closeModal(); toast('บันทึกแล้ว'); await reload(); markSeen();
   }catch(e){ document.getElementById('dErr').textContent=e.message; }
+  finally{ const b=document.getElementById('dOk'); if(b) b.disabled=false; }
 }
 async function viewDoc(path){
-  try{ toast('กำลังเปิดรูป…'); const r=await docFn({action:'view', path}); window.open(r.url,'_blank','noopener'); }
-  catch(e){ toast(e.message); }
+  const w = window.open('', '_blank');   /* เปิดหน้าต่างทันทีตอนกด ไอโฟนจะได้ไม่บล็อก */
+  try{ toast('กำลังเปิดรูป…'); const r=await docFn({action:'view', path});
+       if(w){ w.opener=null; w.location.href=r.url; } else window.location.href=r.url; }
+  catch(e){ if(w) w.close(); toast(e.message); }
 }
 
 /* ── จุดเช็ก (คนตรวจ) ── */
