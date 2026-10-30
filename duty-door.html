@@ -483,11 +483,10 @@ function renderCal(){
   } else nb.classList.add('hide');
 }
 
+const MK_MOVE = {moved:'มีเวรปกติ', one_per_day:'วันละเวรเดียว', nodata:'ไม่มีข้อมูล', closed:'ร้านปิด', leave:'ลา'};
 function mkLine(m){
   if(m.state==='done') return '<span class="st ontime">✓ '+esc(m.scan||'')+'</span>';
-  if(m.state==='moved') return m.moved_res==='moved' ? '<span class="st wait">เลื่อน (มีเวรปกติ)</span>'
-    : m.moved_res==='nodata' ? '<span class="st wait">เลื่อน (ไม่มีข้อมูล)</span>'
-    : '<span class="st miss">ไม่ได้ทำ → เลื่อน</span>';
+  if(m.state==='moved') return '<span class="st '+(MK_MOVE[m.moved_res]?'wait':'miss')+'">'+(MK_MOVE[m.moved_res]||'ไม่ได้ทำ')+' → เลื่อน</span>';
   return '<span class="st wait">เวรซ้ำ</span>';
 }
 function mkWhy(m){
@@ -530,8 +529,7 @@ function openDay(date){
       b += '<h3 style="margin:10px 0 4px">🔁 เวรซ้ำ</h3>';
       for(const m of d.makeup){
         const st = m.state==='done' ? '<span class="pill good">มาเปิดประตู · สแกน '+esc(m.scan||'')+'</span>'
-          : m.state==='moved' ? (m.moved_res==='moved' ? '<span class="pill">วันนี้มีเวรปกติอยู่แล้ว → เลื่อน</span>'
-              : m.moved_res==='nodata' ? '<span class="pill">ไม่มีข้อมูลสแกนวันนี้ → เลื่อน</span>'
+          : m.state==='moved' ? (MK_MOVE[m.moved_res] ? '<span class="pill">'+MK_MOVE[m.moved_res]+' → เลื่อน</span>'
               : '<span class="pill bad">ไม่ได้ทำ'+(m.scan?' · สแกน '+esc(m.scan):'')+' → เลื่อน</span>')
           : (date < DATA.today || (date===DATA.today && DATA.now_th.slice(11) >= '07:51') ? '<span class="pill">รอผล</span>' : '<span class="pill">ยังไม่ถึงเวลาเวร</span>');
         b += '<div class="slotbox" style="border-style:dashed"><b style="font-size:16px">'+esc(m.nick)+'</b>'+
